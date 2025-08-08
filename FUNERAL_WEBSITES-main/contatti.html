@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contatti - Onoranze Funebri Santaniello</title>
+    <meta name="description" content="Contatta l'Onoranze Funebri Santaniello. Disponibili 24/7 per emergenze. Via Cimitile 4, Nola. Tel: +39 081 8234914. Email: santanielloservizifunebri@gmail.com">
+    <meta name="keywords" content="contatti agenzia funebre, emergenze 24/7, Napoli, indirizzo, telefono, email, Santaniello">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'modern-dark': '#1a1a1a',
+                        'modern-gray': '#374151',
+                        'modern-light': '#6b7280',
+                        'modern-accent': '#2d3748'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <!-- Top bar -->
+            <div class="py-2 text-sm border-b border-gray-600">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <span><i class="fas fa-phone text-gray-300"></i> +39 081 8234914</span>
+                        <span><i class="fas fa-envelope text-gray-300"></i> santanielloservizifunebri@gmail.com</span>
+                    </div>
+                    <div class="text-gray-300">
+                        <i class="fas fa-clock"></i> Disponibili 24/7
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main navigation -->
+            <nav class="py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-gray-300">
+                            <i class="fas fa-dove text-lg mr-2"></i>
+                            <a href="index.html">Santaniello</a>
+                        </h1>
+                        <span class="ml-3 text-sm text-gray-300">Agenzia Funebre</span>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <ul class="hidden md:flex space-x-6 items-center">
+                        <li><a href="index.html" class="hover:text-gray-300 transition-colors">Home</a></li>
+                        <li><a href="necrologi.html" class="hover:text-gray-300 transition-colors">Necrologi</a></li>
+                        <li><a href="fiori-omaggi.html" class="hover:text-gray-300 transition-colors">Fiori & Omaggi</a></li>
+                        <li><a href="chi-siamo.html" class="hover:text-gray-300 transition-colors">Chi Siamo</a></li>
+                        <li><a href="casa-funeraria.html" class="hover:text-gray-300 transition-colors">Casa Funeraria</a></li>
+                        <li><a href="servizi.html" class="hover:text-gray-300 transition-colors">Servizi</a></li>
+                        <li><a href="contatti.html" class="text-gray-300">Contatti</a></li>
+                    </ul>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button class="md:hidden text-white" id="mobile-menu-btn">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Mobile Menu -->
+                <div class="md:hidden mt-4 hidden" id="mobile-menu">
+                    <ul class="space-y-2 pb-4">
+                        <li><a href="index.html" class="block py-2 hover:text-gray-300 transition-colors">Home</a></li>
+                        <li><a href="necrologi.html" class="block py-2 hover:text-gray-300 transition-colors">Necrologi</a></li>
+                        <li><a href="fiori-omaggi.html" class="block py-2 hover:text-gray-300 transition-colors">Fiori & Omaggi</a></li>
+                        <li><a href="chi-siamo.html" class="block py-2 hover:text-gray-300 transition-colors">Chi Siamo</a></li>
+                        <li><a href="casa-funeraria.html" class="block py-2 hover:text-gray-300 transition-colors">Casa Funeraria</a></li>
+                        <li><a href="servizi.html" class="block py-2 hover:text-gray-300 transition-colors">Servizi</a></li>
+                        <li><a href="contatti.html" class="block py-2 text-gray-300">Contatti</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <section class="py-4 bg-white border-b">
+        <div class="container mx-auto px-4">
+            <nav class="breadcrumb">
+                <a href="index.html">Home</a>
+                <span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+                <span>Contatti</span>
+            </nav>
+        </div>
+    </section>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden bg-gradient-to-br from-gray-600 via-gray-500 to-gray-700 text-white">
+        <div class="absolute inset-0 bg-gradient-to-br from-gray-800 via-transparent to-gray-600 opacity-40"></div>
+        <div class="absolute inset-0">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-white opacity-5 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gray-300 opacity-5 rounded-full blur-3xl"></div>
+        </div>
+        <div class="container mx-auto px-4 py-24 relative z-10">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="text-5xl md:text-6xl font-bold mb-8">
+                    <i class="fas fa-phone mr-4 text-gray-300"></i>
+                    Contattaci
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
+                    Siamo sempre disponibili per assisterti. Il nostro staff professionale è pronto ad aiutarti 
+                    24 ore su 24, 7 giorni su 7, anche nei giorni festivi.
+                </p>
+                <div class="bg-gradient-to-r from-white to-gray-200 text-gray-900 px-10 py-6 rounded-2xl inline-block shadow-2xl transform hover:scale-105 transition-all duration-300">
+                    <div class="flex items-center text-2xl font-bold">
+                        <i class="fas fa-phone mr-4"></i>
+                        <span>Emergenze 24/7: +39 081 8234914</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative bottom wave -->
+        <div class="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1200 120L0 16.48V120h1200z" fill="rgb(255, 255, 255)"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Contact Information -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-12 text-center">Le Nostre Informazioni</h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Telefono -->
+                    <div class="text-center bg-gray-50 p-8 rounded-lg shadow-lg">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-phone text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Telefono</h3>
+                        <div class="space-y-2">
+                            <p class="text-gray-600">
+                                <strong>Emergenze 24/7:</strong><br>
+                                <a href="tel:+390818234914" class="text-gray-300 hover:text-gray-400">+39 081 8234914</a>
+                            </p>
+                            <p class="text-gray-600">
+                                <strong>Cellulare:</strong><br>
+                                <a href="tel:+39336913232" class="text-gray-300 hover:text-gray-400">+39 336 913232</a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="text-center bg-gray-50 p-8 rounded-lg shadow-lg">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-envelope text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Email</h3>
+                        <div class="space-y-2">
+                            <p class="text-gray-600">
+                                <strong>Generale:</strong><br>
+                                <a href="mailto:santanielloservizifunebri@gmail.com" class="text-gray-300 hover:text-gray-400">santanielloservizifunebri@gmail.com</a>
+                            </p>
+
+                        </div>
+                    </div>
+                    
+                    <!-- Indirizzo -->
+                    <div class="text-center bg-gray-50 p-8 rounded-lg shadow-lg">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-map-marker-alt text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Indirizzo</h3>
+                        <div class="space-y-2">
+                            <p class="text-gray-600">
+                                <strong>Sede Principale:</strong><br>
+                                Via Cimitile 4<br>
+                80035 Nola (NA), Italia
+                            </p>
+                        </div>
+                        <a href="#map" class="inline-block mt-3 text-gray-300 hover:text-gray-400 text-sm">
+                            <i class="fas fa-directions mr-1"></i>
+                            Visualizza sulla mappa
+                        </a>
+                    </div>
+                    
+                    <!-- Orari -->
+                    <div class="text-center bg-gray-50 p-8 rounded-lg shadow-lg">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-clock text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Orari Ufficio</h3>
+                        <div class="space-y-1 text-sm text-gray-600">
+                            <p><strong>Lunedì - Venerdì:</strong><br>8:00 - 18:00</p>
+                            <p><strong>Sabato:</strong><br>8:00 - 13:00</p>
+                            <p><strong>Domenica:</strong><br>Solo emergenze</p>
+                            <p class="text-gray-300 font-semibold mt-2">
+                                <i class="fas fa-exclamation-circle mr-1"></i>
+                                Emergenze sempre attive
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form -->
+    <section class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Invia un Messaggio</h2>
+                <p class="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+                    Compila il form sottostante per inviarci una richiesta di informazioni o per prenotare un appuntamento. 
+                    Ti risponderemo nel più breve tempo possibile.
+                </p>
+                
+                <div class="bg-white rounded-lg shadow-lg p-8">
+                    <form id="contact-form" class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <!-- Nome -->
+                            <div>
+                                <label for="nome" class="block text-sm font-semibold text-gray-800 mb-2">
+                                    <i class="fas fa-user mr-1"></i> Nome *
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="nome"
+                                    name="nome" 
+                                    required 
+                                    class="form-input w-full p-4 border border-gray-300 rounded-lg focus:border-funeral-gold"
+                                    placeholder="Il tuo nome"
+                                >
+                            </div>
+                            
+                            <!-- Cognome -->
+                            <div>
+                                <label for="cognome" class="block text-sm font-semibold text-gray-800 mb-2">
+                                    <i class="fas fa-user mr-1"></i> Cognome *
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="cognome"
+                                    name="cognome" 
+                                    required 
+                                    class="form-input w-full p-4 border border-gray-300 rounded-lg focus:border-funeral-gold"
+                                    placeholder="Il tuo cognome"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <!-- Email -->
+                            <div>
+                                <label for="email" class="block text-sm font-semibold text-gray-800 mb-2">
+                                    <i class="fas fa-envelope mr-1"></i> Email *
+                                </label>
+                                <input 
+                                    type="email" 
+                                    id="email"
+                                    name="email" 
+                                    required 
+                                    class="form-input w-full p-4 border border-gray-300 rounded-lg focus:border-funeral-gold"
+                                    placeholder="la.tua.email@esempio.it"
+                                >
+                            </div>
+                            
+                            <!-- Telefono -->
+                            <div>
+                                <label for="telefono" class="block text-sm font-semibold text-gray-800 mb-2">
+                                    <i class="fas fa-phone mr-1"></i> Telefono
+                                </label>
+                                <input 
+                                    type="tel" 
+                                    id="telefono"
+                                    name="telefono" 
+                                    class="form-input w-full p-4 border border-gray-300 rounded-lg focus:border-funeral-gold"
+                                    placeholder="+39 123 456 7890"
+                                >
+                            </div>
+                        </div>
+                        
+                        <!-- Motivo del contatto -->
+                        <div>
+                            <label for="motivo" class="block text-sm font-semibold text-gray-800 mb-2">
+                                <i class="fas fa-clipboard-list mr-1"></i> Motivo del Contatto
+                            </label>
+                            <select 
+                                id="motivo"
+                                name="motivo" 
+                                class="form-input w-full p-4 border border-gray-300 rounded-lg focus:border-funeral-gold"
+                            >
+                                <option value="">Seleziona il motivo</option>
+                                <option value="informazioni-generali">Informazioni generali</option>
+                                <option value="preventivo">Richiesta preventivo</option>
+                                <option value="emergenza">Emergenza</option>
+                                <option value="appuntamento">Prenotazione appuntamento</option>
+                                <option value="supporto-lutto">Supporto nel lutto</option>
+                                <option value="altro">Altro</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Messaggio -->
+                        <div>
+                            <label for="messaggio" class="block text-sm font-semibold text-gray-800 mb-2">
+                                <i class="fas fa-comment mr-1"></i> Messaggio *
+                            </label>
+                            <textarea 
+                                id="messaggio"
+                                name="messaggio" 
+                                required 
+                                rows="6" 
+                                class="form-input w-full p-4 border border-gray-300 rounded-lg focus:border-funeral-gold resize-none"
+                                placeholder="Scrivi qui il tuo messaggio..."
+                            ></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Minimo 10 caratteri richiesti</p>
+                        </div>
+                        
+                        <!-- Urgenza -->
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-start">
+                                <input 
+                                    type="checkbox" 
+                                    id="urgente"
+                                    name="urgente" 
+                                    class="mt-1 mr-3"
+                                >
+                                <div>
+                                    <label for="urgente" class="font-semibold text-yellow-800 cursor-pointer">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        Richiesta Urgente
+                                    </label>
+                                    <p class="text-sm text-yellow-700 mt-1">
+                                        Seleziona questa opzione se si tratta di un'emergenza o di una richiesta urgente. 
+                                        Per emergenze immediate, ti consigliamo di chiamare direttamente.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Privacy -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start">
+                                <input 
+                                    type="checkbox" 
+                                    id="privacy"
+                                    name="privacy" 
+                                    required
+                                    class="mt-1 mr-3"
+                                >
+                                <div>
+                                    <label for="privacy" class="font-semibold text-blue-800 cursor-pointer text-sm">
+                                        <i class="fas fa-shield-alt mr-1"></i>
+                                        Accetto il trattamento dei dati personali *
+                                    </label>
+                                    <p class="text-xs text-blue-700 mt-1">
+                                        I tuoi dati saranno trattati nel rispetto della Privacy Policy per rispondere alla tua richiesta. 
+                                        Non verranno condivisi con terze parti senza il tuo consenso.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="text-center">
+                            <button 
+                                type="submit" 
+                                class="bg-gradient-to-r from-gray-500 to-gray-600 text-gray-800 px-12 py-4 rounded-lg font-bold text-lg hover:bg-yellow-400 transition-colors shadow-lg"
+                            >
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                Invia Messaggio
+                            </button>
+                            
+                            <p class="text-xs text-gray-500 mt-4">
+                                Ti risponderemo entro 24 ore. Per emergenze, chiama direttamente il +39 081 8234914
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section id="map" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Come Raggiungerci</h2>
+                
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <!-- Map -->
+                    <div class="lg:col-span-2">
+                        <div class="rounded-lg overflow-hidden shadow-lg h-96">
+                            <!-- Google Maps Embed -->
+                            <iframe 
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3019.2442!2d14.5277756!3d40.9265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x133b084f4b7c51fd%3A0x40c6a5770c718b00!2sVia%20Cimitile%2C%204%2C%2080035%20Nola%20NA%2C%20Italy!5e0!3m2!1sen!2s!4v1649000000000!5m2!1sen!2s"
+                                width="100%" 
+                                height="100%" 
+                                style="border:0;" 
+                                allowfullscreen="" 
+                                loading="lazy" 
+                                referrerpolicy="no-referrer-when-downgrade"
+                                title="Mappa Onoranze Funebri Santaniello"
+                            ></iframe>
+                        </div>
+                    </div>
+                    
+                    <!-- Directions -->
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-route text-gray-300 mr-2"></i>
+                                Indicazioni Stradali
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div class="border-l-4 border-funeral-gold pl-4">
+                                    <h4 class="font-semibold text-gray-800 mb-1">
+                                        <i class="fas fa-car mr-2"></i>In Auto
+                                    </h4>
+                                    <p class="text-sm text-gray-600">
+                                        Autostrada A1: Uscita Nola<br>
+                                        Seguire le indicazioni per il centro storico<br>
+                                        Parcheggio privato disponibile
+                                    </p>
+                                </div>
+                                
+                                <div class="border-l-4 border-funeral-gold pl-4">
+                                    <h4 class="font-semibold text-gray-800 mb-1">
+                                        <i class="fas fa-bus mr-2"></i>Trasporti Pubblici
+                                    </h4>
+                                    <p class="text-sm text-gray-600">
+                                        Autobus: Linee 140, 151, 168<br>
+                                        Metro Linea 2: Fermata Cavour (500m)<br>
+                                        Taxi disponibili nelle vicinanze
+                                    </p>
+                                </div>
+                                
+                                <div class="border-l-4 border-funeral-gold pl-4">
+                                    <h4 class="font-semibold text-gray-800 mb-1">
+                                        <i class="fas fa-plane mr-2"></i>Dall'Aeroporto
+                                    </h4>
+                                    <p class="text-sm text-gray-600">
+                                        Aeroporto di Capodichino: 15 km<br>
+                                        Autobus Alibus diretto al centro<br>
+                                        Taxi: circa 30 minuti
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2">
+                                <i class="fas fa-info-circle text-gray-300 mr-2"></i>
+                                Informazioni Utili
+                            </h4>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Parcheggio gratuito per clienti</li>
+                                <li>• Struttura accessibile ai disabili</li>
+                                <li>• Fermata bus a 50 metri</li>
+                                <li>• Zona pedonale nelle vicinanze</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="text-center">
+                            <a 
+                                href="https://goo.gl/maps/example" 
+                                target="_blank"
+                                class="inline-block bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-lg hover:bg-gradient-to-r from-gray-500 to-gray-600 hover:text-gray-800 transition-colors font-semibold"
+                            >
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                Apri in Google Maps
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Emergency Contact -->
+    <section class="py-12 bg-red-50 border-y-2 border-red-200">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="flex items-center justify-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-3xl mr-4"></i>
+                    <h2 class="text-2xl font-bold text-red-800">Hai Bisogno di Assistenza Immediata?</h2>
+                </div>
+                <p class="text-red-700 mb-6">
+                    Per emergenze o situazioni che richiedono assistenza immediata, 
+                    non esitare a contattarci telefonicamente. Siamo sempre disponibili.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a 
+                        href="tel:+390811234567" 
+                        class="bg-red-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-red-700 transition-colors shadow-lg"
+                    >
+                        <i class="fas fa-phone mr-2"></i>
+                        Chiama Subito: +39 081 8234914
+                    </a>
+                    <a 
+                        href="https://wa.me/390811234567" 
+                        target="_blank"
+                        class="bg-green-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors shadow-lg"
+                    >
+                        <i class="fab fa-whatsapp mr-2"></i>
+                        WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Domande Frequenti</h2>
+                
+                <div class="space-y-4">
+                    <div class="bg-white rounded-lg shadow">
+                        <button class="w-full text-left p-6 font-semibold text-gray-800 hover:bg-gray-50 flex justify-between items-center" onclick="toggleContactFaq(1)">
+                            <span>Quanto tempo ci vuole per avere una risposta?</span>
+                            <i class="fas fa-chevron-down transform transition-transform duration-200" id="contact-faq-icon-1"></i>
+                        </button>
+                        <div class="hidden p-6 pt-0 text-gray-600" id="contact-faq-content-1">
+                            <p>
+                                Risponderemo alla tua email entro 24 ore nei giorni lavorativi. 
+                                Per richieste urgenti, ti consigliamo di chiamare direttamente il nostro numero.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow">
+                        <button class="w-full text-left p-6 font-semibold text-gray-800 hover:bg-gray-50 flex justify-between items-center" onclick="toggleContactFaq(2)">
+                            <span>Posso prenotare un appuntamento online?</span>
+                            <i class="fas fa-chevron-down transform transition-transform duration-200" id="contact-faq-icon-2"></i>
+                        </button>
+                        <div class="hidden p-6 pt-0 text-gray-600" id="contact-faq-content-2">
+                            <p>
+                                Sì, puoi richiedere un appuntamento attraverso il form di contatto selezionando 
+                                "Prenotazione appuntamento" come motivo. Ti ricontatteremo per confermare data e ora.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow">
+                        <button class="w-full text-left p-6 font-semibold text-gray-800 hover:bg-gray-50 flex justify-between items-center" onclick="toggleContactFaq(3)">
+                            <span>È disponibile il parcheggio?</span>
+                            <i class="fas fa-chevron-down transform transition-transform duration-200" id="contact-faq-icon-3"></i>
+                        </button>
+                        <div class="hidden p-6 pt-0 text-gray-600" id="contact-faq-content-3">
+                            <p>
+                                Sì, disponiamo di un parcheggio privato gratuito riservato ai nostri clienti. 
+                                La struttura è facilmente accessibile anche con mezzi pubblici.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-gray-800 to-gray-700 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <!-- Logo e Descrizione -->
+                <div class="col-span-1">
+                    <h3 class="text-xl font-bold text-gray-300 mb-4">
+                        <i class="fas fa-dove mr-2"></i>Santaniello
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Agenzia funebre di fiducia dal 1950. Serviamo le famiglie con professionalità, rispetto e compassione.
+                    </p>
+                    <div class="flex space-x-3">
+                        <a href="#" class="text-gray-400 hover:text-gray-300">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-gray-300">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Servizi -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Servizi</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Organizzazione Funerali</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Trasporto Salme</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Cremazione</a></li>
+                        <li><a href="casa-funeraria.html" class="text-gray-300 hover:text-white">Casa Funeraria</a></li>
+                        <li><a href="fiori-omaggi.html" class="text-gray-300 hover:text-white">Fiori & Omaggi</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Collegamenti Utili -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Collegamenti</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="necrologi.html" class="text-gray-300 hover:text-white">Necrologi</a></li>
+                        <li><a href="chi-siamo.html" class="text-gray-300 hover:text-white">Chi Siamo</a></li>
+                        <li><a href="contatti.html" class="text-gray-300 hover:text-white">Contatti</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Contatti -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Contatti</h4>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <p><i class="fas fa-phone mr-2"></i> +39 081 8234914</p>
+                        <p><i class="fas fa-envelope mr-2"></i> santanielloservizifunebri@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt mr-2"></i> Via Cimitile 4<br> 80035 Nola (NA), Italia</p>
+                        <p><i class="fas fa-clock mr-2"></i> Disponibili 24/7</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-600 mt-8 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2024 Santaniello Servizi Funebri. Tutti i diritti riservati.</p>
+                <p class="text-sm mt-2">
+                    Iscritto al registro delle imprese della regione Campania n. 471 | P.I. 10320801219
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/modern-theme.js"></script>
+    <script>
+        // FAQ Toggle functionality for contact page
+        function toggleContactFaq(faqNumber) {
+            const content = document.getElementById(`contact-faq-content-${faqNumber}`);
+            const icon = document.getElementById(`contact-faq-icon-${faqNumber}`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
+</body>
+</html>

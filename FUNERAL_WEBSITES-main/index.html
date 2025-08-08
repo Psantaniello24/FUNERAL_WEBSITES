@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onoranze Funebri Santaniello - Servizi funebri di qualità</title>
+    <meta name="description" content="Onoranze Funebri Santaniello offre servizi funebri completi con professionalità e rispetto. Necrologi online, casa funeraria, fiori e omaggi.">
+    <meta name="keywords" content="agenzia funebre, servizi funebri, necrologi, casa funeraria, fiori, cremazione, sepoltura">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'modern-dark': '#1a1a1a',
+                        'modern-gray': '#374151',
+                        'modern-light': '#6b7280',
+                        'modern-accent': '#2d3748'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-modern-dark to-modern-accent text-white shadow-2xl relative">
+        <div class="container mx-auto px-4">
+            <!-- Top bar -->
+            <div class="py-3 text-sm border-b border-modern-gray border-opacity-30">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-6">
+                        <span class="flex items-center"><i class="fas fa-phone text-gray-300 mr-2"></i> +39 081 8234914</span>
+                        <span class="flex items-center"><i class="fas fa-envelope text-gray-300 mr-2"></i> santanielloservizifunebri@gmail.com</span>
+                    </div>
+                    <div class="text-gray-300 flex items-center">
+                        <i class="fas fa-clock mr-2"></i> Disponibili 24/7
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main navigation -->
+            <nav class="py-5">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <h1 class="text-3xl font-bold text-white">
+                            <i class="fas fa-dove text-xl mr-3 text-gray-300"></i>
+                            Santaniello
+                        </h1>
+                        <span class="ml-4 text-sm text-gray-400 font-medium">Agenzia Funebre</span>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <ul class="hidden md:flex space-x-8 items-center">
+                        <li><a href="index.html" class="text-white hover:text-gray-300 transition-all duration-300 font-medium border-b-2 border-transparent hover:border-gray-300">Home</a></li>
+                        <li><a href="necrologi.html" class="text-gray-300 hover:text-white transition-all duration-300 font-medium">Necrologi</a></li>
+                        <li><a href="fiori-omaggi.html" class="text-gray-300 hover:text-white transition-all duration-300 font-medium">Fiori & Omaggi</a></li>
+                        <li><a href="chi-siamo.html" class="text-gray-300 hover:text-white transition-all duration-300 font-medium">Chi Siamo</a></li>
+                        <li><a href="casa-funeraria.html" class="text-gray-300 hover:text-white transition-all duration-300 font-medium">Casa Funeraria</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white transition-all duration-300 font-medium">Servizi</a></li>
+                        <li><a href="contatti.html" class="text-gray-300 hover:text-white transition-all duration-300 font-medium">Contatti</a></li>
+                        <li><a href="admin.html" class="text-gray-400 hover:text-gray-300 transition-all duration-300 text-sm" title="Pannello Amministrazione"><i class="fas fa-cog"></i></a></li>
+                    </ul>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button class="md:hidden text-white" id="mobile-menu-btn">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Mobile Menu -->
+                <div class="md:hidden mt-4 hidden" id="mobile-menu">
+                    <ul class="space-y-3 pb-6 bg-black bg-opacity-20 rounded-lg p-4 backdrop-blur-sm">
+                        <li><a href="index.html" class="block py-3 px-2 text-white font-medium border-l-2 border-white">Home</a></li>
+                        <li><a href="necrologi.html" class="block py-3 px-2 text-gray-300 hover:text-white hover:border-l-2 hover:border-gray-300 transition-all duration-300">Necrologi</a></li>
+                        <li><a href="fiori-omaggi.html" class="block py-3 px-2 text-gray-300 hover:text-white hover:border-l-2 hover:border-gray-300 transition-all duration-300">Fiori & Omaggi</a></li>
+                        <li><a href="chi-siamo.html" class="block py-3 px-2 text-gray-300 hover:text-white hover:border-l-2 hover:border-gray-300 transition-all duration-300">Chi Siamo</a></li>
+                        <li><a href="casa-funeraria.html" class="block py-3 px-2 text-gray-300 hover:text-white hover:border-l-2 hover:border-gray-300 transition-all duration-300">Casa Funeraria</a></li>
+                        <li><a href="servizi.html" class="block py-3 px-2 text-gray-300 hover:text-white hover:border-l-2 hover:border-gray-300 transition-all duration-300">Servizi</a></li>
+                        <li><a href="contatti.html" class="block py-3 px-2 text-gray-300 hover:text-white hover:border-l-2 hover:border-gray-300 transition-all duration-300">Contatti</a></li>
+                        <li><a href="admin.html" class="block py-2 px-2 text-gray-400 hover:text-gray-300 text-sm transition-all duration-300"><i class="fas fa-cog mr-2"></i>Admin</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden bg-gradient-to-br from-gray-600 via-gray-500 to-gray-700 text-white">
+        <div class="absolute inset-0 bg-gradient-to-br from-gray-800 via-transparent to-gray-600 opacity-40"></div>
+        <div class="absolute inset-0">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-white opacity-5 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gray-300 opacity-5 rounded-full blur-3xl"></div>
+        </div>
+        <div class="container mx-auto px-4 py-24 relative z-10">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-5xl md:text-6xl font-bold mb-8 leading-tight">
+                    Con Rispetto e Dignità<br>
+                    <span class="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Al Vostro Servizio</span>
+                </h2>
+                <p class="text-xl md:text-2xl mb-10 text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                    Storica agenzia funebre di Nola, gestita dalla famiglia Santaniello attraverso passione e dedizione, 
+                    consolidando forti principi aziendali tramandati da generazioni.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-6 justify-center">
+                    <a href="contatti.html" class="bg-gradient-to-r from-white to-gray-200 text-gray-900 px-10 py-4 rounded-xl font-bold text-lg hover:from-gray-100 hover:to-white transition-all duration-300 transform hover:scale-105 shadow-2xl">
+                        Contattaci Ora
+                    </a>
+                    <a href="servizi.html" class="border-2 border-white text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm">
+                        I Nostri Servizi
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative bottom wave -->
+        <div class="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1200 120L0 16.48V120h1200z" fill="rgb(249, 250, 251)"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Servizi Principali -->
+    <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">I Nostri Servizi</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                    Offriamo una gamma completa di servizi funebri per accompagnare voi e i vostri cari con la massima professionalità.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-10">
+                <!-- Necrologi -->
+                <div class="text-center group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:from-gray-700 group-hover:to-gray-800 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-newspaper text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Necrologi Online</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Pubblicazione necrologi con possibilità di inviare condoglianze online e condividere ricordi.
+                    </p>
+                    <a href="necrologi.html" class="inline-flex items-center text-gray-900 hover:text-gray-700 font-bold text-lg transition-colors duration-300">
+                        Visualizza Necrologi 
+                        <i class="fas fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
+                    </a>
+                </div>
+                
+                <!-- Casa Funeraria -->
+                <div class="text-center group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:from-gray-700 group-hover:to-gray-800 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-home text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Casa Funeraria</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Una struttura moderna e accogliente per veglie e cerimonie in un ambiente confortevole.
+                    </p>
+                    <a href="casa-funeraria.html" class="inline-flex items-center text-gray-900 hover:text-gray-700 font-bold text-lg transition-colors duration-300">
+                        Scopri la Struttura 
+                        <i class="fas fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
+                    </a>
+                </div>
+                
+                <!-- Fiori e Omaggi -->
+                <div class="text-center group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:from-gray-700 group-hover:to-gray-800 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-flower text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Fiori & Omaggi</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Composizioni floreali e articoli commemorativi per onorare la memoria dei vostri cari.
+                    </p>
+                    <a href="fiori-omaggi.html" class="inline-flex items-center text-gray-900 hover:text-gray-700 font-bold text-lg transition-colors duration-300">
+                        Sfoglia il Catalogo 
+                        <i class="fas fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Necrologi Recenti -->
+    <section class="py-20 bg-gradient-to-b from-white to-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Necrologi Recenti</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Gli ultimi annunci pubblicati dalle famiglie della nostra comunità.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="recent-obituaries">
+                <!-- I necrologi verranno caricati dinamicamente -->
+            </div>
+            
+            <div class="text-center mt-12">
+                <a href="necrologi.html" class="bg-gradient-to-r from-gray-900 to-gray-800 text-white px-10 py-4 rounded-xl font-bold text-lg hover:from-gray-800 hover:to-gray-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    Visualizza Tutti i Necrologi
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Perché Scegliere Santaniello -->
+    <section class="py-20 bg-gradient-to-br from-gray-50 to-white">
+        <div class="container mx-auto px-4">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-8">
+                        Perché Scegliere Santaniello
+                    </h2>
+                    <div class="space-y-8">
+                        <div class="flex items-start group">
+                            <div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white w-12 h-12 rounded-2xl flex items-center justify-center mr-6 mt-1 flex-shrink-0 group-hover:from-gray-700 group-hover:to-gray-800 transition-all duration-300 shadow-lg">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-3">Compassione e Rispetto</h3>
+                                <p class="text-gray-600 leading-relaxed">Trattiamo ogni famiglia con la massima sensibilità e rispetto in questo momento difficile.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start group">
+                            <div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white w-12 h-12 rounded-2xl flex items-center justify-center mr-6 mt-1 flex-shrink-0 group-hover:from-gray-700 group-hover:to-gray-800 transition-all duration-300 shadow-lg">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-3">Disponibilità 24/7</h3>
+                                <p class="text-gray-600 leading-relaxed">Siamo sempre disponibili, giorno e notte, per assistere le famiglie nel momento del bisogno.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start group">
+                            <div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white w-12 h-12 rounded-2xl flex items-center justify-center mr-6 mt-1 flex-shrink-0 group-hover:from-gray-700 group-hover:to-gray-800 transition-all duration-300 shadow-lg">
+                                <i class="fas fa-award"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-3">Esperienza e Professionalità</h3>
+                                <p class="text-gray-600 leading-relaxed">Tre generazioni di esperienza nel settore funebre con servizi di alta qualità.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-white to-gray-50 p-10 rounded-3xl shadow-2xl border border-gray-100">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-8 text-center">Contatto Immediato</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <i class="fas fa-phone text-gray-700 text-2xl mr-6"></i>
+                            <div>
+                                <p class="font-bold text-gray-900">Emergenze 24/7</p>
+                                <p class="text-2xl text-gray-800 font-bold">+39 081 8234914</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <i class="fas fa-envelope text-gray-700 text-2xl mr-6"></i>
+                            <div>
+                                <p class="font-bold text-gray-900">Email</p>
+                                <p class="text-lg text-gray-800">santanielloservizifunebri@gmail.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <i class="fas fa-map-marker-alt text-gray-700 text-2xl mr-6"></i>
+                            <div>
+                                <p class="font-bold text-gray-900">Indirizzo</p>
+                                <p class="text-lg text-gray-800">Via Cimitile 4, Nola (NA)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-b from-gray-900 to-black text-white py-16">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-12">
+                <!-- Logo e Descrizione -->
+                <div class="col-span-1">
+                    <h3 class="text-2xl font-bold text-white mb-6">
+                        <i class="fas fa-dove mr-3 text-gray-300"></i>Santaniello
+                    </h3>
+                    <p class="text-gray-300 mb-6 leading-relaxed">
+                        Agenzia funebre di fiducia dal 1950. Serviamo le famiglie con professionalità, rispetto e compassione.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300 p-2 bg-gray-800 rounded-full hover:bg-gray-700">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300 p-2 bg-gray-800 rounded-full hover:bg-gray-700">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Servizi -->
+                <div>
+                    <h4 class="font-bold mb-6 text-white text-lg">Servizi</h4>
+                    <ul class="space-y-3">
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Organizzazione Funerali</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Trasporto Salme</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Cremazione</a></li>
+                        <li><a href="casa-funeraria.html" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Casa Funeraria</a></li>
+                        <li><a href="fiori-omaggi.html" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Fiori & Omaggi</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Collegamenti Utili -->
+                <div>
+                    <h4 class="font-bold mb-6 text-white text-lg">Collegamenti</h4>
+                    <ul class="space-y-3">
+                        <li><a href="necrologi.html" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Necrologi</a></li>
+                        <li><a href="chi-siamo.html" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Chi Siamo</a></li>
+                        <li><a href="contatti.html" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Contatti</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white transition-colors duration-300 flex items-center"><i class="fas fa-chevron-right mr-2 text-xs"></i>Cookie Policy</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Contatti -->
+                <div>
+                    <h4 class="font-bold mb-6 text-white text-lg">Contatti</h4>
+                    <div class="space-y-4 text-gray-300">
+                        <div class="flex items-center">
+                            <i class="fas fa-phone mr-3 text-gray-400"></i>
+                            <span>+39 081 8234914</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-envelope mr-3 text-gray-400"></i>
+                            <span>santanielloservizifunebri@gmail.com</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-map-marker-alt mr-3 text-gray-400 mt-1"></i>
+                            <span>Via Cimitile 4<br>80035 Nola (NA), Italia</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock mr-3 text-gray-400"></i>
+                            <span>Disponibili 24/7</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 Santaniello Servizi Funebri. Tutti i diritti riservati.</p>
+                <p class="text-sm mt-2">
+                    Iscritto al registro delle imprese della regione Campania n. 471 | P.I. 10320801219
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/modern-theme.js"></script>
+    <script src="js/firebase-config.js"></script>
+</body>
+</html>
