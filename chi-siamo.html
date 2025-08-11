@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Siamo - Onoranze Funebri Santaniello</title>
+    <meta name="description" content="Scopri la storia dell'Onoranze Funebri Santaniello. Da tre generazioni al servizio delle famiglie con professionalità, compassione e rispetto.">
+    <meta name="keywords" content="storia agenzia funebre, famiglia Santaniello, tradizione, esperienza, servizi funebri Napoli">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'funeral-dark': '#1a1a2e',
+                        'funeral-blue': '#16213e',
+                        'funeral-gold': '#d4af37',
+                        'funeral-gray': '#8b8b8b'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <!-- Top bar -->
+            <div class="py-2 text-sm border-b border-gray-600">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <span><i class="fas fa-phone text-gray-300"></i> +39 081 8234914</span>
+                        <span><i class="fas fa-envelope text-gray-300"></i> santanielloservizifunebri@gmail.com</span>
+                    </div>
+                    <div class="text-gray-300">
+                        <i class="fas fa-clock"></i> Disponibili 24/7
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main navigation -->
+            <nav class="py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-gray-300">
+                            <i class="fas fa-dove text-lg mr-2"></i>
+                            <a href="index.html">Santaniello</a>
+                        </h1>
+                        <span class="ml-3 text-sm text-gray-300">Agenzia Funebre</span>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <ul class="hidden md:flex space-x-6 items-center">
+                        <li><a href="index.html" class="hover:text-gray-300 transition-colors">Home</a></li>
+                        <li><a href="necrologi.html" class="hover:text-gray-300 transition-colors">Necrologi</a></li>
+                        <li><a href="fiori-omaggi.html" class="hover:text-gray-300 transition-colors">Fiori & Omaggi</a></li>
+                        <li><a href="chi-siamo.html" class="text-gray-300">Chi Siamo</a></li>
+                        <li><a href="casa-funeraria.html" class="hover:text-gray-300 transition-colors">Casa Funeraria</a></li>
+                        <li><a href="servizi.html" class="hover:text-gray-300 transition-colors">Servizi</a></li>
+                        <li><a href="contatti.html" class="hover:text-gray-300 transition-colors">Contatti</a></li>
+                    </ul>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button class="md:hidden text-white" id="mobile-menu-btn">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Mobile Menu -->
+                <div class="md:hidden mt-4 hidden" id="mobile-menu">
+                    <ul class="space-y-2 pb-4">
+                        <li><a href="index.html" class="block py-2 hover:text-gray-300 transition-colors">Home</a></li>
+                        <li><a href="necrologi.html" class="block py-2 hover:text-gray-300 transition-colors">Necrologi</a></li>
+                        <li><a href="fiori-omaggi.html" class="block py-2 hover:text-gray-300 transition-colors">Fiori & Omaggi</a></li>
+                        <li><a href="chi-siamo.html" class="block py-2 text-gray-300">Chi Siamo</a></li>
+                        <li><a href="casa-funeraria.html" class="block py-2 hover:text-gray-300 transition-colors">Casa Funeraria</a></li>
+                        <li><a href="servizi.html" class="block py-2 hover:text-gray-300 transition-colors">Servizi</a></li>
+                        <li><a href="contatti.html" class="block py-2 hover:text-gray-300 transition-colors">Contatti</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <section class="py-4 bg-white border-b">
+        <div class="container mx-auto px-4">
+            <nav class="breadcrumb">
+                <a href="index.html">Home</a>
+                <span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+                <span>Chi Siamo</span>
+            </nav>
+        </div>
+    </section>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden bg-gradient-to-br from-gray-600 via-gray-500 to-gray-700 text-white py-16">
+        <div class="absolute inset-0 bg-gradient-to-br from-gray-800 via-transparent to-gray-600 opacity-40"></div>
+        <div class="absolute inset-0">
+            <div class="absolute top-1/4 left-1/4 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-72 h-72 bg-gray-300 opacity-5 rounded-full blur-3xl"></div>
+        </div>
+        <div class="relative z-10">
+            <div class="container mx-auto px-4">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                        La Nostra Storia
+                    </h1>
+                    <p class="text-xl text-gray-200 mb-8">
+                        Da tre generazioni, la famiglia Santaniello si prende cura delle famiglie nei momenti più difficili, 
+                        offrendo servizi funebri con professionalità, compassione e rispetto.
+                    </p>
+                    <div class="flex items-center justify-center space-x-8 text-white">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">1950</div>
+                            <div class="text-sm">Anno di fondazione</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">3</div>
+                            <div class="text-sm">Generazioni</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">70+</div>
+                            <div class="text-sm">Anni di esperienza</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Story -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Le Nostre Origini</h2>
+                        <div class="space-y-4 text-gray-700 leading-relaxed">
+                            <p>
+                                <strong>Santaniello Servizi Funebri</strong> è una storica agenzia funebre di Nola, gestita dalla famiglia Santaniello 
+                                attraverso passione e dedizione, consolidando forti principi aziendali tramandati da generazioni.
+                            </p>
+                            <p>
+                                Da sempre si avvale solo del lavoro della famiglia e di persone di fiducia, senza la collaborazione di intermediari. 
+                                Una caratteristica distintiva è che non è presente in nessun Ospedale o Clinica, nel pieno rispetto del dolore del cliente, 
+                                che si trova così libero di scegliere l'impresa da contattare, senza inutili forzature o ingiuste pressioni.
+                            </p>
+                            <p>
+                                <strong>Trasparenza e fiducia</strong> sono i nostri valori fondamentali. Santaniello si sostituisce, con grande professionalità e discrezione, 
+                                ai familiari nelle incombenze burocratiche e nella gestione del momento luttuoso, consigliando in modo trasparente 
+                                il miglior servizio al miglior prezzo.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <img src="images/placeholder-gallery.svg" alt="Giuseppe Santaniello, fondatore" class="w-full h-64 object-cover rounded-lg shadow-lg">
+                        <img src="images/placeholder-gallery.svg" alt="Sede storica dell'agenzia" class="w-full h-64 object-cover rounded-lg shadow-lg">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Values -->
+    <section class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-12 text-center">I Nostri Valori</h2>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-lg shadow-lg text-center">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-heart text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Compassione</h3>
+                        <p class="text-gray-600">
+                            Comprendiamo il dolore del lutto e offriamo il nostro supporto con sincera partecipazione emotiva, 
+                            accompagnando le famiglie con sensibilità e calore umano.
+                        </p>
+                    </div>
+                    
+                    <div class="bg-white p-8 rounded-lg shadow-lg text-center">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-award text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Professionalità</h3>
+                        <p class="text-gray-600">
+                            Settant'anni di esperienza ci hanno insegnato l'importanza dell'eccellenza in ogni dettaglio, 
+                            dalla cura della salma all'organizzazione delle cerimonie.
+                        </p>
+                    </div>
+                    
+                    <div class="bg-white p-8 rounded-lg shadow-lg text-center">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-handshake text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Rispetto</h3>
+                        <p class="text-gray-600">
+                            Ogni persona è unica e merita di essere onorata secondo le proprie tradizioni, credenze e volontà, 
+                            nel pieno rispetto della dignità umana.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Timeline -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-12 text-center">La Nostra Evoluzione</h2>
+                
+                <div class="relative">
+                    <!-- Timeline line -->
+                    <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-r from-gray-500 to-gray-600"></div>
+                    
+                    <div class="space-y-12">
+                        <!-- 1950 -->
+                        <div class="relative flex items-start">
+                            <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg">
+                                1950
+                            </div>
+                            <div class="ml-8">
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">La Fondazione</h3>
+                                <p class="text-gray-600">
+                                    Giuseppe Santaniello apre la prima sede dell'agenzia funebre a Nola, 
+                                    con l'obiettivo di servire la comunità locale con dedizione e rispetto.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 1975 -->
+                        <div class="relative flex items-start">
+                            <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg">
+                                1975
+                            </div>
+                            <div class="ml-8">
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">La Seconda Generazione</h3>
+                                <p class="text-gray-600">
+                                    Antonio Santaniello, figlio del fondatore, entra nell'azienda e introduce nuovi servizi, 
+                                    ampliando l'attività e aprendo la prima casa funeraria moderna.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 2000 -->
+                        <div class="relative flex items-start">
+                            <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg">
+                                2000
+                            </div>
+                            <div class="ml-8">
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">L'Innovazione</h3>
+                                <p class="text-gray-600">
+                                    Con l'arrivo del nuovo millennio, l'agenzia si dota delle più moderne attrezzature 
+                                    e introduce servizi digitali, mantenendo la tradizione familiare.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 2020 -->
+                        <div class="relative flex items-start">
+                            <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg">
+                                2020
+                            </div>
+                            <div class="ml-8">
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">La Terza Generazione</h3>
+                                <p class="text-gray-600">
+                                    Marco e Lucia Santaniello portano avanti la tradizione di famiglia, 
+                                    introducendo i necrologi online e modernizzando tutti i servizi dell'agenzia.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Team -->
+    <section class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-12 text-center">Il Nostro Team</h2>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Team Member 1 -->
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <img src="images/placeholder-person.svg" alt="Marco Santaniello" class="w-full h-64 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Marco Santaniello</h3>
+                            <p class="text-gray-300 font-semibold mb-3">Direttore Generale</p>
+                            <p class="text-gray-600 text-sm leading-relaxed">
+                                Nipote del fondatore, Marco rappresenta la terza generazione della famiglia. 
+                                Laureato in Scienze della Comunicazione, ha modernizzato l'agenzia introducendo 
+                                i servizi digitali mantenendo sempre i valori tradizionali.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Member 2 -->
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <img src="images/placeholder-person.svg" alt="Lucia Santaniello" class="w-full h-64 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Lucia Santaniello</h3>
+                            <p class="text-gray-300 font-semibold mb-3">Responsabile Servizi alle Famiglie</p>
+                            <p class="text-gray-600 text-sm leading-relaxed">
+                                Sorella di Marco, Lucia si occupa dell'assistenza diretta alle famiglie. 
+                                La sua sensibilità e professionalità l'hanno resa un punto di riferimento 
+                                per chi attraversa momenti difficili.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Member 3 -->
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <img src="images/placeholder-person.svg" alt="Antonio Santaniello Sr." class="w-full h-64 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Antonio Santaniello</h3>
+                            <p class="text-gray-300 font-semibold mb-3">Presidente Onorario</p>
+                            <p class="text-gray-600 text-sm leading-relaxed">
+                                Figlio del fondatore, Antonio ha guidato l'azienda per oltre 40 anni. 
+                                Oggi mantiene un ruolo consultivo, condividendo la sua vasta esperienza 
+                                con le nuove generazioni.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission Statement -->
+    <section class="py-16 bg-gradient-to-r from-gray-800 to-gray-700 text-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl font-bold mb-8">La Nostra Missione</h2>
+                <blockquote class="text-xl italic text-gray-200 mb-8 leading-relaxed">
+                    "Accompagnare le famiglie nei momenti più difficili con professionalità, rispetto e umanità, 
+                    onorando la memoria dei loro cari e offrendo supporto concreto nel percorso del lutto."
+                </blockquote>
+                <div class="grid md:grid-cols-2 gap-8 mt-12">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-300 mb-4">La Nostra Visione</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            Essere il punto di riferimento per i servizi funebri in Campania, 
+                            combinando tradizione familiare e innovazione per offrire il miglior supporto possibile 
+                            alle famiglie in lutto.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-300 mb-4">Il Nostro Impegno</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            Garantire servizi di alta qualità, accessibili e personalizzati, 
+                            rispettando le tradizioni culturali e religiose di ogni famiglia, 
+                            in un ambiente di fiducia e riservatezza.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Certifications and Awards -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-12 text-center">Riconoscimenti e Certificazioni</h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="text-center">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-certificate text-2xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-2">ISO 9001:2015</h3>
+                        <p class="text-sm text-gray-600">Certificazione di qualità dei servizi</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-medal text-2xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-2">Membro Confcommercio</h3>
+                        <p class="text-sm text-gray-600">Associazione di categoria</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-shield-alt text-2xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-2">Assicurazione RC</h3>
+                        <p class="text-sm text-gray-600">Copertura totale per i servizi</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="bg-gradient-to-r from-gray-500 to-gray-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-star text-2xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-2">5 Stelle</h3>
+                        <p class="text-sm text-gray-600">Valutazione media clienti</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-12 bg-gray-100">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Hai Bisogno del Nostro Aiuto?</h2>
+            <p class="text-gray-600 mb-8 max-w-2xl mx-auto">
+                Siamo qui per supportare te e la tua famiglia. Contattaci per qualsiasi informazione 
+                sui nostri servizi o per ricevere assistenza immediata.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="contatti.html" class="bg-gradient-to-r from-gray-500 to-gray-600 text-gray-800 px-8 py-3 rounded-lg font-semibold hover:bg-yellow-400 transition-colors">
+                    <i class="fas fa-phone mr-2"></i>
+                    Contattaci Subito
+                </a>
+                <a href="servizi.html" class="border-2 border-gray-600 text-gray-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 hover:text-white transition-colors">
+                    <i class="fas fa-list mr-2"></i>
+                    I Nostri Servizi
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-gray-800 to-gray-700 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <!-- Logo e Descrizione -->
+                <div class="col-span-1">
+                    <h3 class="text-xl font-bold text-gray-300 mb-4">
+                        <i class="fas fa-dove mr-2"></i>Santaniello
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Agenzia funebre di fiducia dal 1950. Serviamo le famiglie con professionalità, rispetto e compassione.
+                    </p>
+                    <div class="flex space-x-3">
+                        <a href="#" class="text-gray-400 hover:text-gray-300">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-gray-300">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Servizi -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Servizi</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Organizzazione Funerali</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Trasporto Salme</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Cremazione</a></li>
+                        <li><a href="casa-funeraria.html" class="text-gray-300 hover:text-white">Casa Funeraria</a></li>
+                        <li><a href="fiori-omaggi.html" class="text-gray-300 hover:text-white">Fiori & Omaggi</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Collegamenti Utili -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Collegamenti</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="necrologi.html" class="text-gray-300 hover:text-white">Necrologi</a></li>
+                        <li><a href="chi-siamo.html" class="text-gray-300 hover:text-white">Chi Siamo</a></li>
+                        <li><a href="contatti.html" class="text-gray-300 hover:text-white">Contatti</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Contatti -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Contatti</h4>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <p><i class="fas fa-phone mr-2"></i> +39 081 8234914</p>
+                        <p><i class="fas fa-envelope mr-2"></i> santanielloservizifunebri@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt mr-2"></i> Via Cimitile 4<br> 80035 Nola (NA), Italia</p>
+                        <p><i class="fas fa-clock mr-2"></i> Disponibili 24/7</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-600 mt-8 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2024 Santaniello Servizi Funebri. Tutti i diritti riservati.</p>
+                <p class="text-sm mt-2">
+                    Iscritto al registro delle imprese della regione Campania n. 471 | P.I. 10320801219
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

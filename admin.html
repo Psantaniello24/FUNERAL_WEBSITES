@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pannello Admin - Gestione Necrologi | Santaniello</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'modern-dark': '#1a1a1a',
+                        'modern-gray': '#374151',
+                        'modern-light': '#6b7280',
+                        'modern-accent': '#2d3748'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body class="bg-gray-50 font-inter">
+    <!-- Schermata Login -->
+    <div id="loginScreen" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <i class="fas fa-lock text-4xl text-gray-600 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-900">Accesso Admin</h2>
+                <p class="text-gray-600 mt-2">Inserisci la password per accedere al pannello amministrazione</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-900 mb-2">Password</label>
+                    <input type="password" id="adminPassword" required 
+                           class="w-full p-4 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                           placeholder="Inserisci password admin">
+                    <div id="loginError" class="text-red-600 text-sm mt-2 hidden">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Password non corretta
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Accedi
+                </button>
+            </form>
+            
+            <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+                <a href="index.html" class="text-gray-600 hover:text-gray-800 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Torna al sito
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenuto Admin (nascosto inizialmente) -->
+    <div id="adminContent" class="hidden">
+    <!-- Header Admin -->
+    <header class="bg-gradient-to-r from-modern-dark to-modern-accent text-white shadow-2xl">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-cog text-2xl mr-4"></i>
+                    <h1 class="text-2xl font-bold">Pannello Amministrazione</h1>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="logout()" class="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                    <a href="index.html" class="bg-white text-gray-900 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-home mr-2"></i>Torna al Sito
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Form Aggiunta Necrologio -->
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-plus-circle text-green-600 mr-3"></i>
+                    Aggiungi Nuovo Necrologio
+                </h2>
+                
+                <form id="obituaryForm" class="space-y-6">
+                    <!-- Nome -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">Nome Completo *</label>
+                        <input type="text" id="name" required class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                        <small class="text-gray-600">Es: Mario Rossi</small>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-900 mb-2">Data di Nascita *</label>
+                            <input type="date" id="birthDate" required class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-900 mb-2">Data di Morte *</label>
+                            <input type="date" id="deathDate" required class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Luogo -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">Comune *</label>
+                        <select id="city" required class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                            <option value="">Seleziona comune...</option>
+                            
+                            <!-- Provincia di Napoli -->
+                            <optgroup label="🏛️ Città Metropolitana di Napoli">
+                                <option value="Napoli">Napoli</option>
+                                <option value="Acerra">Acerra</option>
+                                <option value="Afragola">Afragola</option>
+                                <option value="Agerola">Agerola</option>
+                                <option value="Anacapri">Anacapri</option>
+                                <option value="Arzano">Arzano</option>
+                                <option value="Bacoli">Bacoli</option>
+                                <option value="Barano d'Ischia">Barano d'Ischia</option>
+                                <option value="Boscoreale">Boscoreale</option>
+                                <option value="Boscotrecase">Boscotrecase</option>
+                                <option value="Brusciano">Brusciano</option>
+                                <option value="Caivano">Caivano</option>
+                                <option value="Calvizzano">Calvizzano</option>
+                                <option value="Camposano">Camposano</option>
+                                <option value="Capri">Capri</option>
+                                <option value="Carbonara di Nola">Carbonara di Nola</option>
+                                <option value="Cardito">Cardito</option>
+                                <option value="Casalnuovo di Napoli">Casalnuovo di Napoli</option>
+                                <option value="Casamarciano">Casamarciano</option>
+                                <option value="Casamicciola Terme">Casamicciola Terme</option>
+                                <option value="Casandrino">Casandrino</option>
+                                <option value="Casavatore">Casavatore</option>
+                                <option value="Castellammare di Stabia">Castellammare di Stabia</option>
+                                <option value="Castello di Cisterna">Castello di Cisterna</option>
+                                <option value="Cercola">Cercola</option>
+                                <option value="Cicciano">Cicciano</option>
+                                <option value="Cimitile">Cimitile</option>
+                                <option value="Comiziano">Comiziano</option>
+                                <option value="Crispano">Crispano</option>
+                                <option value="Ercolano">Ercolano</option>
+                                <option value="Forio">Forio</option>
+                                <option value="Frattamaggiore">Frattamaggiore</option>
+                                <option value="Frattaminore">Frattaminore</option>
+                                <option value="Giugliano in Campania">Giugliano in Campania</option>
+                                <option value="Gragnano">Gragnano</option>
+                                <option value="Grumo Nevano">Grumo Nevano</option>
+                                <option value="Ischia">Ischia</option>
+                                <option value="Lacco Ameno">Lacco Ameno</option>
+                                <option value="Lettere">Lettere</option>
+                                <option value="Liveri">Liveri</option>
+                                <option value="Marano di Napoli">Marano di Napoli</option>
+                                <option value="Mariglianella">Mariglianella</option>
+                                <option value="Marigliano">Marigliano</option>
+                                <option value="Massa Lubrense">Massa Lubrense</option>
+                                <option value="Melito di Napoli">Melito di Napoli</option>
+                                <option value="Meta">Meta</option>
+                                <option value="Monte di Procida">Monte di Procida</option>
+                                <option value="Mugnano di Napoli">Mugnano di Napoli</option>
+                                <option value="Nola">Nola</option>
+                                <option value="Ottaviano">Ottaviano</option>
+                                <option value="Palma Campania">Palma Campania</option>
+                                <option value="Piano di Sorrento">Piano di Sorrento</option>
+                                <option value="Pimonte">Pimonte</option>
+                                <option value="Poggiomarino">Poggiomarino</option>
+                                <option value="Pollena Trocchia">Pollena Trocchia</option>
+                                <option value="Pomigliano d'Arco">Pomigliano d'Arco</option>
+                                <option value="Pompei">Pompei</option>
+                                <option value="Portici">Portici</option>
+                                <option value="Pozzuoli">Pozzuoli</option>
+                                <option value="Procida">Procida</option>
+                                <option value="Qualiano">Qualiano</option>
+                                <option value="Quarto">Quarto</option>
+                                <option value="Roccarainola">Roccarainola</option>
+                                <option value="San Giorgio a Cremano">San Giorgio a Cremano</option>
+                                <option value="San Giuseppe Vesuviano">San Giuseppe Vesuviano</option>
+                                <option value="San Paolo Bel Sito">San Paolo Bel Sito</option>
+                                <option value="San Sebastiano al Vesuvio">San Sebastiano al Vesuvio</option>
+                                <option value="San Vitaliano">San Vitaliano</option>
+                                <option value="Santa Maria la Carità">Santa Maria la Carità</option>
+                                <option value="Sant'Agnello">Sant'Agnello</option>
+                                <option value="Sant'Anastasia">Sant'Anastasia</option>
+                                <option value="Sant'Antimo">Sant'Antimo</option>
+                                <option value="Sant'Antonio Abate">Sant'Antonio Abate</option>
+                                <option value="Saviano">Saviano</option>
+                                <option value="Scisciano">Scisciano</option>
+                                <option value="Serrara Fontana">Serrara Fontana</option>
+                                <option value="Somma Vesuviana">Somma Vesuviana</option>
+                                <option value="Sorrento">Sorrento</option>
+                                <option value="Striano">Striano</option>
+                                <option value="Terzigno">Terzigno</option>
+                                <option value="Torre Annunziata">Torre Annunziata</option>
+                                <option value="Torre del Greco">Torre del Greco</option>
+                                <option value="Trecase">Trecase</option>
+                                <option value="Tufino">Tufino</option>
+                                <option value="Vico Equense">Vico Equense</option>
+                                <option value="Villaricca">Villaricca</option>
+                                <option value="Visciano">Visciano</option>
+                                <option value="Volla">Volla</option>
+                            </optgroup>
+                            
+                            <!-- Provincia di Salerno -->
+                            <optgroup label="🏔️ Provincia di Salerno">
+                                <option value="Salerno">Salerno</option>
+                                <option value="Acerno">Acerno</option>
+                                <option value="Agropoli">Agropoli</option>
+                                <option value="Albanella">Albanella</option>
+                                <option value="Alfano">Alfano</option>
+                                <option value="Altavilla Silentina">Altavilla Silentina</option>
+                                <option value="Amalfi">Amalfi</option>
+                                <option value="Angri">Angri</option>
+                                <option value="Aquara">Aquara</option>
+                                <option value="Ascea">Ascea</option>
+                                <option value="Atena Lucana">Atena Lucana</option>
+                                <option value="Atrani">Atrani</option>
+                                <option value="Auletta">Auletta</option>
+                                <option value="Baronissi">Baronissi</option>
+                                <option value="Battipaglia">Battipaglia</option>
+                                <option value="Bellizzi">Bellizzi</option>
+                                <option value="Bellosguardo">Bellosguardo</option>
+                                <option value="Bracigliano">Bracigliano</option>
+                                <option value="Buccino">Buccino</option>
+                                <option value="Buonabitacolo">Buonabitacolo</option>
+                                <option value="Caggiano">Caggiano</option>
+                                <option value="Calvanico">Calvanico</option>
+                                <option value="Camerota">Camerota</option>
+                                <option value="Campagna">Campagna</option>
+                                <option value="Campora">Campora</option>
+                                <option value="Cannalonga">Cannalonga</option>
+                                <option value="Capaccio Paestum">Capaccio Paestum</option>
+                                <option value="Casal Velino">Casal Velino</option>
+                                <option value="Casalbuono">Casalbuono</option>
+                                <option value="Casaletto Spartano">Casaletto Spartano</option>
+                                <option value="Caselle in Pittari">Caselle in Pittari</option>
+                                <option value="Castellabate">Castellabate</option>
+                                <option value="Castelnuovo Cilento">Castelnuovo Cilento</option>
+                                <option value="Castelnuovo di Conza">Castelnuovo di Conza</option>
+                                <option value="Castel San Giorgio">Castel San Giorgio</option>
+                                <option value="Castel San Lorenzo">Castel San Lorenzo</option>
+                                <option value="Castiglione del Genovesi">Castiglione del Genovesi</option>
+                                <option value="Cava de' Tirreni">Cava de' Tirreni</option>
+                                <option value="Celle di Bulgheria">Celle di Bulgheria</option>
+                                <option value="Centola">Centola</option>
+                                <option value="Ceraso">Ceraso</option>
+                                <option value="Cetara">Cetara</option>
+                                <option value="Cicerale">Cicerale</option>
+                                <option value="Colliano">Colliano</option>
+                                <option value="Conca dei Marini">Conca dei Marini</option>
+                                <option value="Controne">Controne</option>
+                                <option value="Contursi Terme">Contursi Terme</option>
+                                <option value="Corbara">Corbara</option>
+                                <option value="Corleto Monforte">Corleto Monforte</option>
+                                <option value="Cuccaro Vetere">Cuccaro Vetere</option>
+                                <option value="Eboli">Eboli</option>
+                                <option value="Felitto">Felitto</option>
+                                <option value="Fisciano">Fisciano</option>
+                                <option value="Furore">Furore</option>
+                                <option value="Giffoni Sei Casali">Giffoni Sei Casali</option>
+                                <option value="Giffoni Valle Piana">Giffoni Valle Piana</option>
+                                <option value="Gioi">Gioi</option>
+                                <option value="Giungano">Giungano</option>
+                                <option value="Ispani">Ispani</option>
+                                <option value="Laureana Cilento">Laureana Cilento</option>
+                                <option value="Laurino">Laurino</option>
+                                <option value="Laurito">Laurito</option>
+                                <option value="Lustra">Lustra</option>
+                                <option value="Maiori">Maiori</option>
+                                <option value="Mercato San Severino">Mercato San Severino</option>
+                                <option value="Minori">Minori</option>
+                                <option value="Moio della Civitella">Moio della Civitella</option>
+                                <option value="Montecorice">Montecorice</option>
+                                <option value="Montecorvino Pugliano">Montecorvino Pugliano</option>
+                                <option value="Montecorvino Rovella">Montecorvino Rovella</option>
+                                <option value="Monteforte Cilento">Monteforte Cilento</option>
+                                <option value="Montesano sulla Marcellana">Montesano sulla Marcellana</option>
+                                <option value="Morigerati">Morigerati</option>
+                                <option value="Nocera Inferiore">Nocera Inferiore</option>
+                                <option value="Nocera Superiore">Nocera Superiore</option>
+                                <option value="Novi Velia">Novi Velia</option>
+                                <option value="Ogliastro Cilento">Ogliastro Cilento</option>
+                                <option value="Olevano sul Tusciano">Olevano sul Tusciano</option>
+                                <option value="Oliveto Citra">Oliveto Citra</option>
+                                <option value="Omignano">Omignano</option>
+                                <option value="Orria">Orria</option>
+                                <option value="Ottati">Ottati</option>
+                                <option value="Padula">Padula</option>
+                                <option value="Pagani">Pagani</option>
+                                <option value="Pellezzano">Pellezzano</option>
+                                <option value="Perdifumo">Perdifumo</option>
+                                <option value="Perito">Perito</option>
+                                <option value="Pertosa">Pertosa</option>
+                                <option value="Petina">Petina</option>
+                                <option value="Piaggine">Piaggine</option>
+                                <option value="Pisciotta">Pisciotta</option>
+                                <option value="Polla">Polla</option>
+                                <option value="Pollica">Pollica</option>
+                                <option value="Pontecagnano Faiano">Pontecagnano Faiano</option>
+                                <option value="Positano">Positano</option>
+                                <option value="Praiano">Praiano</option>
+                                <option value="Prignano Cilento">Prignano Cilento</option>
+                                <option value="Ravello">Ravello</option>
+                                <option value="Ricigliano">Ricigliano</option>
+                                <option value="Roccadaspide">Roccadaspide</option>
+                                <option value="Roccagloriosa">Roccagloriosa</option>
+                                <option value="Roccapiemonte">Roccapiemonte</option>
+                                <option value="Rofrano">Rofrano</option>
+                                <option value="Roscigno">Roscigno</option>
+                                <option value="Rutino">Rutino</option>
+                                <option value="Sala Consilina">Sala Consilina</option>
+                                <option value="Salento">Salento</option>
+                                <option value="San Cipriano Picentino">San Cipriano Picentino</option>
+                                <option value="San Giovanni a Piro">San Giovanni a Piro</option>
+                                <option value="San Gregorio Magno">San Gregorio Magno</option>
+                                <option value="San Mango Piemonte">San Mango Piemonte</option>
+                                <option value="San Marzano sul Sarno">San Marzano sul Sarno</option>
+                                <option value="San Mauro Cilento">San Mauro Cilento</option>
+                                <option value="San Mauro la Bruca">San Mauro la Bruca</option>
+                                <option value="San Pietro al Tanagro">San Pietro al Tanagro</option>
+                                <option value="San Rufo">San Rufo</option>
+                                <option value="San Valentino Torio">San Valentino Torio</option>
+                                <option value="Sant'Arsenio">Sant'Arsenio</option>
+                                <option value="Sant'Egidio del Monte Albino">Sant'Egidio del Monte Albino</option>
+                                <option value="Santa Marina">Santa Marina</option>
+                                <option value="Santomenna">Santomenna</option>
+                                <option value="Sapri">Sapri</option>
+                                <option value="Sarno">Sarno</option>
+                                <option value="Sassano">Sassano</option>
+                                <option value="Scala">Scala</option>
+                                <option value="Scafati">Scafati</option>
+                                <option value="Serramezzana">Serramezzana</option>
+                                <option value="Serre">Serre</option>
+                                <option value="Sessa Cilento">Sessa Cilento</option>
+                                <option value="Sicignano degli Alburni">Sicignano degli Alburni</option>
+                                <option value="Stella Cilento">Stella Cilento</option>
+                                <option value="Stio">Stio</option>
+                                <option value="Teggiano">Teggiano</option>
+                                <option value="Torraca">Torraca</option>
+                                <option value="Torre Orsaia">Torre Orsaia</option>
+                                <option value="Tortorella">Tortorella</option>
+                                <option value="Tramonti">Tramonti</option>
+                                <option value="Trentinara">Trentinara</option>
+                                <option value="Valle dell'Angelo">Valle dell'Angelo</option>
+                                <option value="Vallo della Lucania">Vallo della Lucania</option>
+                                <option value="Valva">Valva</option>
+                                <option value="Vibonati">Vibonati</option>
+                                <option value="Vietri sul Mare">Vietri sul Mare</option>
+                            </optgroup>
+                            
+                            <!-- Provincia di Caserta -->
+                            <optgroup label="🏰 Provincia di Caserta">
+                                <option value="Caserta">Caserta</option>
+                                <option value="Ailano">Ailano</option>
+                                <option value="Alife">Alife</option>
+                                <option value="Alvignano">Alvignano</option>
+                                <option value="Arienzo">Arienzo</option>
+                                <option value="Aversa">Aversa</option>
+                                <option value="Baia e Latina">Baia e Latina</option>
+                                <option value="Bellona">Bellona</option>
+                                <option value="Caianello">Caianello</option>
+                                <option value="Caiazzo">Caiazzo</option>
+                                <option value="Calvi Risorta">Calvi Risorta</option>
+                                <option value="Camigliano">Camigliano</option>
+                                <option value="Cancello ed Arnone">Cancello ed Arnone</option>
+                                <option value="Capodrise">Capodrise</option>
+                                <option value="Capriati a Volturno">Capriati a Volturno</option>
+                                <option value="Capua">Capua</option>
+                                <option value="Carinaro">Carinaro</option>
+                                <option value="Carinola">Carinola</option>
+                                <option value="Casagiove">Casagiove</option>
+                                <option value="Casal di Principe">Casal di Principe</option>
+                                <option value="Casaluce">Casaluce</option>
+                                <option value="Casapesenna">Casapesenna</option>
+                                <option value="Casapulla">Casapulla</option>
+                                <option value="Castel Campagnano">Castel Campagnano</option>
+                                <option value="Castel di Sasso">Castel di Sasso</option>
+                                <option value="Castello del Matese">Castello del Matese</option>
+                                <option value="Castel Morrone">Castel Morrone</option>
+                                <option value="Castel Volturno">Castel Volturno</option>
+                                <option value="Cervino">Cervino</option>
+                                <option value="Cesa">Cesa</option>
+                                <option value="Ciorlano">Ciorlano</option>
+                                <option value="Conca della Campania">Conca della Campania</option>
+                                <option value="Curti">Curti</option>
+                                <option value="Dragoni">Dragoni</option>
+                                <option value="Falciano del Massico">Falciano del Massico</option>
+                                <option value="Fontegreca">Fontegreca</option>
+                                <option value="Formicola">Formicola</option>
+                                <option value="Francolise">Francolise</option>
+                                <option value="Frignano">Frignano</option>
+                                <option value="Gallo Matese">Gallo Matese</option>
+                                <option value="Galluccio">Galluccio</option>
+                                <option value="Giano Vetusto">Giano Vetusto</option>
+                                <option value="Gioia Sannitica">Gioia Sannitica</option>
+                                <option value="Grazzanise">Grazzanise</option>
+                                <option value="Gricignano di Aversa">Gricignano di Aversa</option>
+                                <option value="Letino">Letino</option>
+                                <option value="Liberi">Liberi</option>
+                                <option value="Lusciano">Lusciano</option>
+                                <option value="Macerata Campania">Macerata Campania</option>
+                                <option value="Maddaloni">Maddaloni</option>
+                                <option value="Marcianise">Marcianise</option>
+                                <option value="Marzano Appio">Marzano Appio</option>
+                                <option value="Mignano Monte Lungo">Mignano Monte Lungo</option>
+                                <option value="Mondragone">Mondragone</option>
+                                <option value="Orta di Atella">Orta di Atella</option>
+                                <option value="Parete">Parete</option>
+                                <option value="Pastorano">Pastorano</option>
+                                <option value="Piana di Monte Verna">Piana di Monte Verna</option>
+                                <option value="Piedimonte Matese">Piedimonte Matese</option>
+                                <option value="Pietramelara">Pietramelara</option>
+                                <option value="Pietravairano">Pietravairano</option>
+                                <option value="Pignataro Maggiore">Pignataro Maggiore</option>
+                                <option value="Pontelatone">Pontelatone</option>
+                                <option value="Portico di Caserta">Portico di Caserta</option>
+                                <option value="Prata Sannita">Prata Sannita</option>
+                                <option value="Presenzano">Presenzano</option>
+                                <option value="Raviscanina">Raviscanina</option>
+                                <option value="Recale">Recale</option>
+                                <option value="Riardo">Riardo</option>
+                                <option value="Rocca d'Evandro">Rocca d'Evandro</option>
+                                <option value="Roccamonfina">Roccamonfina</option>
+                                <option value="Roccaromana">Roccaromana</option>
+                                <option value="Rocchetta e Croce">Rocchetta e Croce</option>
+                                <option value="Ruviano">Ruviano</option>
+                                <option value="San Cipriano d'Aversa">San Cipriano d'Aversa</option>
+                                <option value="San Felice a Cancello">San Felice a Cancello</option>
+                                <option value="San Gregorio Matese">San Gregorio Matese</option>
+                                <option value="San Marcellino">San Marcellino</option>
+                                <option value="San Nicola la Strada">San Nicola la Strada</option>
+                                <option value="San Pietro Infine">San Pietro Infine</option>
+                                <option value="San Potito Sannitico">San Potito Sannitico</option>
+                                <option value="San Prisco">San Prisco</option>
+                                <option value="Santa Maria a Vico">Santa Maria a Vico</option>
+                                <option value="Santa Maria Capua Vetere">Santa Maria Capua Vetere</option>
+                                <option value="Santa Maria la Fossa">Santa Maria la Fossa</option>
+                                <option value="Sant'Angelo d'Alife">Sant'Angelo d'Alife</option>
+                                <option value="Sant'Arpino">Sant'Arpino</option>
+                                <option value="Sessa Aurunca">Sessa Aurunca</option>
+                                <option value="Sparanise">Sparanise</option>
+                                <option value="Succivo">Succivo</option>
+                                <option value="Teano">Teano</option>
+                                <option value="Teverola">Teverola</option>
+                                <option value="Tora e Piccilli">Tora e Piccilli</option>
+                                <option value="Trentola Ducenta">Trentola Ducenta</option>
+                                <option value="Vairano Patenora">Vairano Patenora</option>
+                                <option value="Valle Agricola">Valle Agricola</option>
+                                <option value="Valle di Maddaloni">Valle di Maddaloni</option>
+                                <option value="Villa di Briano">Villa di Briano</option>
+                                <option value="Villa Literno">Villa Literno</option>
+                                <option value="Vitulazio">Vitulazio</option>
+                            </optgroup>
+                            
+                            <!-- Provincia di Avellino -->
+                            <optgroup label="🌄 Provincia di Avellino">
+                                <option value="Avellino">Avellino</option>
+                                <option value="Aiello del Sabato">Aiello del Sabato</option>
+                                <option value="Altavilla Irpina">Altavilla Irpina</option>
+                                <option value="Andretta">Andretta</option>
+                                <option value="Aquilonia">Aquilonia</option>
+                                <option value="Ariano Irpino">Ariano Irpino</option>
+                                <option value="Atripalda">Atripalda</option>
+                                <option value="Avella">Avella</option>
+                                <option value="Bagnoli Irpino">Bagnoli Irpino</option>
+                                <option value="Baiano">Baiano</option>
+                                <option value="Bisaccia">Bisaccia</option>
+                                <option value="Bonito">Bonito</option>
+                                <option value="Cairano">Cairano</option>
+                                <option value="Calabritto">Calabritto</option>
+                                <option value="Calitri">Calitri</option>
+                                <option value="Candida">Candida</option>
+                                <option value="Caposele">Caposele</option>
+                                <option value="Capriglia Irpina">Capriglia Irpina</option>
+                                <option value="Carife">Carife</option>
+                                <option value="Casalbore">Casalbore</option>
+                                <option value="Cassano Irpino">Cassano Irpino</option>
+                                <option value="Castel Baronia">Castel Baronia</option>
+                                <option value="Castelfranci">Castelfranci</option>
+                                <option value="Castelvetere sul Calore">Castelvetere sul Calore</option>
+                                <option value="Cervinara">Cervinara</option>
+                                <option value="Cesinali">Cesinali</option>
+                                <option value="Chianche">Chianche</option>
+                                <option value="Chiusano di San Domenico">Chiusano di San Domenico</option>
+                                <option value="Contrada">Contrada</option>
+                                <option value="Conza della Campania">Conza della Campania</option>
+                                <option value="Domicella">Domicella</option>
+                                <option value="Flumeri">Flumeri</option>
+                                <option value="Fontanarosa">Fontanarosa</option>
+                                <option value="Forino">Forino</option>
+                                <option value="Frigento">Frigento</option>
+                                <option value="Gesualdo">Gesualdo</option>
+                                <option value="Greci">Greci</option>
+                                <option value="Grottaminarda">Grottaminarda</option>
+                                <option value="Grottolella">Grottolella</option>
+                                <option value="Guardia Lombardi">Guardia Lombardi</option>
+                                <option value="Lacedonia">Lacedonia</option>
+                                <option value="Lapio">Lapio</option>
+                                <option value="Lauro">Lauro</option>
+                                <option value="Lioni">Lioni</option>
+                                <option value="Luogosano">Luogosano</option>
+                                <option value="Manocalzati">Manocalzati</option>
+                                <option value="Marzano di Nola">Marzano di Nola</option>
+                                <option value="Melito Irpino">Melito Irpino</option>
+                                <option value="Mercogliano">Mercogliano</option>
+                                <option value="Mirabella Eclano">Mirabella Eclano</option>
+                                <option value="Montaguto">Montaguto</option>
+                                <option value="Montecalvo Irpino">Montecalvo Irpino</option>
+                                <option value="Montefalcione">Montefalcione</option>
+                                <option value="Monteforte Irpino">Monteforte Irpino</option>
+                                <option value="Montefredane">Montefredane</option>
+                                <option value="Montefusco">Montefusco</option>
+                                <option value="Montella">Montella</option>
+                                <option value="Montemarano">Montemarano</option>
+                                <option value="Montemiletto">Montemiletto</option>
+                                <option value="Monteverde">Monteverde</option>
+                                <option value="Morra De Sanctis">Morra De Sanctis</option>
+                                <option value="Moschiano">Moschiano</option>
+                                <option value="Mugnano del Cardinale">Mugnano del Cardinale</option>
+                                <option value="Nusco">Nusco</option>
+                                <option value="Ospedaletto d'Alpinolo">Ospedaletto d'Alpinolo</option>
+                                <option value="Pago del Vallo di Lauro">Pago del Vallo di Lauro</option>
+                                <option value="Parolise">Parolise</option>
+                                <option value="Paternopoli">Paternopoli</option>
+                                <option value="Petruro Irpino">Petruro Irpino</option>
+                                <option value="Pietradefusi">Pietradefusi</option>
+                                <option value="Pietrastornina">Pietrastornina</option>
+                                <option value="Prata di Principato Ultra">Prata di Principato Ultra</option>
+                                <option value="Pratola Serra">Pratola Serra</option>
+                                <option value="Quadrelle">Quadrelle</option>
+                                <option value="Quindici">Quindici</option>
+                                <option value="Roccabascerana">Roccabascerana</option>
+                                <option value="Rocca San Felice">Rocca San Felice</option>
+                                <option value="Rotondi">Rotondi</option>
+                                <option value="Salza Irpina">Salza Irpina</option>
+                                <option value="San Martino Valle Caudina">San Martino Valle Caudina</option>
+                                <option value="San Michele di Serino">San Michele di Serino</option>
+                                <option value="San Nicola Baronia">San Nicola Baronia</option>
+                                <option value="San Potito Ultra">San Potito Ultra</option>
+                                <option value="San Sossio Baronia">San Sossio Baronia</option>
+                                <option value="Sant'Andrea di Conza">Sant'Andrea di Conza</option>
+                                <option value="Sant'Angelo a Scala">Sant'Angelo a Scala</option>
+                                <option value="Sant'Angelo all'Esca">Sant'Angelo all'Esca</option>
+                                <option value="Sant'Angelo dei Lombardi">Sant'Angelo dei Lombardi</option>
+                                <option value="Santa Lucia di Serino">Santa Lucia di Serino</option>
+                                <option value="Santa Paolina">Santa Paolina</option>
+                                <option value="Santo Stefano del Sole">Santo Stefano del Sole</option>
+                                <option value="Savignano Irpino">Savignano Irpino</option>
+                                <option value="Scampitella">Scampitella</option>
+                                <option value="Serino">Serino</option>
+                                <option value="Sirignano">Sirignano</option>
+                                <option value="Solofra">Solofra</option>
+                                <option value="Sorbo Serpico">Sorbo Serpico</option>
+                                <option value="Sperone">Sperone</option>
+                                <option value="Sturno">Sturno</option>
+                                <option value="Summonte">Summonte</option>
+                                <option value="Taurano">Taurano</option>
+                                <option value="Taurasi">Taurasi</option>
+                                <option value="Teora">Teora</option>
+                                <option value="Torella dei Lombardi">Torella dei Lombardi</option>
+                                <option value="Torrioni">Torrioni</option>
+                                <option value="Trevico">Trevico</option>
+                                <option value="Tufo">Tufo</option>
+                                <option value="Vallata">Vallata</option>
+                                <option value="Vallesaccarda">Vallesaccarda</option>
+                                <option value="Venticano">Venticano</option>
+                                <option value="Villamaina">Villamaina</option>
+                                <option value="Villanova del Battista">Villanova del Battista</option>
+                                <option value="Volturara Irpina">Volturara Irpina</option>
+                                <option value="Zungoli">Zungoli</option>
+                            </optgroup>
+                            
+                            <!-- Provincia di Benevento -->
+                            <optgroup label="🏛️ Provincia di Benevento">
+                                <option value="Benevento">Benevento</option>
+                                <option value="Airola">Airola</option>
+                                <option value="Amorosi">Amorosi</option>
+                                <option value="Apice">Apice</option>
+                                <option value="Apollosa">Apollosa</option>
+                                <option value="Arpaia">Arpaia</option>
+                                <option value="Arpaise">Arpaise</option>
+                                <option value="Baselice">Baselice</option>
+                                <option value="Bonea">Bonea</option>
+                                <option value="Bucciano">Bucciano</option>
+                                <option value="Buonalbergo">Buonalbergo</option>
+                                <option value="Calvi">Calvi</option>
+                                <option value="Campolattaro">Campolattaro</option>
+                                <option value="Campoli del Monte Taburno">Campoli del Monte Taburno</option>
+                                <option value="Casalduni">Casalduni</option>
+                                <option value="Castelfranco in Miscano">Castelfranco in Miscano</option>
+                                <option value="Castelpagano">Castelpagano</option>
+                                <option value="Castelpoto">Castelpoto</option>
+                                <option value="Castelvenere">Castelvenere</option>
+                                <option value="Castelvetere in Val Fortore">Castelvetere in Val Fortore</option>
+                                <option value="Cautano">Cautano</option>
+                                <option value="Ceppaloni">Ceppaloni</option>
+                                <option value="Cerreto Sannita">Cerreto Sannita</option>
+                                <option value="Circello">Circello</option>
+                                <option value="Colle Sannita">Colle Sannita</option>
+                                <option value="Cusano Mutri">Cusano Mutri</option>
+                                <option value="Dugenta">Dugenta</option>
+                                <option value="Durazzano">Durazzano</option>
+                                <option value="Faicchio">Faicchio</option>
+                                <option value="Foglianise">Foglianise</option>
+                                <option value="Foiano di Val Fortore">Foiano di Val Fortore</option>
+                                <option value="Forchia">Forchia</option>
+                                <option value="Fragneto l'Abate">Fragneto l'Abate</option>
+                                <option value="Fragneto Monforte">Fragneto Monforte</option>
+                                <option value="Frasso Telesino">Frasso Telesino</option>
+                                <option value="Ginestra degli Schiavoni">Ginestra degli Schiavoni</option>
+                                <option value="Guardia Sanframondi">Guardia Sanframondi</option>
+                                <option value="Limatola">Limatola</option>
+                                <option value="Melizzano">Melizzano</option>
+                                <option value="Moiano">Moiano</option>
+                                <option value="Montesarchio">Montesarchio</option>
+                                <option value="Morcone">Morcone</option>
+                                <option value="Paduli">Paduli</option>
+                                <option value="Paolisi">Paolisi</option>
+                                <option value="Paupisi">Paupisi</option>
+                                <option value="Pesco Sannita">Pesco Sannita</option>
+                                <option value="Pietraroja">Pietraroja</option>
+                                <option value="Pietrelcina">Pietrelcina</option>
+                                <option value="Ponte">Ponte</option>
+                                <option value="Pontelandolfo">Pontelandolfo</option>
+                                <option value="Puglianello">Puglianello</option>
+                                <option value="Reino">Reino</option>
+                                <option value="San Bartolomeo in Galdo">San Bartolomeo in Galdo</option>
+                                <option value="San Giorgio del Sannio">San Giorgio del Sannio</option>
+                                <option value="San Giorgio La Molara">San Giorgio La Molara</option>
+                                <option value="San Leucio del Sannio">San Leucio del Sannio</option>
+                                <option value="San Lorenzo Maggiore">San Lorenzo Maggiore</option>
+                                <option value="San Lupo">San Lupo</option>
+                                <option value="San Marco dei Cavoti">San Marco dei Cavoti</option>
+                                <option value="San Martino Sannita">San Martino Sannita</option>
+                                <option value="San Nazzaro">San Nazzaro</option>
+                                <option value="San Nicola Manfredi">San Nicola Manfredi</option>
+                                <option value="San Salvatore Telesino">San Salvatore Telesino</option>
+                                <option value="Santa Croce del Sannio">Santa Croce del Sannio</option>
+                                <option value="Sant'Agata de' Goti">Sant'Agata de' Goti</option>
+                                <option value="Sant'Angelo a Cupolo">Sant'Angelo a Cupolo</option>
+                                <option value="Sant'Arcangelo Trimonte">Sant'Arcangelo Trimonte</option>
+                                <option value="Sassinoro">Sassinoro</option>
+                                <option value="Solopaca">Solopaca</option>
+                                <option value="Telese Terme">Telese Terme</option>
+                                <option value="Tocco Caudio">Tocco Caudio</option>
+                                <option value="Torrecuso">Torrecuso</option>
+                                <option value="Vitulano">Vitulano</option>
+                            </optgroup>
+                            
+                            <option value="Altro">🌍 Altro (specificare nei dettagli)</option>
+                        </select>
+                    </div>
+
+                    <!-- Età -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">Età *</label>
+                        <input type="number" id="age" required min="0" max="120" class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                        <small class="text-gray-600">Verrà calcolata automaticamente dalle date</small>
+                    </div>
+
+                    <!-- Foto -->
+                    <div class="bg-gray-50 p-6 rounded-xl">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Foto del Defunto</h3>
+                        
+                        <!-- Upload foto locale -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-gray-900 mb-2">
+                                <i class="fas fa-upload mr-2"></i>Carica Foto da Computer
+                            </label>
+                            <div class="flex items-center gap-4">
+                                <input type="file" id="photoFile" accept="image/*" 
+                                       class="w-full p-3 border border-gray-300 rounded-lg focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                                <button type="button" onclick="clearPhotoFile()" 
+                                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <small class="text-gray-600">Formati supportati: JPG, PNG, WEBP (max 5MB)</small>
+                        </div>
+
+                        <!-- Preview foto caricata -->
+                        <div id="photoPreview" class="hidden mb-4 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                            <img id="photoPreviewImg" src="" alt="Anteprima foto" class="mx-auto max-h-48 rounded-lg shadow-md">
+                            <p class="text-sm text-gray-600 mt-2">Anteprima foto caricata</p>
+                        </div>
+
+                        <!-- Alternativa: URL foto -->
+                        <div class="border-t border-gray-200 pt-4">
+                            <label class="block text-sm font-bold text-gray-900 mb-2">
+                                <i class="fas fa-link mr-2"></i>Oppure inserisci URL Foto
+                            </label>
+                            <input type="url" id="photo" placeholder="https://esempio.com/foto.jpg" 
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                            <small class="text-gray-600">Alternativa al caricamento locale</small>
+                        </div>
+                    </div>
+
+                    <!-- Manifesto/Documento -->
+                    <div class="bg-blue-50 p-6 rounded-xl">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">
+                            <i class="fas fa-file-alt mr-2"></i>Manifesto o Documento
+                        </h3>
+                        
+                        <!-- Upload manifesto -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-gray-900 mb-2">
+                                <i class="fas fa-upload mr-2"></i>Carica Manifesto/Documento
+                            </label>
+                            <div class="flex items-center gap-4">
+                                <input type="file" id="manifestoFile" accept=".pdf,.jpg,.jpeg,.png,.webp" 
+                                       class="w-full p-3 border border-gray-300 rounded-lg focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                                <button type="button" onclick="clearManifestoFile()" 
+                                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <small class="text-gray-600">Formati: PDF, JPG, PNG, WEBP (max 10MB)</small>
+                        </div>
+
+                        <!-- Info manifesto caricato -->
+                        <div id="manifestoInfo" class="hidden p-4 bg-white border border-blue-200 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                                <div>
+                                    <p class="font-semibold text-gray-900" id="manifestoFileName">Nome file</p>
+                                    <p class="text-sm text-gray-600" id="manifestoFileSize">Dimensione file</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descrizione -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">Testo Commemorativo</label>
+                        <textarea id="description" rows="4" placeholder="Scrivi un messaggio commemorativo (opzionale)..." class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all resize-none"></textarea>
+                        <small class="text-gray-600">Campo opzionale - lascia vuoto se non necessario</small>
+                    </div>
+
+                    <!-- Dettagli Funerale -->
+                    <div class="bg-gray-50 p-6 rounded-xl">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Dettagli Funerale</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-900 mb-2">Data Funerale</label>
+                                <input type="datetime-local" id="funeralDate" class="w-full p-3 border border-gray-300 rounded-lg focus:border-gray-600 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-900 mb-2">Luogo Funerale</label>
+                                <input type="text" id="funeralLocation" placeholder="Chiesa, Casa Funeraria..." class="w-full p-3 border border-gray-300 rounded-lg focus:border-gray-600 transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-4 pt-6">
+                        <button type="submit" class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-plus mr-2"></i>Crea Necrologio
+                        </button>
+                        <button type="button" onclick="adminManager.cancelEdit()" id="cancelEditBtn" class="hidden bg-red-500 text-white py-4 px-6 rounded-xl font-bold hover:bg-red-600 transition-colors">
+                            <i class="fas fa-times mr-2"></i>Annulla Modifica
+                        </button>
+                        <button type="button" onclick="clearForm()" class="bg-gray-300 text-gray-700 py-4 px-6 rounded-xl font-bold hover:bg-gray-400 transition-colors">
+                            <i class="fas fa-eraser mr-2"></i>Pulisci
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Preview & Lista Necrologi -->
+            <div class="space-y-8">
+                <!-- Preview -->
+                <div class="bg-white rounded-2xl shadow-lg p-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-eye text-blue-600 mr-3"></i>
+                        Anteprima
+                    </h3>
+                    <div id="preview" class="border border-gray-200 rounded-xl p-6 bg-gray-50">
+                        <p class="text-gray-500 text-center italic">Compila il form per vedere l'anteprima...</p>
+                    </div>
+                </div>
+
+
+
+                <!-- Lista Necrologi Esistenti -->
+                <div class="bg-white rounded-2xl shadow-lg p-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-list text-orange-600 mr-3"></i>
+                        Necrologi Esistenti
+                    </h3>
+                    <div id="existingObituaries" class="space-y-4">
+                        <!-- Lista sarà popolata da JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/modern-theme.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script>
+        // Gestione Form Admin Necrologi
+        class AdminManager {
+            constructor() {
+                this.form = document.getElementById('obituaryForm');
+                this.preview = document.getElementById('preview');
+
+                this.existingList = document.getElementById('existingObituaries');
+                
+                this.init();
+            }
+
+            init() {
+                // Event listeners
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                this.form.addEventListener('input', () => this.updatePreview());
+                
+                // Auto-calcolo età
+                document.getElementById('birthDate').addEventListener('change', () => this.calculateAge());
+                document.getElementById('deathDate').addEventListener('change', () => this.calculateAge());
+                
+                // File upload listeners
+                document.getElementById('photoFile').addEventListener('change', (e) => this.handlePhotoUpload(e));
+                document.getElementById('manifestoFile').addEventListener('change', (e) => this.handleManifestoUpload(e));
+                
+                // Carica necrologi esistenti
+                this.loadExistingObituaries();
+            }
+
+            calculateAge() {
+                const birthDate = document.getElementById('birthDate').value;
+                const deathDate = document.getElementById('deathDate').value;
+                
+                if (birthDate && deathDate) {
+                    const birth = new Date(birthDate);
+                    const death = new Date(deathDate);
+                    const age = death.getFullYear() - birth.getFullYear();
+                    document.getElementById('age').value = age;
+                }
+            }
+
+            // 📸 Gestisce l'upload della foto
+            async handlePhotoUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Validazione file
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                const maxSize = 5 * 1024 * 1024; // 5MB
+
+                if (!validTypes.includes(file.type)) {
+                    this.showError('Formato foto non supportato. Usa JPG, PNG o WEBP.');
+                    event.target.value = '';
+                    return;
+                }
+
+                if (file.size > maxSize) {
+                    this.showError('Foto troppo grande. Massimo 5MB.');
+                    event.target.value = '';
+                    return;
+                }
+
+                try {
+                    // Salva il file object invece di convertire in Base64
+                    this.uploadedPhotoData = file;
+
+                    // Crea URL temporaneo per il preview
+                    const previewUrl = URL.createObjectURL(file);
+                    this.showPhotoPreview(previewUrl);
+                    
+                    // Pulisci campo URL se presente
+                    document.getElementById('photo').value = '';
+                    
+                    // Aggiorna anteprima necrologio
+                    this.updatePreview();
+                    
+                    this.showSuccess('Foto caricata con successo!');
+                } catch (error) {
+                    console.error('Errore caricamento foto:', error);
+                    this.showError('Errore durante il caricamento della foto.');
+                    event.target.value = '';
+                }
+            }
+
+            // 📄 Gestisce l'upload del manifesto
+            async handleManifestoUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Validazione file
+                const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                const maxSize = 10 * 1024 * 1024; // 10MB
+
+                if (!validTypes.includes(file.type)) {
+                    this.showError('Formato manifesto non supportato. Usa PDF, JPG, PNG o WEBP.');
+                    event.target.value = '';
+                    return;
+                }
+
+                if (file.size > maxSize) {
+                    this.showError('File troppo grande. Massimo 10MB.');
+                    event.target.value = '';
+                    return;
+                }
+
+                try {
+                    // Salva il file object invece di convertire in Base64
+                    this.uploadedManifestoData = file;
+
+                    // Mostra info file
+                    this.showManifestoInfo(file);
+                    this.showSuccess('Manifesto caricato con successo!');
+                } catch (error) {
+                    console.error('Errore caricamento manifesto:', error);
+                    this.showError('Errore durante il caricamento del manifesto.');
+                    event.target.value = '';
+                }
+            }
+
+            // 🔄 Converte file in base64
+            fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // 👁️ Mostra preview della foto
+            showPhotoPreview(base64Data) {
+                const preview = document.getElementById('photoPreview');
+                const img = document.getElementById('photoPreviewImg');
+                
+                img.src = base64Data;
+                preview.classList.remove('hidden');
+            }
+
+            // 📋 Mostra info del manifesto caricato
+            showManifestoInfo(file) {
+                const info = document.getElementById('manifestoInfo');
+                const fileName = document.getElementById('manifestoFileName');
+                const fileSize = document.getElementById('manifestoFileSize');
+                
+                fileName.textContent = file.name;
+                fileSize.textContent = this.formatFileSize(file.size);
+                info.classList.remove('hidden');
+            }
+
+            // 📏 Formatta dimensioni file
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            updatePreview() {
+                const formData = this.getFormData();
+                if (!formData.name) {
+                    this.preview.innerHTML = '<p class="text-gray-500 text-center italic">Compila il form per vedere l\'anteprima...</p>';
+                    return;
+                }
+
+                const funeralInfo = formData.funeralDate ? 
+                    `<p class="text-sm text-gray-600 mt-2"><i class="fas fa-calendar mr-2"></i>Funerale: ${new Date(formData.funeralDate).toLocaleDateString('it-IT')} ${formData.funeralLocation ? 'presso ' + formData.funeralLocation : ''}</p>` : 
+                    '';
+
+                // Determina quale foto usare (file caricato o URL)
+                let photoHtml = '<div class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center"><i class="fas fa-user text-gray-500"></i></div>';
+                if (formData.photoFile instanceof File) {
+                    // File caricato - crea URL temporaneo
+                    const previewUrl = URL.createObjectURL(formData.photoFile);
+                    photoHtml = `<img src="${previewUrl}" alt="${formData.name}" class="w-16 h-16 rounded-full object-cover">`;
+                } else if (formData.photoFile && formData.photoFile.data) {
+                    // Vecchio formato o URL esistente
+                    photoHtml = `<img src="${formData.photoFile.data}" alt="${formData.name}" class="w-16 h-16 rounded-full object-cover">`;
+                } else if (formData.photo) {
+                    photoHtml = `<img src="${formData.photo}" alt="${formData.name}" class="w-16 h-16 rounded-full object-cover" onerror="this.style.display='none'">`;
+                }
+
+                // Info manifesto se presente
+                const manifestoInfo = formData.manifestoFile ? 
+                    `<p class="text-sm text-blue-600 mt-2"><i class="fas fa-file-alt mr-2"></i>Manifesto: ${formData.manifestoFile.name || (formData.manifestoFile instanceof File ? formData.manifestoFile.name : 'Manifesto caricato')}</p>` : 
+                    '';
+
+                this.preview.innerHTML = `
+                    <div class="necrologio-card bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex items-start gap-4">
+                            ${photoHtml}
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-gray-900">${formData.name}</h3>
+                                <p class="text-gray-600">${formData.birthDate} - ${formData.deathDate} (${formData.age} anni)</p>
+                                <p class="text-sm text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${formData.city}</p>
+                                ${funeralInfo}
+                                ${manifestoInfo}
+                                ${formData.description ? `<p class="text-gray-700 mt-3">${formData.description}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+
+            }
+
+
+
+            getFormData() {
+                return {
+                    name: document.getElementById('name').value,
+                    birthDate: document.getElementById('birthDate').value,
+                    deathDate: document.getElementById('deathDate').value,
+                    age: document.getElementById('age').value,
+                    city: document.getElementById('city').value,
+                    photo: document.getElementById('photo').value,
+                    photoFile: this.uploadedPhotoData || null,
+                    manifestoFile: this.uploadedManifestoData || null,
+                    description: document.getElementById('description').value,
+                    funeralDate: document.getElementById('funeralDate').value,
+                    funeralLocation: document.getElementById('funeralLocation').value
+                };
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                const data = this.getFormData();
+                
+                // Mostra loading
+                this.showLoading(true);
+                
+                try {
+                    if (this.editingObituary) {
+                        // MODALITÀ AGGIORNAMENTO
+                        await this.updateExistingObituary(data);
+                    } else {
+                        // MODALITÀ CREAZIONE
+                        await this.createNewObituary(data);
+                    }
+                    
+                    // Reset form e modalità modifica
+                    this.form.reset();
+                    this.resetEditMode();
+                    this.updatePreview();
+                    this.loadExistingObituaries();
+                    
+                } catch (error) {
+                    console.error('❌ Errore operazione:', error);
+                    this.showError('Errore durante l\'operazione. Riprova.');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            // 🆕 Crea nuovo necrologio
+            async createNewObituary(data) {
+                // 🔥 PRIORITÀ 1: Salva su Firebase (produzione)
+                let firebaseSaved = false;
+                if (window.firebaseManager && window.firebaseManager.isInitialized) {
+                    try {
+                        console.log('🔥 Salvando su Firebase...');
+                        await window.firebaseManager.saveObituary(data);
+                        firebaseSaved = true;
+                        console.log('✅ Salvato su Firebase con successo!');
+                    } catch (firebaseError) {
+                        console.error('❌ Errore Firebase, uso fallback localStorage:', firebaseError);
+                    }
+                }
+                
+                // 💾 FALLBACK: Salva anche su localStorage (backup)
+                this.saveObituaryLocal(data);
+                
+                // Mostra messaggio di successo
+                if (firebaseSaved) {
+                    this.showSuccess('🔥 Necrologio creato su Firebase con successo!');
+                } else {
+                    this.showSuccess('💾 Necrologio creato localmente (Firebase non disponibile)');
+                }
+            }
+
+            // 🔄 Aggiorna necrologio esistente
+            async updateExistingObituary(data) {
+                const { id, source } = this.editingObituary;
+                
+                // 🔥 Aggiorna su Firebase se necessario
+                let firebaseUpdated = false;
+                if (source === 'firebase' && window.firebaseManager && window.firebaseManager.isInitialized) {
+                    try {
+                        console.log('🔥 Aggiornando su Firebase...');
+                        // Per Firebase, mantieni l'ID originale
+                        data.id = id;
+                        await window.firebaseManager.saveObituary(data);
+                        firebaseUpdated = true;
+                        console.log('✅ Aggiornato su Firebase con successo!');
+                    } catch (firebaseError) {
+                        console.error('❌ Errore aggiornamento Firebase:', firebaseError);
+                    }
+                }
+                
+                // 💾 Aggiorna su localStorage se necessario
+                if (source === 'local') {
+                    this.updateObituaryLocal(data, id);
+                }
+                
+                // Mostra messaggio di successo
+                if (firebaseUpdated) {
+                    this.showSuccess('🔥 Necrologio aggiornato su Firebase con successo!');
+                } else {
+                    this.showSuccess('💾 Necrologio aggiornato localmente con successo!');
+                }
+            }
+
+            // 💾 Salva su localStorage (backup/fallback)
+            saveObituaryLocal(data) {
+                let saved = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
+                data.id = Date.now(); // ID basato su timestamp
+                saved.push(data);
+                localStorage.setItem('adminObituaries', JSON.stringify(saved));
+                console.log('💾 Salvato su localStorage come backup');
+            }
+
+            // 🔄 Aggiorna necrologio su localStorage
+            updateObituaryLocal(data, id) {
+                let saved = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
+                const index = saved.findIndex(obit => obit.id == id);
+                
+                if (index !== -1) {
+                    // Mantieni l'ID originale
+                    data.id = id;
+                    saved[index] = data;
+                    localStorage.setItem('adminObituaries', JSON.stringify(saved));
+                    console.log('💾 Aggiornato su localStorage');
+                } else {
+                    console.warn('⚠️ Necrologio non trovato in localStorage per aggiornamento');
+                }
+            }
+
+            // 📊 Carica necrologi esistenti (Firebase + localStorage)
+            async loadExistingObituaries() {
+                let allObituaries = [];
+                
+                try {
+                    // 🔥 Carica da Firebase se disponibile
+                    if (window.firebaseManager && window.firebaseManager.isInitialized) {
+                        const firebaseData = await window.firebaseManager.loadObituaries();
+                        allObituaries = firebaseData.map(obit => ({
+                            ...obit,
+                            source: 'firebase'
+                        }));
+                    }
+                    
+                    // 💾 Carica anche da localStorage
+                    const localData = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
+                    const localObituaries = localData.map(obit => ({
+                        ...obit,
+                        source: 'local'
+                    }));
+                    
+                    allObituaries = [...allObituaries, ...localObituaries];
+                    
+                } catch (error) {
+                    console.error('❌ Errore caricamento necrologi:', error);
+                    // Fallback solo localStorage
+                    const localData = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
+                    allObituaries = localData.map(obit => ({
+                        ...obit,
+                        source: 'local'
+                    }));
+                }
+                
+                if (allObituaries.length === 0) {
+                    this.existingList.innerHTML = '<p class="text-gray-500 italic">Nessun necrologio trovato</p>';
+                    return;
+                }
+
+                this.existingList.innerHTML = allObituaries.map(obit => `
+                    <div class="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
+                        <div>
+                            <h4 class="font-semibold">${obit.name}</h4>
+                            <p class="text-sm text-gray-600">${obit.city} - ${obit.deathDate || obit.dataMorte}</p>
+                            <span class="inline-block px-2 py-1 text-xs rounded ${obit.source === 'firebase' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                ${obit.source === 'firebase' ? '🔥 Firebase' : '💾 Locale'}
+                            </span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="adminManager.editObituary('${obit.id}', '${obit.source}')" 
+                                    class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded bg-blue-50 hover:bg-blue-100 transition-colors" 
+                                    title="Modifica necrologio">
+                                <i class="fas fa-edit mr-1"></i>Modifica
+                            </button>
+                            <button onclick="adminManager.deleteObituary('${obit.id}', '${obit.source}')" 
+                                    class="text-red-600 hover:text-red-800 px-3 py-1 rounded bg-red-50 hover:bg-red-100 transition-colors" 
+                                    title="Elimina necrologio">
+                                <i class="fas fa-trash mr-1"></i>Elimina
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // ✏️ Modifica necrologio esistente
+            async editObituary(id, source) {
+                this.showLoading(true);
+                
+                try {
+                    let obituaryToEdit = null;
+                    
+                    // Trova il necrologio da modificare
+                    if (source === 'firebase' && window.firebaseManager && window.firebaseManager.isInitialized) {
+                        const allObituaries = await window.firebaseManager.loadObituaries();
+                        obituaryToEdit = allObituaries.find(obit => obit.id === id);
+                    } else if (source === 'local') {
+                        const localData = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
+                        obituaryToEdit = localData.find(obit => obit.id == id);
+                    }
+                    
+                    if (!obituaryToEdit) {
+                        this.showError('Necrologio non trovato');
+                        return;
+                    }
+                    
+                    // Popola il form con i dati esistenti
+                    this.populateFormForEdit(obituaryToEdit, source);
+                    
+                    // Scroll al form
+                    document.getElementById('obituaryForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    this.showSuccess('Necrologio caricato per la modifica');
+                    
+                } catch (error) {
+                    console.error('❌ Errore caricamento necrologio:', error);
+                    this.showError('Errore durante il caricamento. Riprova.');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            // 📝 Popola il form per la modifica
+            populateFormForEdit(obituary, source) {
+                // Salva info per l'aggiornamento
+                this.editingObituary = {
+                    id: obituary.id,
+                    source: source,
+                    originalData: obituary
+                };
+                
+                // Popola campi base
+                document.getElementById('name').value = obituary.name || '';
+                document.getElementById('birthDate').value = obituary.birthDate || '';
+                document.getElementById('deathDate').value = obituary.deathDate || '';
+                document.getElementById('age').value = obituary.age || '';
+                document.getElementById('city').value = obituary.city || '';
+                document.getElementById('description').value = obituary.description || '';
+                document.getElementById('funeralDate').value = obituary.funeralDate || '';
+                document.getElementById('funeralLocation').value = obituary.funeralLocation || '';
+                
+                // Gestione foto
+                if (obituary.photoFile && obituary.photoFile.data) {
+                    // Foto caricata (può essere Base64 o URL di Storage)
+                    this.uploadedPhotoData = obituary.photoFile;
+                    this.showPhotoPreview(obituary.photoFile.data);
+                    document.getElementById('photo').value = '';
+                } else if (obituary.photoURL) {
+                    // URL diretto da Storage (nuovo formato)
+                    this.uploadedPhotoData = {
+                        data: obituary.photoURL,
+                        name: obituary.photoFileName,
+                        type: obituary.photoFileType,
+                        size: obituary.photoFileSize
+                    };
+                    this.showPhotoPreview(obituary.photoURL);
+                    document.getElementById('photo').value = '';
+                } else if (obituary.photo) {
+                    // URL foto tradizionale
+                    document.getElementById('photo').value = obituary.photo;
+                    this.uploadedPhotoData = null;
+                    document.getElementById('photoPreview').classList.add('hidden');
+                } else {
+                    // Nessuna foto
+                    document.getElementById('photo').value = '';
+                    this.uploadedPhotoData = null;
+                    document.getElementById('photoPreview').classList.add('hidden');
+                }
+                
+                // Gestione manifesto
+                if (obituary.manifestoFile) {
+                    this.uploadedManifestoData = obituary.manifestoFile;
+                    this.showManifestoInfo({
+                        name: obituary.manifestoFile.name,
+                        size: obituary.manifestoFile.size
+                    });
+                } else if (obituary.manifestoURL) {
+                    // URL diretto da Storage (nuovo formato)
+                    this.uploadedManifestoData = {
+                        data: obituary.manifestoURL,
+                        name: obituary.manifestoFileName,
+                        type: obituary.manifestoFileType,
+                        size: obituary.manifestoFileSize
+                    };
+                    this.showManifestoInfo({
+                        name: obituary.manifestoFileName,
+                        size: obituary.manifestoFileSize
+                    });
+                } else {
+                    this.uploadedManifestoData = null;
+                    document.getElementById('manifestoInfo').classList.add('hidden');
+                }
+                
+                // Aggiorna anteprima
+                this.updatePreview();
+                
+                // Cambia il testo del pulsante
+                const submitBtn = this.form.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Aggiorna Necrologio';
+                submitBtn.className = submitBtn.className.replace('bg-green-600 hover:bg-green-700', 'bg-orange-600 hover:bg-orange-700');
+                
+                // Mostra pulsante annulla
+                document.getElementById('cancelEditBtn').classList.remove('hidden');
+            }
+
+            // 🔄 Resetta modalità modifica
+            resetEditMode() {
+                this.editingObituary = null;
+                
+                // Ripristina pulsante submit
+                const submitBtn = this.form.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Crea Necrologio';
+                submitBtn.className = submitBtn.className.replace('bg-orange-600 hover:bg-orange-700', 'bg-green-600 hover:bg-green-700');
+                
+                // Nascondi pulsante annulla
+                document.getElementById('cancelEditBtn').classList.add('hidden');
+            }
+
+            // ❌ Annulla modifica
+            cancelEdit() {
+                if (confirm('Sei sicuro di voler annullare la modifica? Tutte le modifiche non salvate andranno perse.')) {
+                    this.form.reset();
+                    this.resetEditMode();
+                    this.updatePreview();
+                    
+                    // Pulisci anche i file caricati
+                    this.uploadedPhotoData = null;
+                    this.uploadedManifestoData = null;
+                    document.getElementById('photoPreview').classList.add('hidden');
+                    document.getElementById('manifestoInfo').classList.add('hidden');
+                    
+                    this.showSuccess('Modifica annullata');
+                }
+            }
+
+            // 🗑️ Elimina necrologio (Firebase + localStorage)
+            async deleteObituary(id, source) {
+                if (!confirm('Sei sicuro di voler eliminare questo necrologio?')) {
+                    return;
+                }
+                
+                this.showLoading(true);
+                
+                try {
+                    // 🔥 Elimina da Firebase se è la fonte
+                    if (source === 'firebase' && window.firebaseManager && window.firebaseManager.isInitialized) {
+                        await window.firebaseManager.deleteObituary(id);
+                        console.log('✅ Eliminato da Firebase');
+                    }
+                    
+                    // 💾 Elimina da localStorage se è la fonte o come fallback
+                    if (source === 'local') {
+                        let saved = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
+                        saved = saved.filter(obit => obit.id != id); // Usa != per confronto flessibile
+                        localStorage.setItem('adminObituaries', JSON.stringify(saved));
+                        console.log('✅ Eliminato da localStorage');
+                    }
+                    
+                    // Ricarica lista
+                    await this.loadExistingObituaries();
+                    this.showSuccess('Necrologio eliminato con successo');
+                    
+                } catch (error) {
+                    console.error('❌ Errore eliminazione:', error);
+                    this.showError('Errore durante l\'eliminazione. Riprova.');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            // ✅ Mostra messaggio di successo
+            showSuccess(text = 'Operazione completata con successo!') {
+                const message = document.createElement('div');
+                message.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+                message.innerHTML = `<i class="fas fa-check mr-2"></i>${text}`;
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 4000);
+            }
+
+            // ❌ Mostra messaggio di errore  
+            showError(text = 'Si è verificato un errore') {
+                const message = document.createElement('div');
+                message.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+                message.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${text}`;
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 5000);
+            }
+
+            // ⏳ Mostra/nascondi indicatore di caricamento
+            showLoading(show) {
+                const loadingId = 'admin-loading';
+                let loading = document.getElementById(loadingId);
+                
+                if (show) {
+                    if (!loading) {
+                        loading = document.createElement('div');
+                        loading.id = loadingId;
+                        loading.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                        loading.innerHTML = `
+                            <div class="bg-white rounded-lg p-6 flex items-center gap-4">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                <span class="text-lg font-semibold">Caricamento...</span>
+                            </div>
+                        `;
+                    }
+                    document.body.appendChild(loading);
+                } else {
+                    if (loading) {
+                        loading.remove();
+                    }
+                }
+            }
+        }
+
+        // Funzioni globali
+        function clearForm() {
+            document.getElementById('obituaryForm').reset();
+            document.getElementById('preview').innerHTML = '<p class="text-gray-500 text-center italic">Compila il form per vedere l\'anteprima...</p>';
+
+            
+            // Pulisci anche i file caricati
+            clearPhotoFile();
+            clearManifestoFile();
+        }
+
+        // 🗑️ Pulisce la foto caricata
+        function clearPhotoFile() {
+            const photoFile = document.getElementById('photoFile');
+            const photoPreview = document.getElementById('photoPreview');
+            
+            photoFile.value = '';
+            photoPreview.classList.add('hidden');
+            
+            if (adminManager) {
+                adminManager.uploadedPhotoData = null;
+                adminManager.updatePreview();
+            }
+        }
+
+        // 🗑️ Pulisce il manifesto caricato
+        function clearManifestoFile() {
+            const manifestoFile = document.getElementById('manifestoFile');
+            const manifestoInfo = document.getElementById('manifestoInfo');
+            
+            manifestoFile.value = '';
+            manifestoInfo.classList.add('hidden');
+            
+            if (adminManager) {
+                adminManager.uploadedManifestoData = null;
+                adminManager.updatePreview();
+            }
+        }
+
+
+
+        // Inizializza admin manager
+        let adminManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            adminManager = new AdminManager();
+        });
+    </script>
+    </div> <!-- Fine contenuto admin -->
+
+    <script>
+        // Sistema di Autenticazione Admin
+        class AdminAuth {
+            constructor() {
+                this.adminPassword = 'admin2024'; // CAMBIA QUESTA PASSWORD!
+                this.init();
+            }
+
+            init() {
+                // Verifica se già autenticato
+                if (sessionStorage.getItem('adminAuthenticated') === 'true') {
+                    this.showAdminContent();
+                } else {
+                    this.showLogin();
+                }
+
+                // Event listener per il form di login
+                document.getElementById('loginForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+
+                // Event listener per Enter key nel campo password
+                document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.handleLogin();
+                    }
+                });
+            }
+
+            handleLogin() {
+                const inputPassword = document.getElementById('adminPassword').value;
+                const errorDiv = document.getElementById('loginError');
+
+                if (inputPassword === this.adminPassword) {
+                    // Password corretta
+                    sessionStorage.setItem('adminAuthenticated', 'true');
+                    this.showAdminContent();
+                    this.showLoginSuccess();
+                } else {
+                    // Password errata
+                    errorDiv.classList.remove('hidden');
+                    document.getElementById('adminPassword').value = '';
+                    document.getElementById('adminPassword').focus();
+                    
+                    // Nasconde l'errore dopo 3 secondi
+                    setTimeout(() => {
+                        errorDiv.classList.add('hidden');
+                    }, 3000);
+                }
+            }
+
+            showLogin() {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('adminContent').classList.add('hidden');
+                setTimeout(() => {
+                    document.getElementById('adminPassword').focus();
+                }, 100);
+            }
+
+            showAdminContent() {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('adminContent').classList.remove('hidden');
+            }
+
+            showLoginSuccess() {
+                const message = document.createElement('div');
+                message.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                message.innerHTML = '<i class="fas fa-check mr-2"></i>Accesso effettuato con successo!';
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 3000);
+            }
+
+            logout() {
+                sessionStorage.removeItem('adminAuthenticated');
+                this.showLogin();
+                
+                // Messaggio di logout
+                const message = document.createElement('div');
+                message.className = 'fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                message.innerHTML = '<i class="fas fa-sign-out-alt mr-2"></i>Logout effettuato con successo!';
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 3000);
+            }
+        }
+
+        // Funzione globale per logout (chiamata dal pulsante)
+        function logout() {
+            adminAuth.logout();
+        }
+
+        // Inizializza sistema di autenticazione
+        let adminAuth;
+        document.addEventListener('DOMContentLoaded', () => {
+            adminAuth = new AdminAuth();
+        });
+    </script>
+</body>
+</html>

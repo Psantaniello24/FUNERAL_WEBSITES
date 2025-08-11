@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giuseppe Verdi - Necrologio | Onoranze Funebri Santaniello</title>
+    <meta name="description" content="Necrologio di Giuseppe Verdi (1940-2024). Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">
+    <meta name="keywords" content="Giuseppe Verdi, necrologio, condoglianze, agenzia funebre, Santaniello">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'funeral-dark': '#1a1a2e',
+                        'funeral-blue': '#16213e',
+                        'funeral-gold': '#d4af37',
+                        'funeral-gray': '#8b8b8b'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <!-- Top bar -->
+            <div class="py-2 text-sm border-b border-gray-600">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <span><i class="fas fa-phone text-gray-300"></i> +39 081 8234914</span>
+                        <span><i class="fas fa-envelope text-gray-300"></i> santanielloservizifunebri@gmail.com</span>
+                    </div>
+                    <div class="text-gray-300">
+                        <i class="fas fa-clock"></i> Disponibili 24/7
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main navigation -->
+            <nav class="py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-gray-300">
+                            <i class="fas fa-dove text-lg mr-2"></i>
+                            <a href="index.html">Santaniello</a>
+                        </h1>
+                        <span class="ml-3 text-sm text-gray-300">Agenzia Funebre</span>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <ul class="hidden md:flex space-x-6 items-center">
+                        <li><a href="index.html" class="hover:text-white transition-colors">Home</a></li>
+                        <li><a href="necrologi.html" class="text-gray-300">Necrologi</a></li>
+                        <li><a href="fiori-omaggi.html" class="hover:text-white transition-colors">Fiori & Omaggi</a></li>
+                        <li><a href="chi-siamo.html" class="hover:text-white transition-colors">Chi Siamo</a></li>
+                        <li><a href="casa-funeraria.html" class="hover:text-white transition-colors">Casa Funeraria</a></li>
+                        <li><a href="servizi.html" class="hover:text-white transition-colors">Servizi</a></li>
+                        <li><a href="contatti.html" class="hover:text-white transition-colors">Contatti</a></li>
+                    </ul>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button class="md:hidden text-white" id="mobile-menu-btn">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Mobile Menu -->
+                <div class="md:hidden mt-4 hidden" id="mobile-menu">
+                    <ul class="space-y-2 pb-4">
+                        <li><a href="index.html" class="block py-2 hover:text-white transition-colors">Home</a></li>
+                        <li><a href="necrologi.html" class="block py-2 text-gray-300">Necrologi</a></li>
+                        <li><a href="fiori-omaggi.html" class="block py-2 hover:text-white transition-colors">Fiori & Omaggi</a></li>
+                        <li><a href="chi-siamo.html" class="block py-2 hover:text-white transition-colors">Chi Siamo</a></li>
+                        <li><a href="casa-funeraria.html" class="block py-2 hover:text-white transition-colors">Casa Funeraria</a></li>
+                        <li><a href="servizi.html" class="block py-2 hover:text-white transition-colors">Servizi</a></li>
+                        <li><a href="contatti.html" class="block py-2 hover:text-white transition-colors">Contatti</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <section class="py-4 bg-white border-b">
+        <div class="container mx-auto px-4">
+            <nav class="breadcrumb">
+                <a href="index.html">Home</a>
+                <span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+                <a href="necrologi.html">Necrologi</a>
+                <span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+                <span>Giuseppe Verdi</span>
+            </nav>
+        </div>
+    </section>
+
+    <!-- Obituary Detail -->
+    <section class="py-12">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <!-- Main obituary card -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                    <div class="p-8">
+                        <div class="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
+                            <!-- Photo -->
+                            <div class="flex-shrink-0">
+                                <img src="images/placeholder-person.svg" alt="Giuseppe Verdi" class="w-64 h-80 object-cover rounded-lg shadow-md">
+                            </div>
+                            
+                            <!-- Details -->
+                            <div class="flex-1">
+                                <h1 class="text-4xl font-bold text-gray-800 mb-4">Giuseppe Verdi</h1>
+                                
+                                <div class="space-y-3 text-lg mb-6">
+                                    <p class="flex items-center">
+                                        <i class="fas fa-calendar text-gray-300 mr-3 w-5"></i>
+                                        <span class="font-semibold mr-2">Nato:</span>
+                                        8 novembre 1940
+                                    </p>
+                                    <p class="flex items-center">
+                                        <i class="fas fa-heart text-gray-300 mr-3 w-5"></i>
+                                        <span class="font-semibold mr-2">Chiamato alla Casa del Padre:</span>
+                                        13 gennaio 2024
+                                    </p>
+                                    <p class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-gray-300 mr-3 w-5"></i>
+                                        <span class="font-semibold mr-2">Comune:</span>
+                                        Caserta
+                                    </p>
+                                    <p class="flex items-center">
+                                        <i class="fas fa-hourglass text-gray-300 mr-3 w-5"></i>
+                                        <span class="font-semibold mr-2">Età:</span>
+                                        83 anni
+                                    </p>
+                                </div>
+                                
+                                <!-- Funeral details -->
+                                <div class="bg-gradient-to-r from-gray-300 to-gray-400 bg-opacity-20 p-6 rounded-lg">
+                                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                                        <i class="fas fa-church text-gray-300 mr-2"></i>
+                                        Cerimonia Funebre
+                                    </h2>
+                                    <div class="space-y-2">
+                                        <p><span class="font-semibold">Data:</span> Martedì 16 gennaio 2024</p>
+                                        <p><span class="font-semibold">Ora:</span> 11:00</p>
+                                        <p><span class="font-semibold">Luogo:</span> Chiesa San Francesco, Via Nazionale 78, Caserta</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Memorial Text -->
+                <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-heart text-gray-300 mr-3"></i>
+                        In Memoria
+                    </h2>
+                    <div class="prose prose-lg max-w-none text-gray-700">
+                        <p class="text-xl leading-relaxed mb-6">
+                            Maestro di vita e di lavoro, ha lasciato un segno indelebile in tutti coloro che hanno avuto la fortuna di conoscerlo. Riposa in pace.
+                        </p>
+                        <p class="leading-relaxed mb-4">
+                            Giuseppe è stato un uomo di principi saldi e di grande saggezza. Veterano del lavoro nei campi, ha trasmesso a figli e nipoti l'amore per la terra e il valore della fatica onesta.
+                        </p>
+                        <p class="leading-relaxed mb-4">
+                            La sua vita è stata un esempio di dedizione alla famiglia e alla comunità. Sposato per 55 anni con la cara Antonietta, ha cresciuto quattro figli con amore e severità giusta, insegnando loro i valori del rispetto e dell'onestà.
+                        </p>
+                        <p class="leading-relaxed mb-4">
+                            Conosciuto in tutto il paese per la sua generosità, Giuseppe non ha mai negato il suo aiuto a chi ne aveva bisogno. Le sue mani callose raccontano storie di lavoro e sacrificio, ma anche di tenerezza nei momenti con i suoi undici nipoti.
+                        </p>
+                        <p class="leading-relaxed">
+                            La sua saggezza popolare e i suoi racconti di un tempo che fu rimarranno per sempre nel cuore di chi lo ha amato. Un uomo d'altri tempi, quando la parola data valeva più di qualsiasi contratto.
+                        </p>
+                        <p class="text-center italic text-gray-300 font-semibold mt-8">
+                            "Ha seminato bene nella vita, e ora raccoglierà nella pace eterna."
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button 
+                            onclick="openCondolenceFormDetail(3)" 
+                            class="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-gray-400 hover:to-gray-500 transition-colors flex items-center justify-center" 
+                            id="condolence-btn"
+                        >
+                            <i class="fas fa-heart mr-3"></i>
+                            Invia Condoglianze
+                        </button>
+                        <a 
+                            href="fiori-omaggi.html" 
+                            class="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-gray-500 hover:to-gray-600 hover:text-white transition-colors flex items-center justify-center"
+                        >
+                            <i class="fas fa-flower mr-3"></i>
+                            Invia Fiori
+                        </a>
+                        <button 
+                            onclick="shareObituary()" 
+                            class="flex-1 border-2 border-gray-600 text-gray-600 py-4 px-6 rounded-lg font-semibold text-lg hover:bg-gradient-to-r from-gray-600 to-gray-700 hover:text-white transition-colors flex items-center justify-center"
+                        >
+                            <i class="fas fa-share mr-3"></i>
+                            Condividi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Condolences Section -->
+                <div class="bg-white rounded-lg shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-comments text-gray-300 mr-3"></i>
+                        Condoglianze
+                        <span id="condolences-count" class="ml-2 text-lg text-gray-500">(0)</span>
+                    </h2>
+                    
+                    <div id="condolences-list" class="space-y-6">
+                        <!-- Condolences will be loaded here -->
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-heart text-4xl mb-4"></i>
+                            <p>Ancora nessuna condoglianza. Sii il primo a inviare un messaggio di cordoglio.</p>
+                            <button 
+                                onclick="openCondolenceForm(3)" 
+                                class="mt-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-gray-400 hover:to-gray-500 transition-colors"
+                            >
+                                Invia le tue condoglianze
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Navigation to other obituaries -->
+    <section class="py-12 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">Altri Necrologi Recenti</h2>
+                <div class="grid md:grid-cols-2 gap-6" id="other-obituaries">
+                    <!-- Other obituaries will be loaded here -->
+                </div>
+                <div class="text-center mt-8">
+                    <a href="necrologi.html" class="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-8 py-3 rounded-lg font-semibold hover:from-gray-500 hover:to-gray-600 hover:text-white transition-colors">
+                        Visualizza Tutti i Necrologi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-gray-800 to-gray-700 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <!-- Logo e Descrizione -->
+                <div class="col-span-1">
+                    <h3 class="text-xl font-bold text-gray-300 mb-4">
+                        <i class="fas fa-dove mr-2"></i>Santaniello
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Agenzia funebre di fiducia dal 1950. Serviamo le famiglie con professionalità, rispetto e compassione.
+                    </p>
+                    <div class="flex space-x-3">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Servizi -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Servizi</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Organizzazione Funerali</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Trasporto Salme</a></li>
+                        <li><a href="servizi.html" class="text-gray-300 hover:text-white">Cremazione</a></li>
+                        <li><a href="casa-funeraria.html" class="text-gray-300 hover:text-white">Casa Funeraria</a></li>
+                        <li><a href="fiori-omaggi.html" class="text-gray-300 hover:text-white">Fiori & Omaggi</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Collegamenti Utili -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Collegamenti</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="necrologi.html" class="text-gray-300 hover:text-white">Necrologi</a></li>
+                        <li><a href="chi-siamo.html" class="text-gray-300 hover:text-white">Chi Siamo</a></li>
+                        <li><a href="contatti.html" class="text-gray-300 hover:text-white">Contatti</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Contatti -->
+                <div>
+                    <h4 class="font-semibold mb-4 text-gray-300">Contatti</h4>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <p><i class="fas fa-phone mr-2"></i> +39 081 8234914</p>
+                        <p><i class="fas fa-envelope mr-2"></i> santanielloservizifunebri@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt mr-2"></i> Via Cimitile 4<br> 80035 Nola (NA), Italia</p>
+                        <p><i class="fas fa-clock mr-2"></i> Disponibili 24/7</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-600 mt-8 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2024 Santaniello Servizi Funebri. Tutti i diritti riservati.</p>
+                <p class="text-sm mt-2">
+                    Iscritto al registro delle imprese della regione Campania n. 471 | P.I. 10320801219
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/necrologio-detail.js"></script>
+</body>
+</html>

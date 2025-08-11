@@ -1,0 +1,17 @@
+warning: in the working copy of 'admin.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'casa-funeraria.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'chi-siamo.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/necrologi.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'index.html', LF will be replaced by CRLF the next time Git touches it
+admin.html
+casa-funeraria.html
+chi-siamo.html
+data/necrologi.json
+index.html
+js/main.js
+js/necrologi.js
+js/necrologio-detail.js
+necrologio-1.html
+necrologio-2.html
+necrologio-3.html
+necrologio-detail.html
