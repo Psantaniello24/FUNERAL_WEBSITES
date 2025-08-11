@@ -70,6 +70,26 @@ class FirebaseManager {
 
     // 📁 Upload file su Firebase Storage
     async uploadFile(file, path) {
+        // Rilevamento ambiente
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' || 
+                           window.location.hostname.includes('127.0.0.1');
+        
+        const isProduction = window.location.hostname.includes('onrender.com') ||
+                            window.location.hostname.includes('netlify.app') ||
+                            window.location.hostname.includes('vercel.app') ||
+                            window.location.hostname.includes('github.io');
+        
+        // Per ora, usa sempre Base64 per evitare problemi CORS sia in locale che in produzione
+        // TODO: Rimuovere quando Firebase Storage CORS sarà configurato correttamente
+        const useFirebaseStorage = false; // Cambia a true quando CORS è risolto
+        
+        if (!useFirebaseStorage || isLocalhost) {
+            const env = isLocalhost ? 'Localhost' : isProduction ? 'Produzione' : 'Sconosciuto';
+            console.log(`🔄 ${env} rilevato, usando Base64 diretto (evita problemi CORS)`);
+            return this.uploadFileBase64(file, path);
+        }
+        
         if (!this.isInitialized || !this.storage) {
             throw new Error('Firebase Storage non inizializzato');
         }
@@ -78,7 +98,8 @@ class FirebaseManager {
             const storageRef = this.storage.ref();
             const fileRef = storageRef.child(path);
             
-            console.log(`📁 Caricando file su Storage: ${path}`);
+            console.log(`📁 Tentativo caricamento Firebase Storage: ${path}`);
+            console.log(`📊 File info: ${file.name} (${Math.round(file.size/1024)}KB, ${file.type})`);
             
             // Upload del file
             const snapshot = await fileRef.put(file);
@@ -86,7 +107,8 @@ class FirebaseManager {
             // Ottieni URL di download
             const downloadURL = await snapshot.ref.getDownloadURL();
             
-            console.log(`✅ File caricato su Storage: ${downloadURL}`);
+            console.log(`✅ File caricato su Firebase Storage con successo!`);
+            console.log(`🔗 URL: ${downloadURL}`);
             
             return {
                 downloadURL,
@@ -96,9 +118,64 @@ class FirebaseManager {
                 type: file.type
             };
         } catch (error) {
-            console.error('❌ Errore upload Storage:', error);
+            console.error('❌ Errore Firebase Storage:', error);
+            console.log(`🔍 Dettagli errore: ${error.code} - ${error.message}`);
+            console.log(`🌐 Hostname: ${window.location.hostname}`);
+            
+            // Se siamo in localhost, usa sempre il fallback per evitare problemi CORS
+            if (isLocalhost) {
+                console.log('🔄 Localhost rilevato, attivando fallback Base64 automatico...');
+                return this.uploadFileBase64(file, path);
+            }
+            
+            // Anche in produzione, se c'è un errore CORS, prova il fallback
+            if (error.message.includes('CORS') || 
+                error.message.includes('blocked') ||
+                error.message.includes('preflight') ||
+                error.message.includes('ERR_FAILED') ||
+                error.code === 'storage/unknown' ||
+                error.name === 'TypeError') {
+                console.log('🔄 Rilevato errore CORS/network, attivando fallback Base64...');
+                return this.uploadFileBase64(file, path);
+            }
+            
             throw error;
         }
+    }
+
+    // 📁 Upload file Base64 (fallback universale)
+    async uploadFileBase64(file, path) {
+        return new Promise((resolve, reject) => {
+            // Controllo dimensione file (importante per Firestore)
+            const maxSize = 800 * 1024; // 800KB limite sicuro per Firestore
+            if (file.size > maxSize) {
+                console.warn(`⚠️ File grande (${Math.round(file.size/1024)}KB), potrebbe causare problemi con Firestore`);
+                // Non bloccare, ma avvisa
+            }
+            
+            const reader = new FileReader();
+            reader.onload = () => {
+                const isLocalhost = window.location.hostname.includes('127.0.0.1') || window.location.hostname === 'localhost';
+                const env = isLocalhost ? 'locale' : 'produzione';
+                
+                console.log(`✅ File caricato come Base64 in ${env}: ${file.name} (${Math.round(file.size/1024)}KB)`);
+                
+                resolve({
+                    downloadURL: reader.result,
+                    fullPath: `base64/${path}`,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    isBase64Fallback: true,
+                    environment: env
+                });
+            };
+            reader.onerror = (error) => {
+                console.error('❌ Errore lettura file per Base64:', error);
+                reject(new Error('Errore nella conversione del file in Base64'));
+            };
+            reader.readAsDataURL(file);
+        });
     }
 
     // 🗑️ Elimina file da Firebase Storage

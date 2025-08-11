@@ -125,6 +125,14 @@ class ObituariesManager {
 
         try {
             // 🔥 PRIORITÀ 1: Carica da Firebase (produzione)
+            // Aspetta che Firebase sia inizializzato se disponibile
+            if (window.firebaseManager) {
+                if (!window.firebaseManager.isInitialized) {
+                    console.log('⏳ Aspettando inizializzazione Firebase...');
+                    await window.firebaseManager.init();
+                }
+            }
+            
             if (window.firebaseManager && window.firebaseManager.isInitialized) {
                 console.log('🔥 Caricamento da Firebase...');
                 const firebaseData = await window.firebaseManager.loadObituaries();
@@ -928,7 +936,10 @@ function closeOrderModal() {
 }
 
 // Initialize everything when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Piccolo delay per assicurarsi che tutti gli script siano caricati
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Initialize mobile menu
     new MobileMenu();
     
