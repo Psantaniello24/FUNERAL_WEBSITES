@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -30,10 +33,8 @@
     
     <link rel="stylesheet" href="css/styles.css">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50 font-inter">
     <!-- Schermata Login -->
@@ -815,7 +816,7 @@
         </div>
     </div>
 
-    <script src="js/firebase-config.js"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
     <script src="js/modern-theme.js"></script>
     <script>
@@ -1074,16 +1075,16 @@
 
             // 🆕 Crea nuovo necrologio
             async createNewObituary(data) {
-                // 🔥 PRIORITÀ 1: Salva su Firebase (produzione)
-                let firebaseSaved = false;
-                if (window.firebaseManager && window.firebaseManager.isInitialized) {
+                // 🟢 PRIORITÀ 1: Salva su Supabase (produzione)
+                let supabaseSaved = false;
+                if (window.supabaseManager && window.supabaseManager.isInitialized) {
                     try {
-                        console.log('🔥 Salvando su Firebase...');
-                        await window.firebaseManager.saveObituary(data);
-                        firebaseSaved = true;
-                        console.log('✅ Salvato su Firebase con successo!');
-                    } catch (firebaseError) {
-                        console.error('❌ Errore Firebase, uso fallback localStorage:', firebaseError);
+                        console.log('🟢 Salvando su Supabase...');
+                        await window.supabaseManager.saveObituary(data);
+                        supabaseSaved = true;
+                        console.log('✅ Salvato su Supabase con successo!');
+                    } catch (supabaseError) {
+                        console.error('❌ Errore Supabase, uso fallback localStorage:', supabaseError);
                     }
                 }
                 
@@ -1091,10 +1092,10 @@
                 this.saveObituaryLocal(data);
                 
                 // Mostra messaggio di successo
-                if (firebaseSaved) {
-                    this.showSuccess('🔥 Necrologio creato su Firebase con successo!');
+                if (supabaseSaved) {
+                    this.showSuccess('🟢 Necrologio creato su Supabase con successo!');
                 } else {
-                    this.showSuccess('💾 Necrologio creato localmente (Firebase non disponibile)');
+                    this.showSuccess('💾 Necrologio creato localmente (Supabase non disponibile)');
                 }
             }
 
@@ -1102,20 +1103,22 @@
             async updateExistingObituary(data) {
                 const { id, source } = this.editingObituary;
                 
-                // 🔥 Aggiorna su Firebase se necessario
-                let firebaseUpdated = false;
-                if (source === 'firebase' && window.firebaseManager && window.firebaseManager.isInitialized) {
+                // 🟢 Aggiorna su Supabase se necessario
+                let supabaseUpdated = false;
+                if (source === 'supabase' && window.supabaseManager && window.supabaseManager.isInitialized) {
                     try {
-                        console.log('🔥 Aggiornando su Firebase...');
-                        // Per Firebase, mantieni l'ID originale
+                        console.log('🟢 Aggiornando su Supabase...');
+                        // Per Supabase, mantieni l'ID originale
                         data.id = id;
-                        await window.firebaseManager.saveObituary(data);
-                        firebaseUpdated = true;
-                        console.log('✅ Aggiornato su Firebase con successo!');
-                    } catch (firebaseError) {
-                        console.error('❌ Errore aggiornamento Firebase:', firebaseError);
+                        await window.supabaseManager.saveObituary(data);
+                        supabaseUpdated = true;
+                        console.log('✅ Aggiornato su Supabase con successo!');
+                    } catch (supabaseError) {
+                        console.error('❌ Errore aggiornamento Supabase:', supabaseError);
                     }
                 }
+                
+
                 
                 // 💾 Aggiorna su localStorage se necessario
                 if (source === 'local') {
@@ -1123,8 +1126,8 @@
                 }
                 
                 // Mostra messaggio di successo
-                if (firebaseUpdated) {
-                    this.showSuccess('🔥 Necrologio aggiornato su Firebase con successo!');
+                if (supabaseUpdated) {
+                    this.showSuccess('🟢 Necrologio aggiornato su Supabase con successo!');
                 } else {
                     this.showSuccess('💾 Necrologio aggiornato localmente con successo!');
                 }
@@ -1155,18 +1158,19 @@
                 }
             }
 
-            // 📊 Carica necrologi esistenti (Firebase + localStorage)
+            // 📊 Carica necrologi esistenti (Supabase + localStorage)
             async loadExistingObituaries() {
                 let allObituaries = [];
                 
                 try {
-                    // 🔥 Carica da Firebase se disponibile
-                    if (window.firebaseManager && window.firebaseManager.isInitialized) {
-                        const firebaseData = await window.firebaseManager.loadObituaries();
-                        allObituaries = firebaseData.map(obit => ({
+                    // 🟢 Carica da Supabase
+                    if (window.supabaseManager && window.supabaseManager.isInitialized) {
+                        const supabaseData = await window.supabaseManager.loadObituaries();
+                        allObituaries = supabaseData.map(obit => ({
                             ...obit,
-                            source: 'firebase'
+                            source: 'supabase'
                         }));
+                        console.log(`📊 Caricati ${supabaseData.length} necrologi da Supabase`);
                     }
                     
                     // 💾 Carica anche da localStorage
@@ -1175,7 +1179,6 @@
                         ...obit,
                         source: 'local'
                     }));
-                    
                     allObituaries = [...allObituaries, ...localObituaries];
                     
                 } catch (error) {
@@ -1198,8 +1201,8 @@
                         <div>
                             <h4 class="font-semibold">${obit.name}</h4>
                             <p class="text-sm text-gray-600">${obit.city} - ${obit.deathDate || obit.dataMorte}</p>
-                            <span class="inline-block px-2 py-1 text-xs rounded ${obit.source === 'firebase' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
-                                ${obit.source === 'firebase' ? '🔥 Firebase' : '💾 Locale'}
+                            <span class="inline-block px-2 py-1 text-xs rounded ${this.getSourceBadgeClass(obit.source)}">
+                                ${this.getSourceBadgeText(obit.source)}
                             </span>
                         </div>
                         <div class="flex gap-2">
@@ -1218,6 +1221,24 @@
                 `).join('');
             }
 
+            // 🏷️ Helper per classi CSS badge sorgente
+            getSourceBadgeClass(source) {
+                switch (source) {
+                    case 'supabase': return 'bg-green-100 text-green-800';
+                    case 'local': return 'bg-blue-100 text-blue-800';
+                    default: return 'bg-gray-100 text-gray-800';
+                }
+            }
+
+            // 🏷️ Helper per testo badge sorgente
+            getSourceBadgeText(source) {
+                switch (source) {
+                    case 'supabase': return '🟢 Supabase';
+                    case 'local': return '💾 Locale';
+                    default: return '❓ Sconosciuto';
+                }
+            }
+
             // ✏️ Modifica necrologio esistente
             async editObituary(id, source) {
                 this.showLoading(true);
@@ -1226,8 +1247,8 @@
                     let obituaryToEdit = null;
                     
                     // Trova il necrologio da modificare
-                    if (source === 'firebase' && window.firebaseManager && window.firebaseManager.isInitialized) {
-                        const allObituaries = await window.firebaseManager.loadObituaries();
+                    if (source === 'supabase' && window.supabaseManager && window.supabaseManager.isInitialized) {
+                        const allObituaries = await window.supabaseManager.loadObituaries();
                         obituaryToEdit = allObituaries.find(obit => obit.id === id);
                     } else if (source === 'local') {
                         const localData = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
@@ -1377,13 +1398,13 @@
                 this.showLoading(true);
                 
                 try {
-                    // 🔥 Elimina da Firebase se è la fonte
-                    if (source === 'firebase' && window.firebaseManager && window.firebaseManager.isInitialized) {
-                        await window.firebaseManager.deleteObituary(id);
-                        console.log('✅ Eliminato da Firebase');
+                    // 🟢 Elimina da Supabase se è la fonte
+                    if (source === 'supabase' && window.supabaseManager && window.supabaseManager.isInitialized) {
+                        await window.supabaseManager.deleteObituary(id);
+                        console.log('✅ Eliminato da Supabase');
                     }
                     
-                    // 💾 Elimina da localStorage se è la fonte o come fallback
+                    // 💾 Elimina da localStorage se è la fonte
                     if (source === 'local') {
                         let saved = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
                         saved = saved.filter(obit => obit.id != id); // Usa != per confronto flessibile

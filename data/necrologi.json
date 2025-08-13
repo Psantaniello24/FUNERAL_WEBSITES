@@ -11,7 +11,12 @@
       "description": "È venuto a mancare serenamente il nostro caro Mario, uomo di grande gentilezza e saggezza. Lascia la moglie Anna, i figli Giuseppe e Maria, e quattro nipoti che lo ricorderanno sempre con immenso amore.",
       "funeralDate": "2024-01-12T10:00",
       "funeralLocation": "Chiesa San Giuseppe, Via Roma 45, Napoli",
-      "publishDate": "2024-01-10"
+      "publishDate": "2024-01-10",
+      "manifestoFile": {
+        "name": "Manifesto_Mario_Rossi.svg",
+        "type": "image/svg+xml",
+        "data": "images/product_images/manifesto_commemorativo.svg"
+      }
     },
     {
       "id": 2,

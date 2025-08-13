@@ -33,9 +33,8 @@
     <link rel="stylesheet" href="css/styles.css">
     
     <!-- Firebase SDK for data loading -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50">
     <!-- Loading State -->
@@ -324,7 +323,7 @@
         </div>
     </footer>
 
-    <script src="js/firebase-config.js"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
     <script src="js/necrologio-detail.js"></script>
     <script>
@@ -333,6 +332,117 @@
             // The loading screen will be hidden by the obituary detail page once data is loaded
             console.log('Dynamic obituary page loaded');
         });
+        
+        // Robust condolence function
+        function openCondolenceFormDetail() {
+            console.log('🔄 Condolence form requested...');
+            
+            // Check if obituaryDetailPage is available
+            if (!window.obituaryDetailPage || !window.obituaryDetailPage.obituary) {
+                console.error('❌ ObituaryDetailPage or obituary not available');
+                alert('Pagina ancora in caricamento. Riprova tra un momento.');
+                return;
+            }
+            
+            const obituary = window.obituaryDetailPage.obituary;
+            console.log('✅ Opening condolence form for:', obituary.nome);
+            
+            // Create modal directly here
+            const modal = document.createElement('div');
+            modal.className = 'modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.id = 'condolence-modal-detail';
+            
+            modal.innerHTML = `
+                <div class="modal-content bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-funeral-dark">Condoglianze per ${obituary.nome}</h3>
+                        <button onclick="closeCondolenceModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-4">
+                            <img src="${obituary.foto || 'images/placeholder-person.svg'}" alt="${obituary.nome}" class="w-16 h-20 object-cover rounded">
+                            <div>
+                                <p class="font-bold text-funeral-dark text-lg">${obituary.nome}</p>
+                                <p class="text-sm text-gray-600">${obituary.dataNascita} - ${obituary.dataMorte}</p>
+                                <p class="text-sm text-gray-500">${obituary.eta} anni, ${obituary.comune}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form id="condolence-form" onsubmit="submitCondolence(event)">
+                        <input type="hidden" name="obituary_id" value="${obituary.id}">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-funeral-dark mb-2">
+                                <i class="fas fa-user mr-1"></i> Nome *
+                            </label>
+                            <input type="text" name="nome" required class="w-full p-3 border border-gray-300 rounded-lg focus:border-funeral-gold focus:ring-2 focus:ring-funeral-gold/20 transition-all">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-funeral-dark mb-2">
+                                <i class="fas fa-envelope mr-1"></i> Email
+                            </label>
+                            <input type="email" name="email" class="w-full p-3 border border-gray-300 rounded-lg focus:border-funeral-gold focus:ring-2 focus:ring-funeral-gold/20 transition-all">
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-funeral-dark mb-2">
+                                <i class="fas fa-heart mr-1"></i> Messaggio di Condoglianze *
+                            </label>
+                            <textarea name="messaggio" required rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:border-funeral-gold focus:ring-2 focus:ring-funeral-gold/20 transition-all resize-none" placeholder="Scrivi qui il tuo messaggio di cordoglio..."></textarea>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button type="button" onclick="closeCondolenceModal()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 transition-colors">
+                                <i class="fas fa-times mr-2"></i> Annulla
+                            </button>
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-funeral-gold to-yellow-600 text-funeral-dark py-3 rounded-lg font-semibold hover:from-yellow-400 hover:to-yellow-500 transition-colors">
+                                <i class="fas fa-heart mr-2"></i> Invia Condoglianze
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+            
+            // Focus on first input
+            setTimeout(() => {
+                const firstInput = modal.querySelector('input[name="nome"]');
+                if (firstInput) firstInput.focus();
+            }, 100);
+        }
+        
+        function closeCondolenceModal() {
+            const modal = document.getElementById('condolence-modal-detail');
+            if (modal) {
+                modal.remove();
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        function submitCondolence(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const condolence = {
+                nome: formData.get('nome'),
+                email: formData.get('email'),
+                messaggio: formData.get('messaggio'),
+                data: new Date().toISOString()
+            };
+            
+            console.log('📝 Condolence submitted:', condolence);
+            
+            // Simulate success
+            alert('Condoglianze inviate con successo. Grazie per il tuo messaggio.');
+            closeCondolenceModal();
+        }
     </script>
 </body>
 </html>

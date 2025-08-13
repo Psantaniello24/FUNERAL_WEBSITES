@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Necrologio Detail</title>
+</head>
+<body>
+    <h1>Debug Pagina Dettaglio Necrologio</h1>
+    <div id="debug-output"></div>
+    
+    <!-- Simula l'elemento other-obituaries -->
+    <div id="other-obituaries" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+        <h3>Altri Necrologi (sarà popolato dal JS):</h3>
+    </div>
+    
+    <!-- Include gli script necessari -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/necrologio-detail.js"></script>
+    
+    <script>
+        // Simula URL con ID necrologio
+        const originalLocation = window.location;
+        delete window.location;
+        window.location = {
+            ...originalLocation,
+            search: '?id=json_1', // Testa con un ID JSON
+            pathname: '/necrologio-detail.html'
+        };
+        
+        async function debugDetailPage() {
+            const output = document.getElementById('debug-output');
+            
+            try {
+                output.innerHTML += '<p>🔄 Inizializzando test pagina dettaglio...</p>';
+                
+                // Aspetta che Supabase sia inizializzato
+                if (window.supabaseManager) {
+                    if (!window.supabaseManager.isInitialized) {
+                        output.innerHTML += '<p>⏳ Aspettando Supabase...</p>';
+                        let attempts = 0;
+                        const maxAttempts = 20;
+                        
+                        while (!window.supabaseManager.isInitialized && attempts < maxAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            attempts++;
+                            if (attempts % 4 === 0) {
+                                output.innerHTML += `<p>⏳ Tentativo ${attempts}/${maxAttempts}...</p>`;
+                            }
+                        }
+                        
+                        if (window.supabaseManager.isInitialized) {
+                            output.innerHTML += '<p>✅ Supabase inizializzato!</p>';
+                        } else {
+                            output.innerHTML += '<p style="color: orange;">⚠️ Timeout Supabase</p>';
+                        }
+                    } else {
+                        output.innerHTML += '<p>✅ Supabase già inizializzato</p>';
+                    }
+                }
+                
+                output.innerHTML += '<p>🔄 Creando ObituaryDetailPage...</p>';
+                
+                // Crea la pagina dettaglio
+                const detailPage = new ObituaryDetailPage();
+                
+                // Aspetta un po' per vedere i risultati
+                setTimeout(() => {
+                    output.innerHTML += '<p>📋 Informazioni pagina dettaglio:</p>';
+                    output.innerHTML += `<p>- ID cercato: ${detailPage.obituaryId}</p>`;
+                    output.innerHTML += `<p>- Necrologio trovato: ${detailPage.obituary ? detailPage.obituary.nome : 'NON TROVATO'}</p>`;
+                    output.innerHTML += `<p>- Necrologi totali: ${detailPage.obituariesManager.obituaries.length}</p>`;
+                    
+                    if (detailPage.obituariesManager.obituaries.length > 0) {
+                        output.innerHTML += '<p>📋 IDs disponibili:</p>';
+                        detailPage.obituariesManager.obituaries.forEach(obit => {
+                            output.innerHTML += `<p>  - ${obit.id}: ${obit.nome}</p>`;
+                        });
+                    }
+                    
+                    // Test elemento other-obituaries
+                    const container = document.getElementById('other-obituaries');
+                    output.innerHTML += `<p>- Elemento other-obituaries: ${container ? '✅ Trovato' : '❌ Non trovato'}</p>`;
+                    
+                    output.innerHTML += '<p>✅ Test completato!</p>';
+                }, 3000);
+                
+            } catch (error) {
+                output.innerHTML += `<p style="color: red;">❌ Errore: ${error.message}</p>`;
+                output.innerHTML += `<p>Stack: ${error.stack}</p>`;
+                console.error('Errore debug:', error);
+            }
+        }
+        
+        // Avvia il debug quando la pagina è caricata
+        document.addEventListener('DOMContentLoaded', debugDetailPage);
+    </script>
+</body>
+</html>

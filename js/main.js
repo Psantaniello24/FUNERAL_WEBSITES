@@ -79,6 +79,432 @@ class Utils {
     }
 }
 
+// 📋 Gestione Necrologi
+class ObituariesManager {
+    constructor() {
+        this.obituaries = [];
+        this.isLoading = false;
+        this.isLoaded = false;
+        console.log('📋 ObituariesManager creato');
+    }
+
+    // 🔄 Carica necrologi da tutte le fonti disponibili
+    async loadObituaries() {
+        if (this.isLoading) {
+            console.log('⏳ Caricamento già in corso...');
+            return;
+        }
+        
+        if (this.isLoaded && this.obituaries.length > 0) {
+            console.log('✅ Dati già caricati, restituisco dati esistenti');
+            return;
+        }
+        
+        this.isLoading = true;
+        console.log('🔄 Inizio caricamento necrologi...');
+        
+        try {
+            let supabaseObituaries = [];
+            let jsonObituaries = [];
+            let adminObituaries = [];
+
+            // 🗄️ PRIORITÀ 1: Carica da Supabase
+            console.log('🔍 Verificando Supabase...', {
+                supabaseManager: !!window.supabaseManager,
+                isInitialized: window.supabaseManager?.isInitialized
+            });
+            
+            // Aspetta che Supabase Manager sia disponibile e inizializzato
+            let attempts = 0;
+            const maxAttempts = 20; // Aumentato il numero di tentativi
+            
+            while ((!window.supabaseManager || !window.supabaseManager.isInitialized) && attempts < maxAttempts) {
+                console.log(`⏳ Tentativo ${attempts + 1}/${maxAttempts} - Aspettando Supabase Manager...`);
+                await new Promise(resolve => setTimeout(resolve, 300));
+                attempts++;
+            }
+            
+            if (window.supabaseManager && window.supabaseManager.isInitialized) {
+                    console.log('🟢 Caricando da Supabase...');
+                    const supabaseData = await window.supabaseManager.loadObituaries();
+                    console.log(`📊 Supabase ha restituito ${supabaseData.length} necrologi`);
+                    
+                    supabaseObituaries = supabaseData.map(obit => ({
+                        id: `supabase_${obit.id}`, // Prefisso per evitare conflitti
+                        nome: obit.name,
+                        dataNascita: obit.birthDate,
+                        dataMorte: obit.deathDate,
+                        eta: obit.age,
+                        foto: obit.photoURL || "images/placeholder-person.svg",
+                        photoFile: obit.photoURL ? {
+                            data: obit.photoURL,
+                            name: obit.photoFileName,
+                            type: obit.photoFileType,
+                            size: obit.photoFileSize
+                        } : null,
+                        manifestoFile: obit.manifestoURL ? {
+                            data: obit.manifestoURL,
+                            name: obit.manifestoFileName,
+                            type: obit.manifestoFileType,
+                            size: obit.manifestoFileSize
+                        } : null,
+                        luogoEsequie: obit.funeralLocation || "Casa Funeraria Santaniello",
+                        oraEsequie: obit.funeralDate ? new Date(obit.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : "10:00",
+                        dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate,
+                        testo: obit.description,
+                        comune: obit.city,
+                        condoglianze: [],
+                        source: 'supabase'
+                    }));
+            } else {
+                if (window.supabaseManager) {
+                    console.warn('⚠️ Supabase Manager trovato ma non inizializzato dopo attesa');
+                } else {
+                    console.warn('⚠️ Supabase Manager non disponibile dopo attesa');
+                }
+            }
+
+            // 📄 PRIORITÀ 2: Carica da file JSON (backup/sviluppo)
+            console.log('🔍 Tentando caricamento da JSON...');
+            try {
+                const response = await fetch('data/necrologi.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                console.log(`📊 JSON contiene ${data.obituaries?.length || 0} necrologi`);
+                
+                jsonObituaries = (data.obituaries || []).map(obit => ({
+                    id: `json_${obit.id}`, // Prefisso per evitare conflitti
+                    nome: obit.name,
+                    dataNascita: obit.birthDate, // Corretto: usa birthDate dal JSON
+                    dataMorte: obit.deathDate,   // Corretto: usa deathDate dal JSON
+                    eta: obit.age,
+                    foto: obit.photo || "images/placeholder-person.svg",
+                    photoFile: obit.photoFile || null, // Aggiungi photoFile per immagini caricate
+                    manifestoFile: obit.manifestoFile || null, // Aggiungi manifestoFile per manifesti caricati
+                    luogoEsequie: obit.funeralLocation || "Casa Funeraria Santaniello", // Corretto: usa funeralLocation
+                    oraEsequie: obit.funeralDate ? new Date(obit.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : "10:00", // Corretto: usa funeralDate
+                    dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate, // Corretto: usa funeralDate e deathDate
+                    testo: obit.description,
+                    comune: obit.city,
+                    condoglianze: [],
+                    source: 'json'
+                }));
+            } catch (jsonError) {
+                console.warn('⚠️ File JSON non trovato o non valido:', jsonError.message);
+            }
+
+            // 💾 PRIORITÀ 3: Carica da localStorage (admin panel)
+            console.log('🔍 Verificando localStorage...');
+            const adminData = JSON.parse(localStorage.getItem('obituaries') || '[]');
+            console.log(`📊 localStorage contiene ${adminData.length} necrologi`);
+            adminObituaries = adminData.map(obit => ({
+                id: `admin_${obit.id}`, // Prefisso per evitare conflitti
+                nome: obit.name,
+                dataNascita: obit.birthDate,
+                dataMorte: obit.deathDate,
+                eta: obit.age,
+                foto: obit.photo || "images/placeholder-person.svg",
+                photoFile: obit.photoFile || null, // Aggiungi photoFile per immagini caricate
+                manifestoFile: obit.manifestoFile || null, // Aggiungi manifestoFile per manifesti caricati
+                luogoEsequie: obit.funeralLocation || "Casa Funeraria Santaniello",
+                oraEsequie: obit.funeralDate ? new Date(obit.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : "10:00",
+                dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate,
+                testo: obit.description,
+                comune: obit.city,
+                condoglianze: [],
+                source: 'admin'
+            }));
+
+            // 🔄 Combina tutte le fonti (Supabase ha priorità)
+            this.obituaries = [
+                ...supabaseObituaries,
+                ...jsonObituaries,
+                ...adminObituaries
+            ];
+
+            // 📊 Log risultati dettagliati
+            const sources = {
+                supabase: supabaseObituaries.length,
+                json: jsonObituaries.length,
+                admin: adminObituaries.length
+            };
+            
+            console.log(`✅ Caricati ${this.obituaries.length} necrologi totali:`, sources);
+            console.log('📋 Dettaglio necrologi caricati:');
+            this.obituaries.forEach((obit, index) => {
+                console.log(`  ${index + 1}. ${obit.nome} (${obit.comune}) [${obit.source}] - ID: ${obit.id}`);
+            });
+            
+            // Se non ci sono necrologi, usa fallback
+            if (this.obituaries.length === 0) {
+                console.log('📋 Nessun necrologio trovato, uso dati predefiniti');
+                this.loadDefaultObituaries();
+            }
+
+            // Aggiorna le visualizzazioni
+            this.updateDisplays();
+            
+            this.isLoaded = true;
+            this.isLoading = false;
+            
+        } catch (error) {
+            console.error('❌ Errore caricamento necrologi:', error);
+            this.loadDefaultObituaries();
+            this.isLoaded = true;
+            this.isLoading = false;
+        }
+    }
+
+    // 🎯 Ottieni foto del necrologio con priorità
+    getObituaryPhoto(obituary) {
+        console.log('📸 Ottenendo foto per:', obituary.nome);
+        
+        // Priorità 1: URL diretto da Supabase (foto)
+        if (obituary.foto && obituary.foto !== 'images/placeholder-person.svg') {
+            console.log('✅ Usando obituary.foto:', obituary.foto);
+            return obituary.foto;
+        }
+        
+        // Priorità 2: photoFile.data (file caricato)
+        if (obituary.photoFile && obituary.photoFile.data) {
+            console.log('✅ Usando photoFile.data:', obituary.photoFile.data);
+            return obituary.photoFile.data;
+        }
+        
+        // Priorità 3: photo (URL diretto)
+        if (obituary.photo && obituary.photo !== 'images/placeholder-person.svg') {
+            console.log('✅ Usando obituary.photo:', obituary.photo);
+            return obituary.photo;
+        }
+        
+        // Fallback: placeholder
+        console.log('⚠️ Usando placeholder per:', obituary.nome);
+        return 'images/placeholder-person.svg';
+    }
+
+    // Altri metodi necessari
+    getRecent(limit = 3) {
+        return this.obituaries.slice(0, limit);
+    }
+
+    getById(id) {
+        console.log(`🔍 Ricerca necrologio con ID: "${id}" (tipo: ${typeof id})`);
+        
+        // Normalizza l'ID di ricerca
+        const searchId = String(id); // Converti sempre a stringa
+        const searchNumeric = parseInt(id); // Converti sempre a numero
+        
+        // Cerca con diverse strategie di matching
+        const obituary = this.obituaries.find(obit => {
+            const obituaryId = obit.id;
+            const obituaryIdStr = String(obituaryId);
+            const obituaryIdNum = parseInt(obituaryId);
+            
+            // Test di matching multipli
+            const matches = [
+                // Matching esatto
+                obituaryId === id,
+                obituaryId === searchId,
+                obituaryId === searchNumeric,
+                
+                // Matching come stringhe
+                obituaryIdStr === searchId,
+                
+                // Matching come numeri (se entrambi sono numeri validi)
+                !isNaN(obituaryIdNum) && !isNaN(searchNumeric) && obituaryIdNum === searchNumeric,
+                
+                // Matching con prefissi
+                obituaryId === `json_${searchId}`,
+                obituaryId === `admin_${searchId}`,
+                obituaryId === `supabase_${searchId}`,
+                
+                // Matching con ID puliti
+                Utils.getCleanId(obituaryId) === searchId,
+                Utils.getCleanId(obituaryId) === String(searchNumeric),
+                !isNaN(parseInt(Utils.getCleanId(obituaryId))) && !isNaN(searchNumeric) && 
+                parseInt(Utils.getCleanId(obituaryId)) === searchNumeric
+            ];
+            
+            const found = matches.some(match => match === true);
+            
+            if (found) {
+                console.log(`✅ Match trovato per ${obituaryId} vs ${id}:`, {
+                    obituaryId,
+                    obituaryIdStr,
+                    obituaryIdNum,
+                    searchId,
+                    searchNumeric,
+                    matchingTests: matches.map((m, i) => `${i}: ${m}`).filter(m => m.includes('true'))
+                });
+            }
+            
+            return found;
+        });
+        
+        if (!obituary) {
+            console.warn(`⚠️ Necrologio con ID "${id}" non trovato`);
+            console.log('📋 ID disponibili:', this.obituaries.map(o => ({
+                id: o.id,
+                tipo: typeof o.id,
+                nome: o.nome,
+                cleanId: Utils.getCleanId(o.id)
+            })));
+            
+            // Suggerisci ID simili
+            if (!isNaN(searchNumeric)) {
+                const suggestions = this.obituaries.filter(obit => {
+                    const cleanId = Utils.getCleanId(obit.id);
+                    const cleanNumeric = parseInt(cleanId);
+                    return !isNaN(cleanNumeric) && Math.abs(cleanNumeric - searchNumeric) <= 2;
+                });
+                
+                if (suggestions.length > 0) {
+                    console.log('💡 Suggerimenti ID simili:', suggestions.map(s => ({
+                        id: s.id,
+                        tipo: typeof s.id,
+                        nome: s.nome
+                    })));
+                }
+            }
+        } else {
+            console.log(`✅ Necrologio trovato: ${obituary.nome} (ID: ${obituary.id}, tipo: ${typeof obituary.id})`);
+        }
+        
+        return obituary || null;
+    }
+
+    getAll() {
+        return [...this.obituaries];
+    }
+
+    search(comune = '', searchTerm = '') {
+        let results = [...this.obituaries];
+        
+        // Filtra per comune se specificato
+        if (comune) {
+            results = results.filter(obit => 
+                obit.comune && obit.comune.toLowerCase() === comune.toLowerCase()
+            );
+        }
+        
+        // Filtra per termine di ricerca se specificato
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            results = results.filter(obit => 
+                obit.nome.toLowerCase().includes(term) ||
+                (obit.testo && obit.testo.toLowerCase().includes(term))
+            );
+        }
+        
+        return results;
+    }
+
+    getObituaryLink(obituary) {
+        // Sempre usa la pagina dinamica per consistenza
+        const link = `necrologio-detail.html?id=${encodeURIComponent(obituary.id)}`;
+        
+        // Debug: verifica che l'ID esista davvero
+        const exists = this.getById(obituary.id);
+        if (!exists) {
+            console.warn(`⚠️ Generando link per ID inesistente: ${obituary.id}`);
+        }
+        
+        return link;
+    }
+    
+    // Metodo per validare tutti i link generati
+    validateAllLinks() {
+        console.log('🔍 Validando tutti i link dei necrologi...');
+        
+        const invalidLinks = [];
+        this.obituaries.forEach(obituary => {
+            const testLookup = this.getById(obituary.id);
+            if (!testLookup) {
+                invalidLinks.push({
+                    id: obituary.id,
+                    nome: obituary.nome,
+                    source: obituary.source
+                });
+            }
+        });
+        
+        if (invalidLinks.length > 0) {
+            console.warn('⚠️ Trovati link potenzialmente problematici:', invalidLinks);
+        } else {
+            console.log('✅ Tutti i link sono validi');
+        }
+        
+        return invalidLinks;
+    }
+
+    updateDisplays() {
+        // Aggiorna eventuali display nella pagina
+        const event = new CustomEvent('obituariesLoaded', { detail: this.obituaries });
+        document.dispatchEvent(event);
+    }
+
+    loadDefaultObituaries() {
+        // Fallback con dati predefiniti se necessario
+        console.log('📋 Caricando necrologi di fallback...');
+        this.obituaries = [
+            {
+                id: 'fallback_1',
+                nome: "Mario Rossi",
+                dataNascita: "1950-03-15",
+                dataMorte: "2024-01-10",
+                eta: 74,
+                foto: "images/placeholder-mario.svg",
+                photoFile: null,
+                manifestoFile: null,
+                luogoEsequie: "Chiesa San Giuseppe, Via Roma 45, Nola",
+                oraEsequie: "10:00",
+                dataEsequie: "2024-01-12",
+                testo: "Con profondo dolore annunciamo la scomparsa del caro Mario, padre e nonno esemplare.",
+                comune: "Nola",
+                condoglianze: [],
+                source: 'fallback'
+            },
+            {
+                id: 'fallback_2',
+                nome: "Anna Bianchi",
+                dataNascita: "1945-07-22",
+                dataMorte: "2024-01-08",
+                eta: 79,
+                foto: "images/placeholder-anna.svg",
+                photoFile: null,
+                manifestoFile: null,
+                luogoEsequie: "Casa Funeraria Santaniello",
+                oraEsequie: "15:00",
+                dataEsequie: "2024-01-10",
+                testo: "Anna ci ha lasciati serenamente, circondata dall'amore della sua famiglia.",
+                comune: "Nola",
+                condoglianze: [],
+                source: 'fallback'
+            },
+            {
+                id: 'fallback_3',
+                nome: "Giuseppe Verdi",
+                dataNascita: "1940-11-08",
+                dataMorte: "2024-01-05",
+                eta: 84,
+                foto: "images/placeholder-giuseppe.svg",
+                photoFile: null,
+                manifestoFile: null,
+                luogoEsequie: "Chiesa Santa Maria delle Grazie",
+                oraEsequie: "11:00",
+                dataEsequie: "2024-01-07",
+                testo: "Maestro di vita e di lavoro, ha lasciato un segno indelebile in tutti coloro che hanno avuto la fortuna di conoscerlo.",
+                comune: "Torre del Greco",
+                condoglianze: [],
+                source: 'fallback'
+            }
+        ];
+        console.log('📋 Caricati 3 necrologi di fallback');
+    }
+}
+
 // Mobile menu functionality
 class MobileMenu {
     constructor() {
@@ -110,356 +536,7 @@ class MobileMenu {
     }
 }
 
-// Obituaries data and functionality  
-class ObituariesManager {
-    constructor() {
-        this.obituaries = [];
-        this.loadObituaries();
-    }
 
-    // 🔥 Carica necrologi con priorità: Firebase > JSON > localStorage > fallback
-    async loadObituaries() {
-        let firebaseObituaries = [];
-        let jsonObituaries = [];
-        let adminObituaries = [];
-
-        try {
-            // 🔥 PRIORITÀ 1: Carica da Firebase (produzione)
-            // Aspetta che Firebase sia inizializzato se disponibile
-            if (window.firebaseManager) {
-                if (!window.firebaseManager.isInitialized) {
-                    console.log('⏳ Aspettando inizializzazione Firebase...');
-                    await window.firebaseManager.init();
-                }
-            }
-            
-            if (window.firebaseManager && window.firebaseManager.isInitialized) {
-                console.log('🔥 Caricamento da Firebase...');
-                const firebaseData = await window.firebaseManager.loadObituaries();
-                
-                firebaseObituaries = firebaseData.map(obit => ({
-                    id: obit.id,
-                    nome: obit.name,
-                    dataNascita: obit.birthDate,
-                    dataMorte: obit.deathDate,
-                    eta: obit.age,
-                    foto: obit.photo || "images/placeholder-person.svg",
-                    photoFile: obit.photoFile || null, // Aggiungi photoFile per immagini caricate
-                    manifestoFile: obit.manifestoFile || null, // Aggiungi manifestoFile per manifesti caricati
-                    luogoEsequie: obit.funeralLocation || "Casa Funeraria Santaniello",
-                    oraEsequie: obit.funeralDate ? new Date(obit.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : "10:00",
-                    dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate,
-                    testo: obit.description,
-                    comune: obit.city,
-                    condoglianze: [],
-                    source: 'firebase'
-                }));
-            }
-
-            // 📄 PRIORITÀ 2: Carica da file JSON (backup/sviluppo)
-            try {
-                const response = await fetch('data/necrologi.json');
-                const data = await response.json();
-                
-                jsonObituaries = (data.obituaries || []).map(obit => ({
-                    id: `json_${obit.id}`, // Prefisso per evitare conflitti
-                    nome: obit.name,
-                    dataNascita: obit.birthDate,
-                    dataMorte: obit.deathDate,
-                    eta: obit.age,
-                    foto: obit.photo,
-                    photoFile: null, // JSON non ha photoFile
-                    manifestoFile: null, // JSON non ha manifestoFile
-                    luogoEsequie: obit.funeralLocation,
-                    oraEsequie: obit.funeralDate ? new Date(obit.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : "10:00",
-                    dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate,
-                    testo: obit.description,
-                    comune: obit.city,
-                    condoglianze: [],
-                    source: 'json'
-                }));
-            } catch (jsonError) {
-                console.warn('⚠️ File JSON non disponibile:', jsonError.message);
-            }
-            
-            // 💾 PRIORITÀ 3: Carica da localStorage admin (temporaneo)
-            const adminData = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
-            adminObituaries = adminData.map(obit => ({
-                id: `admin_${obit.id}`, // Prefisso per evitare conflitti
-                nome: obit.name,
-                dataNascita: obit.birthDate,
-                dataMorte: obit.deathDate,
-                eta: obit.age,
-                foto: obit.photo || "images/placeholder-person.svg",
-                photoFile: obit.photoFile || null, // Aggiungi photoFile per immagini caricate
-                manifestoFile: obit.manifestoFile || null, // Aggiungi manifestoFile per manifesti caricati
-                luogoEsequie: obit.funeralLocation || "Casa Funeraria Santaniello",
-                oraEsequie: obit.funeralDate ? new Date(obit.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : "10:00",
-                dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate,
-                testo: obit.description,
-                comune: obit.city,
-                condoglianze: [],
-                source: 'admin'
-            }));
-
-            // 🔄 Combina tutte le fonti (Firebase ha priorità)
-            this.obituaries = [
-                ...firebaseObituaries,
-                ...jsonObituaries,
-                ...adminObituaries
-            ];
-
-            // 📊 Log risultati
-            const sources = {
-                firebase: firebaseObituaries.length,
-                json: jsonObituaries.length,
-                admin: adminObituaries.length
-            };
-            
-            console.log(`✅ Caricati ${this.obituaries.length} necrologi:`, sources);
-            
-            // Se non ci sono necrologi, usa fallback
-            if (this.obituaries.length === 0) {
-                console.log('📋 Nessun necrologio trovato, uso dati predefiniti');
-                this.loadDefaultObituaries();
-            }
-
-            // Aggiorna le visualizzazioni
-            this.updateDisplays();
-            
-        } catch (error) {
-            console.error('❌ Errore caricamento necrologi:', error);
-            this.loadDefaultObituaries();
-        }
-    }
-
-    // 🔥 Salva necrologio su Firebase
-    async saveToFirebase(obituaryData) {
-        if (!window.firebaseManager || !window.firebaseManager.isInitialized) {
-            throw new Error('Firebase non disponibile');
-        }
-
-        try {
-            const result = await window.firebaseManager.saveObituary(obituaryData);
-            
-            // Ricarica i dati per sincronizzare
-            await this.loadObituaries();
-            
-            return result;
-        } catch (error) {
-            console.error('❌ Errore salvataggio Firebase:', error);
-            throw error;
-        }
-    }
-
-    // Dati predefiniti come fallback
-    loadDefaultObituaries() {
-        this.obituaries = [
-            {
-                id: 1,
-                nome: "Mario Rossi",
-                dataNascita: "1945-03-15",
-                dataMorte: "2024-01-15",
-                foto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop&crop=face",
-                luogoEsequie: "Chiesa San Giuseppe, Via Roma 45, Nola",
-                oraEsequie: "10:00",
-                dataEsequie: "2024-01-18",
-                testo: "Ci ha lasciati serenamente circondato dall'affetto dei suoi cari. Marito devoto, padre amorevole e nonno premuroso, sarà sempre nei nostri cuori.",
-                comune: "Nola",
-                condoglianze: []
-            },
-            {
-                id: 2,
-                nome: "Anna Bianchi",
-                dataNascita: "1952-07-22",
-                dataMorte: "2024-01-14",
-                foto: "https://images.unsplash.com/photo-1544725121-be3bf52e2dc8?w=300&h=400&fit=crop&crop=face",
-                luogoEsequie: "Chiesa Santa Maria, Piazza del Duomo 12, Nola",
-                oraEsequie: "15:30",
-                dataEsequie: "2024-01-17",
-                testo: "Una donna di grande fede e generosità, ha dedicato la sua vita alla famiglia e al prossimo. Il suo sorriso e la sua bontà rimarranno per sempre con noi.",
-                comune: "Nola",
-                condoglianze: []
-            },
-            {
-                id: 3,
-                nome: "Giuseppe Verdi",
-                dataNascita: "1940-11-08",
-                dataMorte: "2024-01-13",
-                foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop&crop=face",
-                luogoEsequie: "Chiesa San Francesco, Via Nazionale 78, Caserta",
-                oraEsequie: "11:00",
-                dataEsequie: "2024-01-16",
-                testo: "Maestro di vita e di lavoro, ha lasciato un segno indelebile in tutti coloro che hanno avuto la fortuna di conoscerlo. Riposa in pace.",
-                comune: "Caserta",
-                condoglianze: []
-            }
-        ];
-        this.updateDisplays();
-    }
-
-    // Aggiorna le visualizzazioni quando i dati cambiano
-    updateDisplays() {
-        // Se siamo nella homepage, aggiorna necrologi recenti
-        if (document.getElementById('recent-obituaries')) {
-            this.displayRecentObituaries(3);
-        }
-        
-        // Se siamo nella pagina necrologi, aggiorna la lista
-        if (window.necrologiManager && typeof window.necrologiManager.displayObituaries === 'function') {
-            window.necrologiManager.displayObituaries();
-        }
-    }
-
-    // Display recent obituaries on homepage
-    displayRecentObituaries(limit = 3) {
-        const container = document.getElementById('recent-obituaries');
-        if (!container) return;
-
-        const recentObituaries = this.getRecent(limit);
-        
-        Utils.showLoading(container);
-        
-        setTimeout(() => {
-            container.innerHTML = recentObituaries.map(obituary => `
-                <div class="necrologio-card bg-white rounded-lg shadow p-6">
-                    <div class="flex items-start space-x-4">
-                        <img src="${this.getObituaryPhoto(obituary)}" alt="${obituary.nome}" class="w-16 h-20 object-cover rounded">
-                        <div class="flex-1">
-                            <h3 class="font-bold text-gray-800 text-lg mb-2">${obituary.nome}</h3>
-                            <p class="text-sm text-gray-600 mb-1">
-                                <i class="fas fa-calendar mr-1"></i>
-                                ${Utils.formatDate(obituary.dataNascita)} - ${Utils.formatDate(obituary.dataMorte)}
-                            </p>
-                            <p class="text-sm text-gray-600 mb-3">
-                                <i class="fas fa-map-marker-alt mr-1"></i>
-                                ${obituary.comune}
-                            </p>
-                            ${obituary.testo ? `<p class="text-sm text-gray-700 line-clamp-2">${obituary.testo}</p>` : '<p class="text-sm text-gray-500 italic">Nessun testo commemorativo</p>'}
-                            ${obituary.manifestoFile ? '<p class="text-sm text-blue-600 mt-2"><i class="fas fa-eye mr-1"></i>Manifesto visualizzabile</p>' : ''}
-                            <a href="${this.getObituaryLink(obituary)}" class="inline-block mt-3 text-gray-600 hover:text-gray-500 font-semibold text-sm">
-                                Leggi tutto →
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }, 800);
-    }
-
-    // Get clean ID for file links (removes prefixes like json_, admin_)
-    getCleanId(id) {
-        if (typeof id === 'string') {
-            // Remove prefixes like 'json_', 'admin_', etc.
-            return id.replace(/^(json_|admin_|firebase_)/, '');
-        }
-        return id;
-    }
-
-    // Generate the correct link for an obituary
-    getObituaryLink(obituary) {
-        const cleanId = this.getCleanId(obituary.id);
-        
-        // Check if this is likely a Firebase/admin obituary (has prefix or is not a simple number)
-        if (typeof obituary.id === 'string' && obituary.id.includes('_')) {
-            // Use dynamic page with URL parameter
-            return `necrologio-detail.html?id=${encodeURIComponent(obituary.id)}`;
-        }
-        
-        // For simple numeric IDs (1, 2, 3), check if static file exists
-        const numericId = parseInt(cleanId);
-        if (!isNaN(numericId) && numericId >= 1 && numericId <= 3) {
-            // Use static file for IDs 1-3 (assuming these exist)
-            return `necrologio-${cleanId}.html`;
-        }
-        
-        // For any other case, use dynamic page
-        return `necrologio-detail.html?id=${encodeURIComponent(obituary.id)}`;
-    }
-
-    getAll() {
-        return this.obituaries;
-    }
-
-    getById(id) {
-        // Handle both string and numeric IDs
-        const numericId = parseInt(id);
-        const stringId = id.toString();
-        
-        return this.obituaries.find(obit => {
-            const obituaryId = obit.id.toString();
-            const cleanObituaryId = this.getCleanId(obit.id).toString();
-            
-            return obituaryId === stringId || 
-                   cleanObituaryId === stringId || 
-                   obit.id === numericId ||
-                   parseInt(cleanObituaryId) === numericId;
-        });
-    }
-
-    getRecent(limit = 3) {
-        return this.obituaries
-            .sort((a, b) => new Date(b.dataMorte) - new Date(a.dataMorte))
-            .slice(0, limit);
-    }
-
-    // 📸 Ottiene la foto corretta per un necrologio (photoFile -> foto -> placeholder)
-    getObituaryPhoto(obituary) {
-        // Priorità: photoFile -> foto/photo -> placeholder
-        if (obituary.photoFile && obituary.photoFile.data) {
-            return obituary.photoFile.data; // Base64 data
-        } else if (obituary.foto || obituary.photo) {
-            return obituary.foto || obituary.photo; // URL
-        } else {
-            return 'images/placeholder-small.svg'; // Placeholder
-        }
-    }
-
-    filterByComune(comune) {
-        if (!comune) return this.obituaries;
-        return this.obituaries.filter(obit => 
-            obit.comune.toLowerCase().includes(comune.toLowerCase())
-        );
-    }
-
-    filterByName(name) {
-        if (!name) return this.obituaries;
-        return this.obituaries.filter(obit => 
-            obit.nome.toLowerCase().includes(name.toLowerCase())
-        );
-    }
-
-    search(comune, name) {
-        let results = this.obituaries;
-        
-        if (comune) {
-            results = results.filter(obit => 
-                obit.comune.toLowerCase().includes(comune.toLowerCase())
-            );
-        }
-        
-        if (name) {
-            results = results.filter(obit => 
-                obit.nome.toLowerCase().includes(name.toLowerCase())
-            );
-        }
-        
-        return results;
-    }
-
-    addCondolence(obituaryId, condolence) {
-        const obituary = this.getById(obituaryId);
-        if (obituary) {
-            obituary.condoglianze.push({
-                ...condolence,
-                data: new Date().toISOString(),
-                id: Date.now()
-            });
-            return true;
-        }
-        return false;
-    }
-}
 
 // Products data and functionality
 class ProductsManager {
@@ -977,20 +1054,46 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // Load recent obituaries for homepage
-function loadRecentObituaries() {
+async function loadRecentObituaries() {
     const container = document.getElementById('recent-obituaries');
-    if (!container) return;
+    if (!container) {
+        console.warn('❌ Container #recent-obituaries non trovato');
+        return;
+    }
 
-    const obituariesManager = new ObituariesManager();
-    const recentObituaries = obituariesManager.getRecent(3);
+    console.log('📋 Inizializzo ObituariesManager...');
+    // Crea o usa l'istanza globale
+    const obituariesManager = window.globalObituariesManager || new ObituariesManager();
+    if (!window.globalObituariesManager) {
+        window.globalObituariesManager = obituariesManager;
+    }
     
     Utils.showLoading(container);
     
-    setTimeout(() => {
-        container.innerHTML = recentObituaries.map(obituary => `
+    // Carica i dati esplicitamente
+    console.log('🔄 Caricando dati necrologi...');
+    await obituariesManager.loadObituaries();
+    
+    // Aspetta che i dati siano caricati
+    let attempts = 0;
+    const maxAttempts = 30; // 3 secondi max
+    
+    const checkData = () => {
+        attempts++;
+        console.log(`🔍 Tentativo ${attempts}: Necrologi disponibili: ${obituariesManager.obituaries.length}`);
+        
+        if (obituariesManager.obituaries.length > 0 || attempts >= maxAttempts) {
+            const recentObituaries = obituariesManager.getRecent(3);
+            console.log(`🎯 Mostrando ${recentObituaries.length} necrologi recenti`);
+            
+            container.innerHTML = recentObituaries.map(obituary => `
             <div class="necrologio-card bg-white rounded-lg shadow p-6">
                 <div class="flex items-start space-x-4">
-                    <img src="${obituariesManager.getObituaryPhoto(obituary)}" alt="${obituary.nome}" class="w-16 h-20 object-cover rounded">
+                    <img src="${obituariesManager.getObituaryPhoto(obituary)}" 
+                         alt="${obituary.nome}" 
+                         class="w-16 h-20 object-cover rounded"
+                         onerror="this.src='images/placeholder-small.svg'; console.warn('❌ Errore caricamento immagine homepage:', this.src);"
+                         onload="console.log('✅ Immagine homepage caricata:', this.src);">
                     <div class="flex-1">
                         <h3 class="font-bold text-gray-800 text-lg mb-2">${obituary.nome}</h3>
                         <p class="text-sm text-gray-600 mb-1">
@@ -1010,5 +1113,21 @@ function loadRecentObituaries() {
                 </div>
             </div>
         `).join('');
-    }, 800);
+            
+            if (recentObituaries.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-info-circle text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600">Nessun necrologio disponibile al momento.</p>
+                    </div>
+                `;
+            }
+        } else {
+            // Riprova dopo 100ms
+            setTimeout(checkData, 100);
+        }
+    };
+    
+    // Inizia il controllo
+    checkData();
 }

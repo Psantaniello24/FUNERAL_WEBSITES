@@ -2,7 +2,11 @@
 
 class ObituariesPage {
     constructor() {
-        this.obituariesManager = new ObituariesManager();
+        // Usa l'istanza globale se disponibile, altrimenti creane una nuova
+        this.obituariesManager = window.globalObituariesManager || new ObituariesManager();
+        if (!window.globalObituariesManager) {
+            window.globalObituariesManager = this.obituariesManager;
+        }
         this.currentPage = 1;
         this.itemsPerPage = 6;
         this.currentResults = [];
@@ -10,7 +14,6 @@ class ObituariesPage {
     }
 
     init() {
-        this.loadObituaries();
         this.setupEventListeners();
     }
 
@@ -19,39 +22,87 @@ class ObituariesPage {
         const comuneSelect = document.getElementById('comune-select');
 
         if (searchInput) {
-            searchInput.addEventListener('input', () => {
+            searchInput.addEventListener('input', async () => {
                 this.currentPage = 1;
-                this.performSearch();
+                await this.performSearch();
             });
         }
 
         if (comuneSelect) {
-            comuneSelect.addEventListener('change', () => {
+            comuneSelect.addEventListener('change', async () => {
                 this.currentPage = 1;
-                this.performSearch();
+                await this.performSearch();
             });
         }
     }
 
-    loadObituaries() {
+    async loadObituaries() {
         this.showLoading();
         
-        setTimeout(() => {
+        try {
+            console.log('🔄 Caricando necrologi in pagina necrologi...');
+            
+            // Aspetta che Supabase sia disponibile e inizializzato
+            console.log('🔍 Stato Supabase prima dell\'attesa:', {
+                supabaseManager: !!window.supabaseManager,
+                isInitialized: window.supabaseManager?.isInitialized
+            });
+            
+            let attempts = 0;
+            const maxAttempts = 20;
+            
+            while ((!window.supabaseManager || !window.supabaseManager.isInitialized) && attempts < maxAttempts) {
+                console.log(`⏳ Tentativo ${attempts + 1}/${maxAttempts} - Aspettando Supabase Manager...`);
+                await new Promise(resolve => setTimeout(resolve, 300));
+                attempts++;
+            }
+            
+            if (window.supabaseManager && window.supabaseManager.isInitialized) {
+                console.log('✅ Supabase Manager disponibile e inizializzato, procedo con il caricamento');
+            } else {
+                if (window.supabaseManager) {
+                    console.warn('⚠️ Supabase Manager trovato ma non inizializzato, procedo senza');
+                } else {
+                    console.warn('⚠️ Supabase Manager non disponibile, procedo senza');
+                }
+            }
+            
+            // Aspetta che i dati vengano caricati
+            await this.obituariesManager.loadObituaries();
+            
+            // Ottieni tutti i necrologi
             this.currentResults = this.obituariesManager.getAll();
+            console.log(`📋 Trovati ${this.currentResults.length} necrologi`);
+            
             this.displayResults();
-        }, 1000);
+        } catch (error) {
+            console.error('❌ Errore caricamento necrologi:', error);
+            this.currentResults = [];
+            this.displayResults();
+        }
     }
 
-    performSearch() {
+    async performSearch() {
         const searchTerm = document.getElementById('search-input')?.value || '';
         const comune = document.getElementById('comune-select')?.value || '';
 
         this.showLoading();
 
-        setTimeout(() => {
+        try {
+            // Assicurati che i dati siano caricati prima di cercare
+            if (this.obituariesManager.obituaries.length === 0) {
+                console.log('🔄 Dati non ancora caricati, caricamento in corso...');
+                await this.obituariesManager.loadObituaries();
+            }
+
             this.currentResults = this.obituariesManager.search(comune, searchTerm);
+            console.log(`🔍 Ricerca completata: ${this.currentResults.length} risultati`);
             this.displayResults();
-        }, 500);
+        } catch (error) {
+            console.error('❌ Errore durante la ricerca:', error);
+            this.currentResults = [];
+            this.displayResults();
+        }
     }
 
     showLoading() {
@@ -271,29 +322,14 @@ class ObituariesPage {
 
     // Generate the correct link for an obituary
     getObituaryLink(obituary) {
-        const cleanId = this.getCleanId(obituary.id);
-        
-        // Check if this is likely a Firebase/admin obituary (has prefix or is not a simple number)
-        if (typeof obituary.id === 'string' && obituary.id.includes('_')) {
-            // Use dynamic page with URL parameter
-            return `necrologio-detail.html?id=${encodeURIComponent(obituary.id)}`;
-        }
-        
-        // For simple numeric IDs (1, 2, 3), check if static file exists
-        const numericId = parseInt(cleanId);
-        if (!isNaN(numericId) && numericId >= 1 && numericId <= 3) {
-            // Use static file for IDs 1-3 (assuming these exist)
-            return `necrologio-${cleanId}.html`;
-        }
-        
-        // For any other case, use dynamic page
+        // Sempre usa la pagina dinamica per consistenza
         return `necrologio-detail.html?id=${encodeURIComponent(obituary.id)}`;
     }
 }
 
 // Condolence form modal
 function openCondolenceForm(obituaryId) {
-    const obituariesManager = new ObituariesManager();
+    const obituariesManager = window.globalObituariesManager || new ObituariesManager();
     // Clean the ID to handle prefixed IDs
     const cleanId = typeof obituaryId === 'string' ? obituaryId.replace(/^(json_|admin_|firebase_)/, '') : obituaryId;
     const obituary = obituariesManager.getById(cleanId);
@@ -371,16 +407,39 @@ function closeCondolenceModal() {
 }
 
 // Clear filters function
-function clearFilters() {
+async function clearFilters() {
     document.getElementById('search-input').value = '';
     document.getElementById('comune-select').value = '';
     obituariesPage.currentPage = 1;
-    obituariesPage.loadObituaries();
+    await obituariesPage.loadObituaries();
 }
 
 // Initialize obituaries page
 let obituariesPage;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 DOM caricato, inizializzando pagina necrologi...');
+    
+    // Aspetta che Supabase sia completamente inizializzato prima di creare ObituariesPage
+    console.log('⏳ Aspettando che Supabase sia pronto...');
+    let attempts = 0;
+    const maxAttempts = 30; // Più tempo per Supabase
+    
+    while ((!window.supabaseManager || !window.supabaseManager.isInitialized) && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        attempts++;
+        if (attempts % 10 === 0) {
+            console.log(`⏳ Aspettando Supabase... tentativo ${attempts}/${maxAttempts}`);
+        }
+    }
+    
+    if (window.supabaseManager && window.supabaseManager.isInitialized) {
+        console.log('✅ Supabase pronto, creo ObituariesPage');
+    } else {
+        console.warn('⚠️ Supabase non pronto, procedo comunque');
+    }
+    
     obituariesPage = new ObituariesPage();
+    // Carica i dati iniziali
+    await obituariesPage.loadObituaries();
 });

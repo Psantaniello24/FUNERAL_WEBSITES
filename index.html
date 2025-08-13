@@ -32,10 +32,8 @@
     
     <link rel="stylesheet" href="css/styles.css">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
@@ -368,8 +366,76 @@
         </div>
     </footer>
 
-    <script src="js/firebase-config.js"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
     <script src="js/modern-theme.js"></script>
+    <script>
+        // Versione semplificata per test
+        window.addEventListener('load', function() {
+            console.log('🚀 Pagina caricata completamente');
+            
+            setTimeout(() => {
+                console.log('🔍 Test dipendenze:');
+                console.log('- ObituariesManager:', typeof ObituariesManager);
+                console.log('- loadRecentObituaries:', typeof loadRecentObituaries);
+                console.log('- window.supabaseManager:', typeof window.supabaseManager);
+                
+                // Test diretto senza ObituariesManager
+                testDirectLoading();
+            }, 2000);
+        });
+        
+        async function testDirectLoading() {
+            const container = document.getElementById('recent-obituaries');
+            if (!container) {
+                console.error('❌ Container non trovato');
+                return;
+            }
+            
+            console.log('🧪 Test caricamento diretto...');
+            
+            // Mostra loading
+            container.innerHTML = '<div style="text-align: center; padding: 40px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: #4CAF50; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 20px;">Caricando necrologi...</p></div>';
+            
+            try {
+                if (window.supabaseManager && window.supabaseManager.isInitialized) {
+                    console.log('✅ Supabase disponibile, caricando...');
+                    const data = await window.supabaseManager.loadObituaries();
+                    console.log('📊 Dati ricevuti:', data.length);
+                    
+                    if (data.length > 0) {
+                        // Mostra primi 3 necrologi
+                        const recent = data.slice(0, 3);
+                        container.innerHTML = recent.map(obit => `
+                            <div style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                                <div style="display: flex; gap: 15px;">
+                                    <img src="${obit.photoURL || 'images/placeholder-person.svg'}" 
+                                         alt="${obit.name}" 
+                                         style="width: 60px; height: 80px; object-fit: cover; border-radius: 4px;"
+                                         onerror="this.src='images/placeholder-person.svg';">
+                                    <div style="flex: 1;">
+                                        <h3 style="margin: 0 0 8px 0; font-size: 1.1em; font-weight: bold;">${obit.name}</h3>
+                                        <p style="margin: 4px 0; color: #666; font-size: 0.9em;">📅 ${obit.birthDate || 'N/A'} - ${obit.deathDate || 'N/A'}</p>
+                                        <p style="margin: 4px 0; color: #666; font-size: 0.9em;">📍 ${obit.city || 'N/A'}</p>
+                                        <p style="margin: 8px 0 0 0; color: #333; font-size: 0.9em;">${(obit.description || '').substring(0, 100)}${obit.description && obit.description.length > 100 ? '...' : ''}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                        
+                        console.log('✅ Necrologi mostrati con successo!');
+                    } else {
+                        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>Nessun necrologio disponibile</p></div>';
+                    }
+                } else {
+                    console.error('❌ Supabase non disponibile');
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: #f00;"><p>Errore: Supabase non inizializzato</p></div>';
+                }
+            } catch (error) {
+                console.error('❌ Errore:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #f00;"><p>Errore nel caricamento</p></div>';
+            }
+        }
+    </script>
 </body>
 </html>

@@ -2,7 +2,11 @@
 
 class ObituaryDetailPage {
     constructor() {
-        this.obituariesManager = new ObituariesManager();
+        // Usa l'istanza globale se disponibile, altrimenti creane una nuova
+        this.obituariesManager = window.globalObituariesManager || new ObituariesManager();
+        if (!window.globalObituariesManager) {
+            window.globalObituariesManager = this.obituariesManager;
+        }
         this.obituaryId = this.getObituaryIdFromUrl();
         this.obituary = null;
         this.init();
@@ -13,7 +17,14 @@ class ObituaryDetailPage {
         const urlParams = new URLSearchParams(window.location.search);
         const idParam = urlParams.get('id');
         
+        console.log('🔍 Estrazione ID da URL:', {
+            search: window.location.search,
+            pathname: window.location.pathname,
+            idParam: idParam
+        });
+        
         if (idParam) {
+            console.log('✅ ID trovato da parametro URL:', idParam);
             // From URL parameter (e.g., necrologio-detail.html?id=firebase_abc123)
             return idParam;
         }
@@ -21,10 +32,36 @@ class ObituaryDetailPage {
         // Extract ID from URL like "necrologio-1.html" (legacy static pages)
         const pathname = window.location.pathname;
         const match = pathname.match(/necrologio-(\d+)\.html/);
-        return match ? parseInt(match[1]) : null;
+        const legacyId = match ? parseInt(match[1]) : null;
+        
+        console.log('🔍 ID estratto da pathname:', legacyId);
+        return legacyId;
     }
 
     async init() {
+        console.log('🔄 Inizializzando pagina dettaglio necrologio...');
+        
+        // Aspetta che Supabase sia inizializzato se disponibile
+        if (window.supabaseManager && !window.supabaseManager.isInitialized) {
+            console.log('⏳ Aspettando inizializzazione Supabase per pagina dettaglio...');
+            let attempts = 0;
+            const maxAttempts = 20;
+            
+            while (!window.supabaseManager.isInitialized && attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                attempts++;
+                if (attempts % 5 === 0) {
+                    console.log(`⏳ Aspettando Supabase... tentativo ${attempts}/${maxAttempts}`);
+                }
+            }
+            
+            if (window.supabaseManager.isInitialized) {
+                console.log('✅ Supabase inizializzato per pagina dettaglio');
+            } else {
+                console.warn('⚠️ Timeout Supabase per pagina dettaglio');
+            }
+        }
+        
         // Wait for obituaries to be loaded
         await this.waitForObituaries();
         this.loadObituary();
@@ -33,30 +70,82 @@ class ObituaryDetailPage {
     }
 
     async waitForObituaries() {
+        console.log('⏳ Aspettando caricamento necrologi...');
+        
+        // Carica esplicitamente i dati se non sono già caricati
+        if (!this.obituariesManager.obituaries || this.obituariesManager.obituaries.length === 0) {
+            console.log('🔄 Necrologi non ancora caricati, avvio caricamento...');
+            await this.obituariesManager.loadObituaries();
+        }
+        
         // Wait until obituaries are loaded
-        const maxWait = 10000; // 10 seconds maximum
+        const maxWait = 15000; // 15 seconds maximum
         const startTime = Date.now();
         
         while (Date.now() - startTime < maxWait) {
             if (this.obituariesManager.obituaries && this.obituariesManager.obituaries.length > 0) {
+                console.log(`📋 Caricati ${this.obituariesManager.obituaries.length} necrologi per pagina dettaglio`);
                 return;
             }
-            // Wait 100ms before checking again
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Wait 200ms before checking again
+            await new Promise(resolve => setTimeout(resolve, 200));
         }
         
-        console.warn('Timeout waiting for obituaries to load');
+        console.warn('⚠️ Timeout aspettando caricamento necrologi');
     }
 
     loadObituary() {
+        console.log('🔍 Caricando obituary con ID:', this.obituaryId);
+        console.log('📊 Necrologi disponibili:', this.obituariesManager.obituaries.length);
+        
+        // Debug: mostra tutti gli ID disponibili
+        console.log('📋 IDs disponibili:', this.obituariesManager.obituaries.map(o => ({
+            id: o.id,
+            nome: o.nome,
+            tipo: typeof o.id,
+            source: o.source,
+            hasManifesto: !!o.manifestoFile
+        })));
+        
+        // Debug specifico per manifesti
+        const obituariesWithManifesto = this.obituariesManager.obituaries.filter(o => o.manifestoFile);
+        console.log(`📄 Necrologi con manifesto (${obituariesWithManifesto.length}):`, 
+            obituariesWithManifesto.map(o => ({
+                id: o.id,
+                nome: o.nome,
+                source: o.source,
+                manifestoName: o.manifestoFile.name,
+                manifestoType: o.manifestoFile.type
+            }))
+        );
+        
         this.obituary = this.obituariesManager.getById(this.obituaryId);
         
         if (!this.obituary) {
-            console.error(`Obituary with ID ${this.obituaryId} not found`);
+            console.error(`❌ Obituary con ID "${this.obituaryId}" (tipo: ${typeof this.obituaryId}) non trovato`);
+            
+            // Test di ricerca con diversi formati ID
+            console.log('🔍 Test ricerca ID:');
+            const testIds = [
+                this.obituaryId,
+                String(this.obituaryId),
+                parseInt(this.obituaryId),
+                `json_${this.obituaryId}`,
+                `admin_${this.obituaryId}`,
+                `supabase_${this.obituaryId}`
+            ];
+            
+            testIds.forEach(testId => {
+                const result = this.obituariesManager.getById(testId);
+                console.log(`  - "${testId}": ${result ? `✅ ${result.nome}` : '❌ Non trovato'}`);
+            });
+            
             // Show error message instead of redirecting immediately
             this.showNotFoundMessage();
             return;
         }
+        
+        console.log('✅ Obituary caricato:', this.obituary.nome);
         
         // Hide loading screen if it exists
         const loadingScreen = document.getElementById('loading-screen');
@@ -97,6 +186,12 @@ class ObituaryDetailPage {
     }
 
     updatePageContent() {
+        // Controllo di sicurezza: verifica che obituary sia caricato
+        if (!this.obituary) {
+            console.error('❌ Impossibile aggiornare contenuto: obituary non caricato');
+            this.showNotFoundMessage();
+            return;
+        }
         // Update photo and name using specific IDs
         const photoImg = document.getElementById('obituary-photo');
         const nameH1 = document.getElementById('obituary-name');
@@ -155,6 +250,7 @@ class ObituaryDetailPage {
         }
 
         // Aggiungi link manifesto se presente
+        console.log('🔄 Chiamando addManifestoLink per:', this.obituary.nome);
         this.addManifestoLink();
 
         // Update breadcrumb using specific ID
@@ -166,14 +262,29 @@ class ObituaryDetailPage {
 
         // Update condolence button with correct ID
         const condolenceBtn = document.getElementById('condolence-btn');
+        console.log('🔍 Debug condoglianze:', {
+            condolenceBtn: !!condolenceBtn,
+            obituaryId: this.obituaryId,
+            obituaryName: this.obituary.nome
+        });
+        
         if (condolenceBtn) {
             // For dynamic pages, just use openCondolenceFormDetail without parameters
             // since the function will get the obituary from obituaryDetailPage.obituary
             condolenceBtn.setAttribute('onclick', `openCondolenceFormDetail()`);
+            console.log('✅ Bottone condoglianze configurato correttamente');
+        } else {
+            console.warn('⚠️ Bottone condoglianze (#condolence-btn) non trovato nel DOM');
         }
     }
 
     calculateAge() {
+        // Controllo di sicurezza: verifica che obituary esista
+        if (!this.obituary || !this.obituary.dataNascita || !this.obituary.dataMorte) {
+            console.warn('⚠️ Dati obituary mancanti per calcolo età');
+            return 0;
+        }
+        
         const birth = new Date(this.obituary.dataNascita);
         const death = new Date(this.obituary.dataMorte);
         return death.getFullYear() - birth.getFullYear();
@@ -181,11 +292,35 @@ class ObituaryDetailPage {
 
     // 📄 Mostra il manifesto inline se presente
     addManifestoLink() {
-        if (!this.obituary.manifestoFile) return;
+        // Controllo di sicurezza: verifica che obituary esista
+        if (!this.obituary) {
+            console.warn('⚠️ Obituary non caricato, impossibile mostrare manifesto');
+            return;
+        }
+        
+        console.log('🔍 Debug manifesto completo:', {
+            hasObituary: !!this.obituary,
+            obituaryName: this.obituary.nome,
+            obituaryId: this.obituary.id,
+            obituarySource: this.obituary.source,
+            hasManifestoFile: !!this.obituary.manifestoFile,
+            manifestoFile: this.obituary.manifestoFile
+        });
+        
+        // Verifica manifesto - dovrebbe essere già mappato correttamente in main.js
+        if (!this.obituary.manifestoFile) {
+            console.log('📄 Nessun manifesto disponibile per questo necrologio');
+            return;
+        }
+        
+        console.log('📄 Manifesto trovato, procedo con la visualizzazione');
 
         // Trova un punto dove inserire il manifesto (dopo la descrizione)
         const descriptionEl = document.getElementById('obituary-description');
-        if (!descriptionEl) return;
+        if (!descriptionEl) {
+            console.error('❌ Elemento #obituary-description non trovato');
+            return;
+        }
 
         // Rimuovi manifesto esistente se presente
         const existingManifesto = document.getElementById('manifesto-viewer');
@@ -210,9 +345,11 @@ class ObituaryDetailPage {
         manifestoDiv.appendChild(headerDiv);
         
         // Determina il tipo di file e mostra di conseguenza
-        const fileType = this.obituary.manifestoFile.type;
+        const fileType = this.obituary.manifestoFile.type || 'unknown';
         const manifestoContent = document.createElement('div');
         manifestoContent.className = 'bg-white rounded-lg overflow-hidden shadow-sm';
+        
+        console.log('📄 Tipo file manifesto:', fileType);
         
         if (fileType === 'application/pdf') {
             // Per PDF, usa un iframe
@@ -231,7 +368,7 @@ class ObituaryDetailPage {
                     </a>
                 </div>
             `;
-        } else if (fileType.startsWith('image/')) {
+        } else if (fileType && fileType.startsWith('image/')) {
             // Per immagini, mostra direttamente
             manifestoContent.innerHTML = `
                 <img 
@@ -267,8 +404,10 @@ class ObituaryDetailPage {
         
         manifestoDiv.appendChild(manifestoContent);
         
-        // Inserisci dopo la descrizione
+        // Inserisci dopo la descrizione (stesso metodo che funziona per Mario Rossi)
         descriptionEl.parentNode.insertBefore(manifestoDiv, descriptionEl.nextSibling);
+        
+        console.log('✅ Manifesto inserito per:', this.obituary.nome);
     }
 
     // Generate the correct link for an obituary (same as in ObituariesManager)
@@ -332,9 +471,18 @@ class ObituaryDetailPage {
 
     loadOtherObituaries() {
         const container = document.getElementById('other-obituaries');
+        
+        // Controlla se l'elemento esiste
+        if (!container) {
+            console.warn('⚠️ Elemento #other-obituaries non trovato, salto il caricamento');
+            return;
+        }
+        
         const otherObituaries = this.obituariesManager.getAll()
             .filter(obit => obit.id !== this.obituaryId)
             .slice(0, 2); // Show only 2 other obituaries
+
+        console.log(`📋 Caricando ${otherObituaries.length} altri necrologi per la sidebar`);
 
         container.innerHTML = otherObituaries.map(obituary => `
             <div class="necrologio-card bg-white rounded-lg shadow p-6">
@@ -381,18 +529,31 @@ class ObituaryDetailPage {
 
 // Condolence form functionality
 function openCondolenceFormDetail(obituaryId) {
-    console.log('Opening condolence form...', obituaryId);
+    console.log('🔄 Apertura form condoglianze...', obituaryId);
+    console.log('🔍 Debug stato:', {
+        obituaryDetailPage: !!obituaryDetailPage,
+        hasObituary: !!obituaryDetailPage?.obituary,
+        obituaryName: obituaryDetailPage?.obituary?.nome,
+        Utils: !!Utils,
+        showNotification: !!Utils?.showNotification
+    });
     
     // Use the existing obituary data from the page instead of reloading
     const obituary = obituaryDetailPage?.obituary;
     
     if (!obituary) {
-        console.error('Obituary not found for condolence form. ObituaryDetailPage:', obituaryDetailPage);
-        Utils.showNotification('Errore: necrologio non trovato. Riprova tra qualche secondo.', 'error');
+        console.error('❌ Obituary not found for condolence form. ObituaryDetailPage:', obituaryDetailPage);
+        
+        // Fallback: prova a usare Utils se disponibile
+        if (Utils && Utils.showNotification) {
+            Utils.showNotification('Errore: necrologio non trovato. Riprova tra qualche secondo.', 'error');
+        } else {
+            alert('Errore: necrologio non trovato. Riprova tra qualche secondo.');
+        }
         return;
     }
     
-    console.log('Opening condolence form for:', obituary.nome);
+    console.log('✅ Apertura form condoglianze per:', obituary.nome);
 
     const modal = document.createElement('div');
     modal.className = 'modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
@@ -504,6 +665,9 @@ function openCondolenceFormDetail(obituaryId) {
     }, 100);
 }
 
+// Assign to global immediately after function definition
+window.openCondolenceFormDetail = openCondolenceFormDetail;
+
 function closeCondolenceModalDetail() {
     const modal = document.getElementById('condolence-modal-detail');
     if (modal) {
@@ -511,6 +675,9 @@ function closeCondolenceModalDetail() {
         document.body.style.overflow = 'auto';
     }
 }
+
+// Assign to global immediately after function definition
+window.closeCondolenceModalDetail = closeCondolenceModalDetail;
 
 // Share functionality
 function shareObituary() {
@@ -683,6 +850,9 @@ let obituaryDetailPage;
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Initializing obituary detail page...');
     obituaryDetailPage = new ObituaryDetailPage();
+    
+    // Make obituaryDetailPage globally available for testing
+    window.obituaryDetailPage = obituaryDetailPage;
     
     // Override form handler for condolences
     const formHandler = new CondolenceFormHandler();
