@@ -66,7 +66,7 @@ class ObituaryDetailPage {
         await this.waitForObituaries();
         this.loadObituary();
         this.loadCondolences();
-        this.loadOtherObituaries();
+
     }
 
     async waitForObituaries() {
@@ -298,28 +298,37 @@ class ObituaryDetailPage {
             return;
         }
         
-        console.log('🔍 Debug manifesto completo:', {
-            hasObituary: !!this.obituary,
-            obituaryName: this.obituary.nome,
-            obituaryId: this.obituary.id,
-            obituarySource: this.obituary.source,
-            hasManifestoFile: !!this.obituary.manifestoFile,
-            manifestoFile: this.obituary.manifestoFile
-        });
+        console.log('🔍 Debug manifesto:', this.obituary.nome, 'ha manifesto:', !!this.obituary.manifestoFile);
+        
+        if (this.obituary.manifestoFile) {
+            console.log('📄 Manifesto trovato:', this.obituary.manifestoFile.name, 'URL:', this.obituary.manifestoFile.data);
+        }
         
         // Verifica manifesto - dovrebbe essere già mappato correttamente in main.js
         if (!this.obituary.manifestoFile) {
-            console.log('📄 Nessun manifesto disponibile per questo necrologio');
+            console.log('📄 Nessun manifesto per:', this.obituary.nome);
             return;
         }
         
         console.log('📄 Manifesto trovato, procedo con la visualizzazione');
 
-        // Trova un punto dove inserire il manifesto (dopo la descrizione)
-        const descriptionEl = document.getElementById('obituary-description');
-        if (!descriptionEl) {
-            console.error('❌ Elemento #obituary-description non trovato');
-            return;
+        // Trova il container delle condoglianze per inserire il manifesto dopo
+        const condolencesContainer = document.querySelector('.bg-white.rounded-lg.shadow-lg:last-child') || 
+                                   document.getElementById('condolences-section') ||
+                                   document.querySelector('[class*="condolence"]') ||
+                                   document.querySelector('.mt-8.bg-white');
+        
+        console.log('🔍 Container condoglianze trovato:', condolencesContainer);
+        
+        if (!condolencesContainer) {
+            console.error('❌ Container condoglianze non trovato, uso fallback');
+            // Fallback: inserisci alla fine del main content
+            const mainContent = document.querySelector('main') || document.querySelector('.container') || document.body;
+            if (mainContent) {
+                mainContent.appendChild(manifestoDiv);
+                console.log('✅ Manifesto inserito nel main content come fallback');
+                return;
+            }
         }
 
         // Rimuovi manifesto esistente se presente
@@ -404,10 +413,40 @@ class ObituaryDetailPage {
         
         manifestoDiv.appendChild(manifestoContent);
         
-        // Inserisci dopo la descrizione (stesso metodo che funziona per Mario Rossi)
-        descriptionEl.parentNode.insertBefore(manifestoDiv, descriptionEl.nextSibling);
+        // Inserisci dopo le condoglianze
+        console.log('🔧 Inserendo manifesto nel DOM per:', this.obituary.nome);
+        console.log('📍 Container condoglianze:', condolencesContainer);
         
-        console.log('✅ Manifesto inserito per:', this.obituary.nome);
+        try {
+            // Inserisci dopo il container delle condoglianze
+            if (condolencesContainer.parentNode) {
+                condolencesContainer.parentNode.insertBefore(manifestoDiv, condolencesContainer.nextSibling);
+                console.log('✅ Manifesto inserito dopo le condoglianze');
+            } else {
+                // Fallback: inserisci dopo il container stesso
+                condolencesContainer.appendChild(manifestoDiv);
+                console.log('✅ Manifesto inserito dentro il container condoglianze');
+            }
+            
+            // Verifica che sia stato inserito
+            setTimeout(() => {
+                const inserted = document.getElementById('manifesto-viewer');
+                console.log('🔍 Verifica inserimento:', {
+                    presente: !!inserted,
+                    visibile: inserted ? inserted.offsetHeight > 0 : false,
+                    altezza: inserted ? inserted.offsetHeight : 'N/A'
+                });
+                
+                if (inserted) {
+                    console.log('✅ Manifesto inserito correttamente nella posizione desiderata');
+                } else {
+                    console.error('❌ Manifesto non trovato dopo inserimento');
+                }
+            }, 100);
+            
+        } catch (error) {
+            console.error('❌ Errore inserimento manifesto:', error);
+        }
     }
 
     // Generate the correct link for an obituary (same as in ObituariesManager)
@@ -469,44 +508,7 @@ class ObituaryDetailPage {
         `).join('');
     }
 
-    loadOtherObituaries() {
-        const container = document.getElementById('other-obituaries');
-        
-        // Controlla se l'elemento esiste
-        if (!container) {
-            console.warn('⚠️ Elemento #other-obituaries non trovato, salto il caricamento');
-            return;
-        }
-        
-        const otherObituaries = this.obituariesManager.getAll()
-            .filter(obit => obit.id !== this.obituaryId)
-            .slice(0, 2); // Show only 2 other obituaries
 
-        console.log(`📋 Caricando ${otherObituaries.length} altri necrologi per la sidebar`);
-
-        container.innerHTML = otherObituaries.map(obituary => `
-            <div class="necrologio-card bg-white rounded-lg shadow p-6">
-                <div class="flex items-start space-x-4">
-                    <img src="${this.obituariesManager.getObituaryPhoto(obituary)}" alt="${obituary.nome}" class="w-16 h-20 object-cover rounded">
-                    <div class="flex-1">
-                        <h3 class="font-bold text-funeral-dark text-lg mb-2">${obituary.nome}</h3>
-                        <p class="text-sm text-gray-600 mb-1">
-                            <i class="fas fa-calendar mr-1"></i>
-                            ${this.formatDate(obituary.dataNascita)} - ${this.formatDate(obituary.dataMorte)}
-                        </p>
-                        <p class="text-sm text-gray-600 mb-3">
-                            <i class="fas fa-map-marker-alt mr-1"></i>
-                            ${obituary.comune}
-                        </p>
-                                                    ${obituary.testo ? `<p class="text-sm text-gray-700 line-clamp-2 mb-3">${obituary.testo}</p>` : ''}
-                        <a href="${this.getObituaryLink(obituary)}" class="text-funeral-gold hover:text-funeral-blue font-semibold text-sm">
-                            Leggi tutto →
-                        </a>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
 
     formatDate(dateString) {
         const date = new Date(dateString);

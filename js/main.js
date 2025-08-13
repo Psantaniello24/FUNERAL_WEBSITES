@@ -129,6 +129,13 @@ class ObituariesManager {
                     const supabaseData = await window.supabaseManager.loadObituaries();
                     console.log(`📊 Supabase ha restituito ${supabaseData.length} necrologi`);
                     
+                    // Debug manifesti da Supabase
+                    const withManifesto = supabaseData.filter(o => o.manifestoURL);
+                    console.log(`📄 Necrologi con manifesto da Supabase: ${withManifesto.length}`);
+                    withManifesto.forEach(o => {
+                        console.log(`- ${o.name}: ${o.manifestoFileName} (${o.manifestoURL})`);
+                    });
+                    
                     supabaseObituaries = supabaseData.map(obit => ({
                         id: `supabase_${obit.id}`, // Prefisso per evitare conflitti
                         nome: obit.name,
