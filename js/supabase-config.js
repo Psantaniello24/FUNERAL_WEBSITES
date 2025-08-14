@@ -506,6 +506,115 @@ CREATE TABLE ${this.tableName} (
         }
     }
 
+    // 💌 Salva una condoglianza su Supabase
+    async saveCondolence(condolenceData) {
+        if (!this.isInitialized) {
+            throw new Error('Supabase non inizializzato');
+        }
+
+        try {
+            console.log('💌 Salvando condoglianza su Supabase...');
+
+            // Prepara dati per database
+            const dbData = {
+                necrologio_id: condolenceData.necrologio_id,
+                nome: condolenceData.nome,
+                email: condolenceData.email || null,
+                messaggio: condolenceData.messaggio,
+                data_invio: condolenceData.data || new Date().toISOString(),
+                status: 'active'
+            };
+
+            // Salva su database
+            const { data, error } = await this.supabase
+                .from('condoglianze')
+                .insert(dbData)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            console.log('✅ Condoglianza salvata su Supabase:', data.id);
+            return { success: true, id: data.id, data };
+
+        } catch (error) {
+            console.error('❌ Errore salvataggio condoglianza:', error);
+            throw error;
+        }
+    }
+
+    // 📋 Carica condoglianze per un necrologio da Supabase
+    async loadCondolences(obituaryId) {
+        if (!this.isInitialized) {
+            console.warn('⚠️ Supabase non inizializzato per caricamento condoglianze');
+            return [];
+        }
+
+        try {
+            console.log('📋 Caricando condoglianze da Supabase per necrologio:', obituaryId);
+
+            // Usa l'ID esatto come salvato nel database (senza pulizia automatica)
+            console.log(`🔍 Cercando condoglianze per ID esatto: "${obituaryId}"`);
+
+            const { data, error } = await this.supabase
+                .from('condoglianze')
+                .select('*')
+                .eq('necrologio_id', obituaryId)
+                .eq('status', 'active')
+                .order('data_invio', { ascending: false });
+
+            if (error) {
+                console.error('❌ Errore caricamento condoglianze Supabase:', error);
+                return [];
+            }
+
+            console.log(`✅ Caricate ${data.length} condoglianze da Supabase per necrologio "${obituaryId}"`);
+
+            // Converti formato database in formato applicazione
+            return data.map(row => ({
+                id: row.id,
+                nome: row.nome,
+                email: row.email,
+                messaggio: row.messaggio,
+                data: row.data_invio,
+                necrologio_id: row.necrologio_id
+            }));
+
+        } catch (error) {
+            console.error('❌ Errore caricamento condoglianze:', error);
+            return [];
+        }
+    }
+
+    // 🗑️ Elimina condoglianza (soft delete)
+    async deleteCondolence(id) {
+        if (!this.isInitialized) {
+            throw new Error('Supabase non inizializzato');
+        }
+
+        try {
+            console.log('🗑️ Eliminando condoglianza da Supabase:', id);
+
+            // Soft delete: marca come eliminata invece di cancellare
+            const { error } = await this.supabase
+                .from('condoglianze')
+                .update({ 
+                    status: 'deleted',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            console.log('✅ Condoglianza eliminata da Supabase');
+            return { success: true };
+
+        } catch (error) {
+            console.error('❌ Errore eliminazione condoglianza:', error);
+            throw error;
+        }
+    }
+
     // 📊 Ottieni statistiche necrologi
     async getStatistics() {
         if (!this.isInitialized) {

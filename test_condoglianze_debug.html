@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Debug Condoglianze</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #log { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 5px; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Debug Condoglianze</h1>
+    <p>Questo strumento verifica se il sistema delle condoglianze funziona correttamente.</p>
+    
+    <div id="results"></div>
+    
+    <button onclick="testSupabaseConnection()">1️⃣ Testa Connessione Supabase</button>
+    <button onclick="testCondoglianceTable()">2️⃣ Verifica Tabella Condoglianze</button>
+    <button onclick="testAddCondolence()">3️⃣ Test Aggiunta Condoglianza</button>
+    <button onclick="testLoadCondolences()">4️⃣ Test Caricamento Condoglianze</button>
+    <button onclick="clearResults()">🗑️ Pulisci</button>
+    
+    <div id="log"></div>
+
+    <script>
+        // Configurazione Supabase inline per il test
+        const supabaseConfig = {
+            url: 'https://zivcmlajjrmlzfvfgfjp.supabase.co',
+            anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppdmNtbGFqanJtbHpmdmZnZmpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMDUzMTYsImV4cCI6MjA3MDU4MTMxNn0.p72To6q8vuuDnoXF7eLcih5nJkjlbqsJ01GQB7crHC0'
+        };
+        
+        let testSupabaseClient = null;
+        let testResults = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('log');
+            if (logDiv) {
+                const logEntry = `[${timestamp}] ${message}`;
+                logDiv.innerHTML += logEntry + '\n';
+                logDiv.scrollTop = logDiv.scrollHeight;
+                console.log(logEntry);
+            } else {
+                console.log(`[${timestamp}] ${message}`);
+            }
+        }
+        
+        function showResult(title, message, type) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong><br>${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        async function initializeTestClient() {
+            if (!testSupabaseClient) {
+                try {
+                    if (typeof supabase === 'undefined') {
+                        throw new Error('Supabase SDK non caricato');
+                    }
+                    
+                    testSupabaseClient = supabase.createClient(
+                        supabaseConfig.url,
+                        supabaseConfig.anonKey
+                    );
+                    
+                    log('✅ Client Supabase inizializzato per test');
+                    return true;
+                } catch (error) {
+                    log(`❌ Errore inizializzazione client: ${error.message}`);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        async function testSupabaseConnection() {
+            log('🔄 Testando connessione Supabase...');
+            
+            try {
+                const initialized = await initializeTestClient();
+                if (!initialized) {
+                    showResult('❌ Connessione Supabase', 'Impossibile inizializzare client Supabase', 'error');
+                    return false;
+                }
+                
+                // Test connessione
+                const { data, error } = await testSupabaseClient
+                    .from('necrologi')
+                    .select('count', { count: 'exact', head: true });
+                
+                if (error && error.code !== 'PGRST116') {
+                    showResult('❌ Connessione Supabase', `Errore: ${error.message}`, 'error');
+                    log(`❌ Errore connessione: ${error.message}`);
+                    return false;
+                }
+                
+                showResult('✅ Connessione Supabase', 'Connessione funzionante', 'success');
+                log('✅ Connessione Supabase OK');
+                return true;
+                
+            } catch (error) {
+                showResult('❌ Connessione Supabase', `Errore: ${error.message}`, 'error');
+                log(`❌ Errore: ${error.message}`);
+                return false;
+            }
+        }
+        
+        async function testCondoglianceTable() {
+            log('🔄 Verificando tabella condoglianze...');
+            
+            try {
+                const initialized = await initializeTestClient();
+                if (!initialized) {
+                    showResult('❌ Tabella Condoglianze', 'Client Supabase non inizializzato', 'error');
+                    return false;
+                }
+                
+                // Verifica se la tabella esiste
+                const { data, error, count } = await testSupabaseClient
+                    .from('condoglianze')
+                    .select('*', { count: 'exact', head: true });
+                
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        showResult('❌ Tabella Condoglianze', 'Tabella "condoglianze" non esiste. Esegui lo script VERIFICA_E_CREA_CONDOGLIANZE.sql', 'error');
+                        log('❌ Tabella condoglianze non esiste');
+                        return false;
+                    } else {
+                        showResult('❌ Tabella Condoglianze', `Errore: ${error.message}`, 'error');
+                        log(`❌ Errore tabella: ${error.message}`);
+                        return false;
+                    }
+                }
+                
+                showResult('✅ Tabella Condoglianze', `Tabella esiste. Contiene ${count || 0} condoglianze`, 'success');
+                log(`✅ Tabella condoglianze OK - ${count || 0} record`);
+                return true;
+                
+            } catch (error) {
+                showResult('❌ Tabella Condoglianze', `Errore: ${error.message}`, 'error');
+                log(`❌ Errore: ${error.message}`);
+                return false;
+            }
+        }
+        
+        async function testAddCondolence() {
+            log('🔄 Testando aggiunta condoglianza...');
+            
+            try {
+                const initialized = await initializeTestClient();
+                if (!initialized) {
+                    showResult('❌ Test Aggiunta', 'Client Supabase non inizializzato', 'error');
+                    return false;
+                }
+                
+                const testCondolence = {
+                    necrologio_id: 'test_123',
+                    nome: 'Test User',
+                    email: 'test@example.com',
+                    messaggio: 'Messaggio di test per verificare il funzionamento',
+                    data_invio: new Date().toISOString(),
+                    status: 'active'
+                };
+                
+                // Salva direttamente con il client Supabase
+                const { data, error } = await testSupabaseClient
+                    .from('condoglianze')
+                    .insert(testCondolence)
+                    .select()
+                    .single();
+                
+                if (error) {
+                    showResult('❌ Test Aggiunta', `Errore: ${error.message}`, 'error');
+                    log(`❌ Errore aggiunta: ${error.message}`);
+                    return false;
+                }
+                
+                showResult('✅ Test Aggiunta', `Condoglianza test aggiunta con ID: ${data.id}`, 'success');
+                log(`✅ Condoglianza test aggiunta con ID: ${data.id}`);
+                return data.id;
+                
+            } catch (error) {
+                showResult('❌ Test Aggiunta', `Errore: ${error.message}`, 'error');
+                log(`❌ Errore aggiunta: ${error.message}`);
+                return false;
+            }
+        }
+        
+        async function testLoadCondolences() {
+            log('🔄 Testando caricamento condoglianze...');
+            
+            try {
+                const initialized = await initializeTestClient();
+                if (!initialized) {
+                    showResult('❌ Test Caricamento', 'Client Supabase non inizializzato', 'error');
+                    return false;
+                }
+                
+                // Carica direttamente con il client Supabase
+                const { data, error } = await testSupabaseClient
+                    .from('condoglianze')
+                    .select('*')
+                    .eq('necrologio_id', 'test_123')
+                    .eq('status', 'active')
+                    .order('data_invio', { ascending: false });
+                
+                if (error) {
+                    showResult('❌ Test Caricamento', `Errore: ${error.message}`, 'error');
+                    log(`❌ Errore caricamento: ${error.message}`);
+                    return false;
+                }
+                
+                showResult('✅ Test Caricamento', `Caricate ${data.length} condoglianze per necrologio test_123`, 'success');
+                log(`✅ Caricate ${data.length} condoglianze`);
+                
+                if (data.length > 0) {
+                    log(`📋 Prima condoglianza: ${data[0].nome} - ${data[0].messaggio.substring(0, 50)}...`);
+                }
+                
+                return true;
+                
+            } catch (error) {
+                showResult('❌ Test Caricamento', `Errore: ${error.message}`, 'error');
+                log(`❌ Errore caricamento: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Auto-avvia i test quando la pagina è pronta
+        window.addEventListener('load', async () => {
+            log('🚀 Inizializzando test debug condoglianze...');
+            
+            // Aspetta che Supabase SDK sia caricato
+            setTimeout(async () => {
+                log('🔄 Avviando test automatici...');
+                
+                try {
+                    const connection = await testSupabaseConnection();
+                    if (connection) {
+                        await testCondoglianceTable();
+                    }
+                } catch (error) {
+                    log(`❌ Errore nei test automatici: ${error.message}`);
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

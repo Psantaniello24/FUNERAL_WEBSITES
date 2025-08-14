@@ -65,7 +65,7 @@ class ObituaryDetailPage {
         // Wait for obituaries to be loaded
         await this.waitForObituaries();
         this.loadObituary();
-        this.loadCondolences();
+        await this.loadCondolences();
 
     }
 
@@ -470,42 +470,111 @@ class ObituaryDetailPage {
         return `necrologio-detail.html?id=${encodeURIComponent(obituary.id)}`;
     }
 
-    loadCondolences() {
+    async loadCondolences() {
         const condolencesList = document.getElementById('condolences-list');
         const condolencesCount = document.getElementById('condolences-count');
         
-        if (!this.obituary || !this.obituary.condoglianze) {
+        if (!this.obituary) {
+            console.warn('⚠️ Impossibile caricare condoglianze: obituary non trovato');
             return;
         }
 
-        const condolences = this.obituary.condoglianze;
-        
-        if (condolences.length === 0) {
-            // Already has default "no condolences" message
-            condolencesCount.textContent = '(0)';
-            return;
-        }
+        try {
+            console.log('📋 Caricando condoglianze per necrologio:', this.obituary.nome);
+            console.log('🔍 Debug caricamento condoglianze:', {
+                obituaryId: this.obituaryId,
+                obituaryIdType: typeof this.obituaryId,
+                hasObituariesManager: !!this.obituariesManager,
+                hasLoadCondolencesMethod: !!(this.obituariesManager && this.obituariesManager.loadCondolences),
+                hasSupabaseManager: !!window.supabaseManager,
+                supabaseInitialized: !!(window.supabaseManager && window.supabaseManager.isInitialized)
+            });
 
-        condolencesCount.textContent = `(${condolences.length})`;
-        
-        condolencesList.innerHTML = condolences.map(condolence => `
-            <div class="border-l-4 border-funeral-gold pl-6 py-4">
-                <div class="flex items-start justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-funeral-gold text-funeral-dark rounded-full flex items-center justify-center font-semibold">
-                            ${condolence.nome.charAt(0).toUpperCase()}
+            // Carica condoglianze dal database se disponibile
+            let condolences = [];
+            
+            if (this.obituariesManager && this.obituariesManager.loadCondolences) {
+                console.log(`🔄 Chiamando loadCondolences con ID: "${this.obituaryId}"`);
+                const dbCondolences = await this.obituariesManager.loadCondolences(this.obituaryId);
+                console.log('📋 Risultato loadCondolences:', dbCondolences);
+                
+                if (dbCondolences && dbCondolences.length > 0) {
+                    condolences = dbCondolences;
+                    console.log(`✅ Caricate ${condolences.length} condoglianze dal database`);
+                    
+                    // Aggiorna anche l'obituary locale con le condoglianze del database
+                    this.obituary.condoglianze = condolences;
+                } else {
+                    console.log('⚠️ Nessuna condoglianza trovata nel database');
+                }
+            } else {
+                console.warn('⚠️ ObituariesManager o metodo loadCondolences non disponibile');
+            }
+            
+            // Fallback: usa condoglianze locali se non ci sono quelle del database
+            if (condolences.length === 0 && this.obituary.condoglianze) {
+                condolences = this.obituary.condoglianze;
+                console.log(`📋 Usando ${condolences.length} condoglianze locali`);
+            }
+
+            // Aggiorna il contatore
+            if (condolencesCount) {
+                condolencesCount.textContent = `(${condolences.length})`;
+            }
+
+            // Se non ci sono condoglianze, mostra messaggio predefinito
+            if (condolences.length === 0) {
+                if (condolencesList) {
+                    condolencesList.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-heart text-3xl mb-4 text-gray-300"></i>
+                            <p>Nessuna condoglianza ancora. Sii il primo a lasciare un messaggio di cordoglio.</p>
                         </div>
-                        <div>
-                            <h4 class="font-semibold text-funeral-dark">${condolence.nome}</h4>
-                            <p class="text-sm text-gray-500">${this.formatDate(condolence.data)}</p>
+                    `;
+                }
+                return;
+            }
+
+            // Mostra le condoglianze
+            if (condolencesList) {
+                condolencesList.innerHTML = condolences.map(condolence => `
+                    <div class="border-l-4 border-funeral-gold pl-6 py-4">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-funeral-gold text-funeral-dark rounded-full flex items-center justify-center font-semibold">
+                                    ${condolence.nome.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-funeral-dark">${condolence.nome}</h4>
+                                    <p class="text-sm text-gray-500">${this.formatDate(condolence.data)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-gray-700 leading-relaxed">${condolence.messaggio}</p>
                         </div>
                     </div>
-                </div>
-                <div class="mt-3">
-                    <p class="text-gray-700 leading-relaxed">${condolence.messaggio}</p>
-                </div>
-            </div>
-        `).join('');
+                `).join('');
+            }
+
+            console.log(`✅ Visualizzate ${condolences.length} condoglianze`);
+
+        } catch (error) {
+            console.error('❌ Errore caricamento condoglianze:', error);
+            
+            // Fallback in caso di errore
+            if (condolencesCount) {
+                condolencesCount.textContent = '(0)';
+            }
+            if (condolencesList) {
+                condolencesList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4 text-yellow-500"></i>
+                        <p>Errore nel caricamento delle condoglianze. Riprova più tardi.</p>
+                    </div>
+                `;
+            }
+        }
     }
 
 
@@ -519,13 +588,31 @@ class ObituaryDetailPage {
         });
     }
 
-    addCondolence(condolenceData) {
-        if (this.obituariesManager.addCondolence(this.obituaryId, condolenceData)) {
-            this.obituary = this.obituariesManager.getById(this.obituaryId);
-            this.loadCondolences();
-            return true;
+    async addCondolence(condolenceData) {
+        try {
+            console.log('💌 Aggiungendo condoglianza nella pagina dettaglio...');
+            
+            // Usa il metodo asincrono dell'ObituariesManager
+            const success = await this.obituariesManager.addCondolence(this.obituaryId, condolenceData);
+            
+            if (success) {
+                console.log('✅ Condoglianza aggiunta con successo');
+                
+                // Ricarica l'obituary aggiornato
+                this.obituary = this.obituariesManager.getById(this.obituaryId);
+                
+                // Ricarica le condoglianze dal database
+                await this.loadCondolences();
+                
+                return true;
+            } else {
+                console.error('❌ Errore aggiunta condoglianza');
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Errore nel processo di aggiunta condoglianza:', error);
+            return false;
         }
-        return false;
     }
 }
 
@@ -829,15 +916,32 @@ class CondolenceFormHandler extends FormHandler {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Invio in corso...';
         submitBtn.disabled = true;
 
-        setTimeout(() => {
-            console.log('Processing condolence submission...');
-            // Add condolence using the existing method
-            if (obituaryDetailPage && obituaryDetailPage.addCondolence(condolence)) {
-                console.log('Condolence added successfully');
-                Utils.showNotification('Condoglianze inviate con successo. Grazie per il tuo messaggio.', 'success');
-                closeCondolenceModalDetail();
-            } else {
-                console.error('Failed to add condolence');
+        setTimeout(async () => {
+            try {
+                console.log('Processing condolence submission...');
+                
+                // Add condolence using the existing method (now async)
+                if (obituaryDetailPage) {
+                    const success = await obituaryDetailPage.addCondolence(condolence);
+                    
+                    if (success) {
+                        console.log('Condolence added successfully');
+                        Utils.showNotification('Condoglianze inviate con successo. Grazie per il tuo messaggio.', 'success');
+                        closeCondolenceModalDetail();
+                    } else {
+                        console.error('Failed to add condolence');
+                        Utils.showNotification('Errore nell\'invio delle condoglianze. Riprova più tardi.', 'error');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }
+                } else {
+                    console.error('ObituaryDetailPage not available');
+                    Utils.showNotification('Errore nell\'invio delle condoglianze. Riprova più tardi.', 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error in condolence submission:', error);
                 Utils.showNotification('Errore nell\'invio delle condoglianze. Riprova più tardi.', 'error');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;

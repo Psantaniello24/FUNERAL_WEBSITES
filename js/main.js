@@ -160,7 +160,7 @@ class ObituariesManager {
                         dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate,
                         testo: obit.description,
                         comune: obit.city,
-                        condoglianze: [],
+                        condoglianze: [], // Le condoglianze verranno caricate separatamente quando necessario
                         source: 'supabase'
                     }));
             } else {
@@ -250,6 +250,9 @@ class ObituariesManager {
                 this.loadDefaultObituaries();
             }
 
+            // 💌 Carica condoglianze per tutti i necrologi da Supabase
+            await this.loadAllCondolences();
+            
             // Aggiorna le visualizzazioni
             this.updateDisplays();
             
@@ -450,6 +453,140 @@ class ObituariesManager {
         // Aggiorna eventuali display nella pagina
         const event = new CustomEvent('obituariesLoaded', { detail: this.obituaries });
         document.dispatchEvent(event);
+    }
+
+    // 💌 Aggiunge una condoglianza a un necrologio
+    async addCondolence(obituaryId, condolenceData) {
+        console.log('💌 Aggiungendo condoglianza per necrologio:', obituaryId);
+        
+        try {
+            // Trova il necrologio
+            const obituary = this.getById(obituaryId);
+            if (!obituary) {
+                console.error('❌ Necrologio non trovato per ID:', obituaryId);
+                return false;
+            }
+
+            // Prepara i dati della condoglianza
+            const condolence = {
+                nome: condolenceData.nome,
+                email: condolenceData.email || '',
+                messaggio: condolenceData.messaggio,
+                data: new Date().toISOString(),
+                necrologio_id: obituaryId
+            };
+
+            console.log('📝 Dati condoglianza:', condolence);
+
+            // Salva su Supabase se disponibile
+            let savedToDatabase = false;
+            if (window.supabaseManager && window.supabaseManager.isInitialized) {
+                try {
+                    const result = await window.supabaseManager.saveCondolence(condolence);
+                    if (result.success) {
+                        console.log('✅ Condoglianza salvata su Supabase con ID:', result.id);
+                        condolence.id = result.id;
+                        savedToDatabase = true;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Errore salvataggio condoglianza su Supabase:', error.message);
+                }
+            }
+
+            // Aggiunge alla lista locale (sempre, anche se salvata su DB)
+            if (!obituary.condoglianze) {
+                obituary.condoglianze = [];
+            }
+            obituary.condoglianze.unshift(condolence); // Aggiunge all'inizio
+
+            // Salva in localStorage come backup
+            this.saveToLocalStorage();
+
+            console.log(`✅ Condoglianza aggiunta ${savedToDatabase ? '(salvata su DB)' : '(solo locale)'}`);
+            return true;
+
+        } catch (error) {
+            console.error('❌ Errore aggiunta condoglianza:', error);
+            return false;
+        }
+    }
+
+    // 📋 Carica condoglianze per un necrologio da Supabase
+    async loadCondolences(obituaryId) {
+        if (!window.supabaseManager || !window.supabaseManager.isInitialized) {
+            return [];
+        }
+
+        try {
+            console.log('📋 Caricando condoglianze per necrologio:', obituaryId);
+            const condolences = await window.supabaseManager.loadCondolences(obituaryId);
+            console.log(`✅ Caricate ${condolences.length} condoglianze da Supabase`);
+            return condolences;
+        } catch (error) {
+            console.warn('⚠️ Errore caricamento condoglianze:', error.message);
+            return [];
+        }
+    }
+
+    // 💾 Salva in localStorage come backup
+    saveToLocalStorage() {
+        try {
+            const dataToSave = {
+                obituaries: this.obituaries,
+                lastUpdated: new Date().toISOString()
+            };
+            localStorage.setItem('obituaries_backup', JSON.stringify(dataToSave));
+            console.log('💾 Backup locale salvato');
+        } catch (error) {
+            console.warn('⚠️ Errore salvataggio backup locale:', error.message);
+        }
+    }
+
+    // 📖 Carica da localStorage come fallback
+    loadFromLocalStorage() {
+        try {
+            const saved = localStorage.getItem('obituaries_backup');
+            if (saved) {
+                const data = JSON.parse(saved);
+                console.log('📖 Caricato backup locale del:', data.lastUpdated);
+                return data.obituaries || [];
+            }
+        } catch (error) {
+            console.warn('⚠️ Errore caricamento backup locale:', error.message);
+        }
+        return [];
+    }
+
+    // 💌 Carica condoglianze per tutti i necrologi
+    async loadAllCondolences() {
+        if (!window.supabaseManager || !window.supabaseManager.isInitialized) {
+            console.log('⚠️ Supabase non disponibile per caricamento condoglianze');
+            return;
+        }
+
+        console.log('💌 Caricando condoglianze per tutti i necrologi...');
+        
+        try {
+            let totalCondolences = 0;
+            
+            for (const obituary of this.obituaries) {
+                try {
+                    const condolences = await this.loadCondolences(obituary.id);
+                    if (condolences && condolences.length > 0) {
+                        obituary.condoglianze = condolences;
+                        totalCondolences += condolences.length;
+                        console.log(`✅ Caricate ${condolences.length} condoglianze per ${obituary.nome}`);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Errore caricamento condoglianze per ${obituary.nome}:`, error.message);
+                }
+            }
+            
+            console.log(`💌 Caricamento condoglianze completato: ${totalCondolences} condoglianze totali`);
+            
+        } catch (error) {
+            console.error('❌ Errore caricamento condoglianze globale:', error);
+        }
     }
 
     loadDefaultObituaries() {
@@ -764,7 +901,7 @@ class FormHandler {
 
         // Add condolence to obituary
         const obituaryId = window.location.pathname.split('/').pop().replace('.html', '').replace('necrologio-', '');
-        const obituariesManager = new ObituariesManager();
+        const obituariesManager = window.globalObituariesManager || new ObituariesManager();
         
         const condolence = {
             nome: formData.get('nome'),
@@ -772,16 +909,22 @@ class FormHandler {
             messaggio: formData.get('messaggio')
         };
 
-        if (obituariesManager.addCondolence(parseInt(obituaryId), condolence)) {
-            Utils.showNotification('Condoglianze inviate con successo.', 'success');
-            e.target.reset();
-            // Refresh condolences display if on obituary page
-            if (typeof displayCondolences === 'function') {
-                displayCondolences(parseInt(obituaryId));
+        // Usa il metodo asincrono per l'aggiunta delle condoglianze
+        obituariesManager.addCondolence(parseInt(obituaryId), condolence).then(success => {
+            if (success) {
+                Utils.showNotification('Condoglianze inviate con successo.', 'success');
+                e.target.reset();
+                // Refresh condolences display if on obituary page
+                if (typeof displayCondolences === 'function') {
+                    displayCondolences(parseInt(obituaryId));
+                }
+            } else {
+                Utils.showNotification('Errore nell\'invio delle condoglianze.', 'error');
             }
-        } else {
+        }).catch(error => {
+            console.error('Errore invio condoglianze:', error);
             Utils.showNotification('Errore nell\'invio delle condoglianze.', 'error');
-        }
+        });
     }
 
     handleOrderForm(e) {
