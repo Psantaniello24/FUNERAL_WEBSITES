@@ -804,10 +804,17 @@
 
                 <!-- Lista Necrologi Esistenti -->
                 <div class="bg-white rounded-2xl shadow-lg p-8">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                        <i class="fas fa-list text-orange-600 mr-3"></i>
-                        Necrologi Esistenti
-                    </h3>
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-list text-orange-600 mr-3"></i>
+                            Necrologi Esistenti
+                        </h3>
+                        <button onclick="adminManager.loadExistingObituaries()" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i>
+                            Ricarica
+                        </button>
+                    </div>
                     <div id="existingObituaries" class="space-y-4">
                         <!-- Lista sarà popolata da JavaScript -->
                     </div>
@@ -843,6 +850,9 @@
                 // File upload listeners
                 document.getElementById('photoFile').addEventListener('change', (e) => this.handlePhotoUpload(e));
                 document.getElementById('manifestoFile').addEventListener('change', (e) => this.handleManifestoUpload(e));
+                
+                // Mostra indicatore di caricamento
+                this.showLoadingObituaries();
                 
                 // Carica necrologi esistenti
                 this.loadExistingObituaries();
@@ -1028,7 +1038,7 @@
 
 
             getFormData() {
-                return {
+                const data = {
                     name: document.getElementById('name').value,
                     birthDate: document.getElementById('birthDate').value,
                     deathDate: document.getElementById('deathDate').value,
@@ -1041,6 +1051,36 @@
                     funeralDate: document.getElementById('funeralDate').value,
                     funeralLocation: document.getElementById('funeralLocation').value
                 };
+
+                // Se stiamo modificando, aggiungi info immagini esistenti
+                if (this.editingObituary && this.editingObituary.originalData) {
+                    const original = this.editingObituary.originalData;
+                    
+                    // Preserva info foto esistente se non caricata nuova
+                    if (!this.uploadedPhotoData && (original.photoURL || original.photo_url)) {
+                        data.existingPhotoUrl = original.photoURL || original.photo_url;
+                        data.existingPhotoFileName = original.photoFileName || original.photo_file_name;
+                        data.existingPhotoFileSize = original.photoFileSize || original.photo_file_size;
+                        data.existingPhotoFileType = original.photoFileType || original.photo_file_type;
+                    }
+                    
+                    // Preserva info manifesto esistente se non caricato nuovo
+                    if (!this.uploadedManifestoData && (original.manifestoURL || original.manifesto_url)) {
+                        data.existingManifestoUrl = original.manifestoURL || original.manifesto_url;
+                        data.existingManifestoFileName = original.manifestoFileName || original.manifesto_file_name;
+                        data.existingManifestoFileSize = original.manifestoFileSize || original.manifesto_file_size;
+                        data.existingManifestoFileType = original.manifestoFileType || original.manifesto_file_type;
+                    }
+                    
+                    console.log('🔄 Aggiunto info immagini esistenti:', {
+                        hasExistingPhoto: !!data.existingPhotoUrl,
+                        hasExistingManifesto: !!data.existingManifestoUrl,
+                        hasNewPhoto: !!(this.uploadedPhotoData instanceof File),
+                        hasNewManifesto: !!(this.uploadedManifestoData instanceof File)
+                    });
+                }
+
+                return data;
             }
 
             async handleSubmit(e) {
@@ -1103,6 +1143,9 @@
             async updateExistingObituary(data) {
                 const { id, source } = this.editingObituary;
                 
+                console.log(`🔄 Aggiornando necrologio: ID="${id}", Source="${source}"`);
+                console.log('📝 Dati da aggiornare:', data);
+                
                 // 🟢 Aggiorna su Supabase se necessario
                 let supabaseUpdated = false;
                 if (source === 'supabase' && window.supabaseManager && window.supabaseManager.isInitialized) {
@@ -1110,11 +1153,14 @@
                         console.log('🟢 Aggiornando su Supabase...');
                         // Per Supabase, mantieni l'ID originale
                         data.id = id;
-                        await window.supabaseManager.saveObituary(data);
+                        console.log('📤 Chiamando saveObituary con ID:', data.id);
+                        const result = await window.supabaseManager.saveObituary(data);
+                        console.log('📥 Risultato saveObituary:', result);
                         supabaseUpdated = true;
                         console.log('✅ Aggiornato su Supabase con successo!');
                     } catch (supabaseError) {
                         console.error('❌ Errore aggiornamento Supabase:', supabaseError);
+                        throw supabaseError; // Rilancia l'errore per mostrarlo all'utente
                     }
                 }
                 
@@ -1163,14 +1209,28 @@
                 let allObituaries = [];
                 
                 try {
-                    // 🟢 Carica da Supabase
+                    // 🟢 Aspetta che Supabase sia inizializzato
+                    console.log('⏳ Verificando stato Supabase per admin...');
+                    let attempts = 0;
+                    const maxAttempts = 15; // 15 secondi max
+                    
+                    while ((!window.supabaseManager || !window.supabaseManager.isInitialized) && attempts < maxAttempts) {
+                        console.log(`⏳ Aspettando Supabase per admin... tentativo ${attempts + 1}/${maxAttempts}`);
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // Aspetta 1 secondo
+                        attempts++;
+                    }
+                    
+                    // 🟢 Carica da Supabase se disponibile
                     if (window.supabaseManager && window.supabaseManager.isInitialized) {
+                        console.log('✅ Supabase disponibile per admin, caricando necrologi...');
                         const supabaseData = await window.supabaseManager.loadObituaries();
                         allObituaries = supabaseData.map(obit => ({
                             ...obit,
                             source: 'supabase'
                         }));
                         console.log(`📊 Caricati ${supabaseData.length} necrologi da Supabase`);
+                    } else {
+                        console.warn('⚠️ Supabase non disponibile per admin dopo attesa');
                     }
                     
                     // 💾 Carica anche da localStorage
@@ -1246,13 +1306,17 @@
                 try {
                     let obituaryToEdit = null;
                     
+                    console.log(`🔄 Caricando necrologio per modifica: ID="${id}", Source="${source}"`);
+                    
                     // Trova il necrologio da modificare
                     if (source === 'supabase' && window.supabaseManager && window.supabaseManager.isInitialized) {
                         const allObituaries = await window.supabaseManager.loadObituaries();
-                        obituaryToEdit = allObituaries.find(obit => obit.id === id);
+                        obituaryToEdit = allObituaries.find(obit => obit.id == id); // Usa == per confronto flessibile
+                        console.log(`📋 Cercato in ${allObituaries.length} necrologi Supabase, trovato:`, !!obituaryToEdit);
                     } else if (source === 'local') {
                         const localData = JSON.parse(localStorage.getItem('adminObituaries') || '[]');
                         obituaryToEdit = localData.find(obit => obit.id == id);
+                        console.log(`📋 Cercato in ${localData.length} necrologi locali, trovato:`, !!obituaryToEdit);
                     }
                     
                     if (!obituaryToEdit) {
@@ -1370,6 +1434,17 @@
                 
                 // Nascondi pulsante annulla
                 document.getElementById('cancelEditBtn').classList.add('hidden');
+            }
+
+            // 🔄 Mostra indicatore caricamento necrologi
+            showLoadingObituaries() {
+                this.existingList.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                        <p class="text-gray-600">Caricamento necrologi da Supabase...</p>
+                        <p class="text-sm text-gray-500 mt-2">Questo potrebbe richiedere alcuni secondi</p>
+                    </div>
+                `;
             }
 
             // ❌ Annulla modifica

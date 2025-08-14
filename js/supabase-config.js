@@ -308,6 +308,24 @@ CREATE TABLE ${this.tableName} (
         try {
             console.log('💾 Salvando necrologio su Supabase...');
 
+            // Se è un aggiornamento, carica i dati esistenti per preservare le immagini
+            let existingData = null;
+            if (obituaryData.id) {
+                console.log('🔍 Caricando dati esistenti per preservare immagini...');
+                const { data: existing, error: loadError } = await this.supabase
+                    .from(this.tableName)
+                    .select('*')
+                    .eq('id', obituaryData.id)
+                    .single();
+                
+                if (!loadError && existing) {
+                    existingData = existing;
+                    console.log('✅ Dati esistenti caricati per preservare immagini');
+                } else {
+                    console.warn('⚠️ Non riesco a caricare dati esistenti:', loadError);
+                }
+            }
+
             // 📁 Upload foto se presente
             let photoStorageInfo = null;
             if (obituaryData.photoFile instanceof File) {
@@ -333,21 +351,32 @@ CREATE TABLE ${this.tableName} (
                 funeral_date: obituaryData.funeralDate || null,
                 funeral_location: obituaryData.funeralLocation || null,
                 
-                // Info foto
-                photo_url: photoStorageInfo?.downloadURL || obituaryData.photo || null,
-                photo_file_name: photoStorageInfo?.name || null,
-                photo_file_size: photoStorageInfo?.size || null,
-                photo_file_type: photoStorageInfo?.type || null,
+                // Info foto - priorità: nuovo upload > dati passati > dati esistenti nel DB
+                photo_url: photoStorageInfo?.downloadURL || obituaryData.existingPhotoUrl || obituaryData.photo || existingData?.photo_url || null,
+                photo_file_name: photoStorageInfo?.name || obituaryData.existingPhotoFileName || existingData?.photo_file_name || null,
+                photo_file_size: photoStorageInfo?.size || obituaryData.existingPhotoFileSize || existingData?.photo_file_size || null,
+                photo_file_type: photoStorageInfo?.type || obituaryData.existingPhotoFileType || existingData?.photo_file_type || null,
                 
-                // Info manifesto
-                manifesto_url: manifestoStorageInfo?.downloadURL || null,
-                manifesto_file_name: manifestoStorageInfo?.name || null,
-                manifesto_file_size: manifestoStorageInfo?.size || null,
-                manifesto_file_type: manifestoStorageInfo?.type || null,
+                // Info manifesto - priorità: nuovo upload > dati passati > dati esistenti nel DB
+                manifesto_url: manifestoStorageInfo?.downloadURL || obituaryData.existingManifestoUrl || existingData?.manifesto_url || null,
+                manifesto_file_name: manifestoStorageInfo?.name || obituaryData.existingManifestoFileName || existingData?.manifesto_file_name || null,
+                manifesto_file_size: manifestoStorageInfo?.size || obituaryData.existingManifestoFileSize || existingData?.manifesto_file_size || null,
+                manifesto_file_type: manifestoStorageInfo?.type || obituaryData.existingManifestoFileType || existingData?.manifesto_file_type || null,
                 
                 publish_date: obituaryData.publishDate || new Date().toISOString().split('T')[0],
                 status: 'active'
             };
+
+            console.log('📝 Dati preparati per salvataggio:', {
+                hasNewPhoto: !!photoStorageInfo,
+                hasNewManifesto: !!manifestoStorageInfo,
+                existingPhotoFromDB: existingData?.photo_url,
+                existingManifestoFromDB: existingData?.manifesto_url,
+                passedExistingPhoto: obituaryData.existingPhotoUrl,
+                passedExistingManifesto: obituaryData.existingManifestoUrl,
+                finalPhotoUrl: dbData.photo_url,
+                finalManifestoUrl: dbData.manifesto_url
+            });
 
             // Se è un aggiornamento (ha ID), usa upsert
             if (obituaryData.id) {
