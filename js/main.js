@@ -846,12 +846,13 @@ class FormHandler {
         });
     }
 
-    handleContactForm(e) {
+    async handleContactForm(e) {
         e.preventDefault();
         const formData = new FormData(e.target);
         
         const rules = {
             nome: { required: true, minLength: 2 },
+            cognome: { required: true, minLength: 2 },
             email: { required: true, email: true },
             telefono: { phone: true },
             messaggio: { required: true, minLength: 10 }
@@ -866,18 +867,106 @@ class FormHandler {
 
         this.clearFieldErrors();
         
-        // Simulate form submission
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Invio in corso...';
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Invio in corso...';
         submitBtn.disabled = true;
 
-        setTimeout(() => {
-            Utils.showNotification('Messaggio inviato con successo. Ti contatteremo presto.', 'success');
+        try {
+            // Prepara i dati per l'invio email
+            const emailData = {
+                nome: formData.get('nome'),
+                cognome: formData.get('cognome'),
+                email: formData.get('email'),
+                telefono: formData.get('telefono') || 'Non fornito',
+                motivo: formData.get('motivo') || 'Non specificato',
+                messaggio: formData.get('messaggio'),
+                urgente: formData.get('urgente') ? 'Sì' : 'No',
+                data_invio: new Date().toLocaleString('it-IT')
+            };
+
+            console.log('📧 Invio email con dati:', emailData);
+
+            // Tenta invio con EmailJS se disponibile
+            if (window.emailjs) {
+                await this.sendEmailWithEmailJS(emailData);
+                Utils.showNotification('✅ Messaggio inviato con successo! Ti contatteremo presto.', 'success');
+            } else {
+                // Fallback: apri client email con dati precompilati
+                this.openEmailClient(emailData);
+                Utils.showNotification('📧 Si aprirà il tuo client email. Completa l\'invio da lì.', 'info');
+            }
+            
             e.target.reset();
-            submitBtn.textContent = originalText;
+            
+        } catch (error) {
+            console.error('❌ Errore invio email:', error);
+            
+            // Fallback: apri client email
+            const emailData = {
+                nome: formData.get('nome'),
+                cognome: formData.get('cognome'),
+                email: formData.get('email'),
+                telefono: formData.get('telefono') || 'Non fornito',
+                motivo: formData.get('motivo') || 'Non specificato',
+                messaggio: formData.get('messaggio'),
+                urgente: formData.get('urgente') ? 'Sì' : 'No'
+            };
+            
+            this.openEmailClient(emailData);
+            Utils.showNotification('⚠️ Problema tecnico. Si aprirà il tuo client email per completare l\'invio.', 'warning');
+        } finally {
+            submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
-        }, 1500);
+        }
+    }
+
+    // Invia email tramite EmailJS
+    async sendEmailWithEmailJS(data) {
+        if (!window.emailjs) {
+            throw new Error('EmailJS non disponibile');
+        }
+
+        // Configura EmailJS (dovrai inserire i tuoi ID)
+        const serviceID = 'service_my5u0ws'; 
+        const templateID = 'template_ivt4s5p'; 
+        const userID = 'po89_tdPToDfT8o4U'; 
+
+        const templateParams = {
+            from_name: `${data.nome} ${data.cognome}`,
+            from_email: data.email,
+            phone: data.telefono,
+            subject: data.motivo,
+            message: data.messaggio,
+            is_urgent: data.urgente,
+            send_date: data.data_invio,
+            to_email: 'santanielloservizifunebri@gmail.com'
+        };
+
+        return await emailjs.send(serviceID, templateID, templateParams, userID);
+    }
+
+    // Fallback: apri client email con dati precompilati
+    openEmailClient(data) {
+        const subject = encodeURIComponent(`Richiesta di contatto - ${data.motivo}`);
+        const body = encodeURIComponent(`
+NUOVA RICHIESTA DI CONTATTO
+${data.urgente === 'Sì' ? '🔴 RICHIESTA URGENTE' : ''}
+
+Nome: ${data.nome} ${data.cognome}
+Email: ${data.email}
+Telefono: ${data.telefono}
+Motivo: ${data.motivo}
+
+Messaggio:
+${data.messaggio}
+
+---
+Inviato dal sito web il ${new Date().toLocaleString('it-IT')}
+        `.trim());
+
+        const mailtoLink = `mailto:santanielloservizifunebri@gmail.com?subject=${subject}&body=${body}`;
+        window.open(mailtoLink, '_blank');
     }
 
     handleCondolenceForm(e) {
