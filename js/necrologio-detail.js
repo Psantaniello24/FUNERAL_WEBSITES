@@ -228,7 +228,15 @@ class ObituaryDetailPage {
         }
         if (deathDate) deathDate.textContent = Utils.formatDate(this.obituary.dataMorte);
         if (obituaryCity) obituaryCity.textContent = this.obituary.comune;
-        if (obituaryAge) obituaryAge.textContent = `${this.obituary.eta || this.calculateAge()} anni`;
+        if (obituaryAge) {
+            const age = this.obituary.eta || this.calculateAge();
+            if (age && age > 0) {
+                obituaryAge.textContent = `${age} anni`;
+                obituaryAge.parentElement.style.display = 'flex';
+            } else {
+                obituaryAge.parentElement.style.display = 'none';
+            }
+        }
 
         // Update marital status if present
         const maritalStatusRow = document.getElementById('marital-status-row');
@@ -301,12 +309,20 @@ class ObituaryDetailPage {
         // Controllo di sicurezza: verifica che obituary esista
         if (!this.obituary || !this.obituary.dataNascita || !this.obituary.dataMorte) {
             console.warn('⚠️ Dati obituary mancanti per calcolo età');
-            return 0;
+            return null;
         }
         
         const birth = new Date(this.obituary.dataNascita);
         const death = new Date(this.obituary.dataMorte);
-        return death.getFullYear() - birth.getFullYear();
+        let age = death.getFullYear() - birth.getFullYear();
+        const monthDiff = death.getMonth() - birth.getMonth();
+        
+        // Aggiusta l'età se il compleanno non è ancora passato
+        if (monthDiff < 0 || (monthDiff === 0 && death.getDate() < birth.getDate())) {
+            age--;
+        }
+        
+        return age > 0 ? age : null;
     }
 
     getMaritalStatusText(maritalStatus, spouseName) {

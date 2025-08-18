@@ -345,7 +345,7 @@ CREATE TABLE ${this.tableName} (
                 name: obituaryData.name,
                 birth_date: obituaryData.birthDate || null,
                 death_date: obituaryData.deathDate || null,
-                age: parseInt(obituaryData.age) || null,
+                age: obituaryData.age && obituaryData.age !== '' ? parseInt(obituaryData.age) : null,
                 city: obituaryData.city || null,
                 description: obituaryData.description || null,
                 funeral_date: obituaryData.funeralDate || null,
