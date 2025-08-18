@@ -286,6 +286,9 @@ class ObituaryDetailPage {
 
         // Update page title in head
         document.title = `${this.obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
+        
+        // Update social media meta tags for sharing
+        this.updateSocialMetaTags();
 
         // Update condolence button with correct ID
         const condolenceBtn = document.getElementById('condolence-btn');
@@ -347,6 +350,157 @@ class ObituaryDetailPage {
         }
         
         return text;
+    }
+
+    updateSocialMetaTags() {
+        // Genera il messaggio di condivisione
+        const currentUrl = window.location.href;
+        const shareTitle = `Ci ha lasciati ${this.obituary.nome}`;
+        
+        // Crea la descrizione per la condivisione
+        let shareDescription = `Ci ha lasciati ${this.obituary.nome}`;
+        
+        // Aggiungi informazioni sui funerali se disponibili
+        if (this.obituary.dataEsequie && this.obituary.luogoEsequie) {
+            const funeralDate = Utils.formatDate(this.obituary.dataEsequie);
+            const funeralTime = this.obituary.oraEsequie || '';
+            shareDescription += `. I funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${this.obituary.luogoEsequie}`;
+        } else if (this.obituary.luogoEsequie) {
+            shareDescription += `. I funerali si svolgeranno presso ${this.obituary.luogoEsequie}`;
+        }
+        
+        shareDescription += '. Invia le tue condoglianze alla famiglia.';
+        
+        // Determina l'immagine da usare
+        let shareImage = 'images/placeholder-person.svg'; // Default
+        if (this.obituary.photoFile && this.obituary.photoFile.data) {
+            shareImage = this.obituary.photoFile.data;
+        } else if (this.obituary.foto && this.obituary.foto !== 'images/placeholder-person.svg') {
+            shareImage = this.obituary.foto;
+        }
+        
+        // Converti URL relativo in assoluto se necessario
+        if (shareImage && !shareImage.startsWith('http')) {
+            shareImage = window.location.origin + '/' + shareImage.replace(/^\//, '');
+        }
+        
+        // Aggiorna meta tag Open Graph
+        document.getElementById('og-url').setAttribute('content', currentUrl);
+        document.getElementById('og-title').setAttribute('content', shareTitle);
+        document.getElementById('og-description').setAttribute('content', shareDescription);
+        document.getElementById('og-image').setAttribute('content', shareImage);
+        
+        // Aggiorna meta tag Twitter
+        document.getElementById('twitter-url').setAttribute('content', currentUrl);
+        document.getElementById('twitter-title').setAttribute('content', shareTitle);
+        document.getElementById('twitter-description').setAttribute('content', shareDescription);
+        document.getElementById('twitter-image').setAttribute('content', shareImage);
+        
+        // Aggiorna anche la meta description standard
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+            metaDescription.setAttribute('content', shareDescription);
+        }
+        
+        console.log('🔗 Meta tag social aggiornati:', {
+            title: shareTitle,
+            description: shareDescription,
+            image: shareImage,
+            url: currentUrl
+        });
+    }
+
+    // 🔗 Funzione per condividere il necrologio
+    shareObituary() {
+        const currentUrl = window.location.href;
+        const shareTitle = `Ci ha lasciati ${this.obituary.nome}`;
+        
+        // Crea il messaggio di condivisione
+        let shareText = `Ci ha lasciati ${this.obituary.nome}`;
+        
+        if (this.obituary.dataEsequie && this.obituary.luogoEsequie) {
+            const funeralDate = Utils.formatDate(this.obituary.dataEsequie);
+            const funeralTime = this.obituary.oraEsequie || '';
+            shareText += `. I funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${this.obituary.luogoEsequie}`;
+        }
+        
+        shareText += `.\n\nInvia le tue condoglianze: ${currentUrl}`;
+        
+        // Usa Web Share API se disponibile (mobile)
+        if (navigator.share) {
+            navigator.share({
+                title: shareTitle,
+                text: shareText,
+                url: currentUrl
+            }).then(() => {
+                console.log('✅ Condivisione completata');
+            }).catch((error) => {
+                console.log('❌ Errore condivisione:', error);
+                // Fallback alla copia del link
+                this.fallbackShare(shareText, currentUrl);
+            });
+        } else {
+            // Fallback per desktop: mostra opzioni di condivisione
+            this.showShareOptions(shareTitle, shareText, currentUrl);
+        }
+    }
+
+    fallbackShare(shareText, url) {
+        // Copia il testo negli appunti
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareText).then(() => {
+                alert('📋 Testo copiato negli appunti! Puoi incollarlo dove vuoi condividerlo.');
+            }).catch(() => {
+                this.showShareOptions('Condividi Necrologio', shareText, url);
+            });
+        } else {
+            this.showShareOptions('Condividi Necrologio', shareText, url);
+        }
+    }
+
+    showShareOptions(title, text, url) {
+        const encodedText = encodeURIComponent(text);
+        const encodedUrl = encodeURIComponent(url);
+        const encodedTitle = encodeURIComponent(title);
+        
+        // Crea un modal con opzioni di condivisione
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold mb-4">Condividi Necrologio</h3>
+                <div class="space-y-3">
+                    <a href="https://wa.me/?text=${encodedText}" target="_blank" class="flex items-center w-full p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                        <i class="fab fa-whatsapp text-xl mr-3"></i>
+                        Condividi su WhatsApp
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}" target="_blank" class="flex items-center w-full p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fab fa-facebook-f text-xl mr-3"></i>
+                        Condividi su Facebook
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?text=${encodedText}" target="_blank" class="flex items-center w-full p-3 bg-blue-400 text-white rounded-lg hover:bg-blue-500 transition-colors">
+                        <i class="fab fa-twitter text-xl mr-3"></i>
+                        Condividi su Twitter
+                    </a>
+                    <button onclick="navigator.clipboard.writeText('${text.replace(/'/g, "\\'")}').then(() => alert('📋 Copiato negli appunti!'))" class="flex items-center w-full p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-copy text-xl mr-3"></i>
+                        Copia Testo
+                    </button>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="mt-4 w-full p-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                    Chiudi
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Chiudi il modal cliccando fuori
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
     }
 
     // 📄 Mostra il manifesto inline se presente
@@ -1033,3 +1187,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     console.log('Obituary detail page initialized');
 });
+
+// Funzione globale per il pulsante di condivisione
+function shareObituary() {
+    if (window.obituaryDetailPage && window.obituaryDetailPage.obituary) {
+        window.obituaryDetailPage.shareObituary();
+    } else {
+        console.warn('⚠️ Necrologio non ancora caricato');
+        alert('Attendere il caricamento completo del necrologio...');
+    }
+}
