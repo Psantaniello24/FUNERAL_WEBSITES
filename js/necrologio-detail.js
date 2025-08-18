@@ -218,10 +218,29 @@ class ObituaryDetailPage {
         const obituaryCity = document.getElementById('obituary-city');
         const obituaryAge = document.getElementById('obituary-age');
         
-        if (birthDate) birthDate.textContent = Utils.formatDate(this.obituary.dataNascita);
+        if (birthDate) {
+            if (this.obituary.dataNascita) {
+                birthDate.textContent = Utils.formatDate(this.obituary.dataNascita);
+                birthDate.parentElement.style.display = 'flex';
+            } else {
+                birthDate.parentElement.style.display = 'none';
+            }
+        }
         if (deathDate) deathDate.textContent = Utils.formatDate(this.obituary.dataMorte);
         if (obituaryCity) obituaryCity.textContent = this.obituary.comune;
         if (obituaryAge) obituaryAge.textContent = `${this.obituary.eta || this.calculateAge()} anni`;
+
+        // Update marital status if present
+        const maritalStatusRow = document.getElementById('marital-status-row');
+        const maritalStatusElement = document.getElementById('obituary-marital-status');
+        
+        if (this.obituary.maritalStatus && maritalStatusElement && maritalStatusRow) {
+            const maritalText = this.getMaritalStatusText(this.obituary.maritalStatus, this.obituary.spouseName);
+            maritalStatusElement.textContent = maritalText;
+            maritalStatusRow.style.display = 'flex';
+        } else if (maritalStatusRow) {
+            maritalStatusRow.style.display = 'none';
+        }
 
         // Update funeral details using specific IDs
         const funeralDate = document.getElementById('funeral-date');
@@ -288,6 +307,30 @@ class ObituaryDetailPage {
         const birth = new Date(this.obituary.dataNascita);
         const death = new Date(this.obituary.dataMorte);
         return death.getFullYear() - birth.getFullYear();
+    }
+
+    getMaritalStatusText(maritalStatus, spouseName) {
+        const statusMap = {
+            'celibe': 'Celibe',
+            'nubile': 'Nubile', 
+            'coniugato': 'Coniugato/a',
+            'vedovo': 'Vedovo/a',
+            'divorziato': 'Divorziato/a'
+        };
+        
+        let text = statusMap[maritalStatus] || maritalStatus;
+        
+        if (spouseName && (maritalStatus === 'coniugato' || maritalStatus === 'vedovo' || maritalStatus === 'divorziato')) {
+            if (maritalStatus === 'coniugato') {
+                text += ` con ${spouseName}`;
+            } else if (maritalStatus === 'vedovo') {
+                text += ` di ${spouseName}`;
+            } else if (maritalStatus === 'divorziato') {
+                text += ` da ${spouseName}`;
+            }
+        }
+        
+        return text;
     }
 
     // 📄 Mostra il manifesto inline se presente

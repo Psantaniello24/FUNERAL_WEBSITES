@@ -114,8 +114,9 @@
                     <!-- Date -->
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-bold text-gray-900 mb-2">Data di Nascita *</label>
-                            <input type="date" id="birthDate" required class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                            <label class="block text-sm font-bold text-gray-900 mb-2">Data di Nascita</label>
+                            <input type="date" id="birthDate" class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                            <small class="text-gray-600">Campo opzionale</small>
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-2">Data di Morte *</label>
@@ -671,11 +672,35 @@
                         </select>
                     </div>
 
+                    <!-- Stato Civile -->
+                    <div class="bg-gray-50 p-6 rounded-xl">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Stato Civile</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-900 mb-2">Stato Civile</label>
+                                <select id="maritalStatus" class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all" onchange="toggleSpouseField()">
+                                    <option value="">Seleziona stato civile (opzionale)...</option>
+                                    <option value="celibe">Celibe</option>
+                                    <option value="nubile">Nubile</option>
+                                    <option value="coniugato">Coniugato/a</option>
+                                    <option value="vedovo">Vedovo/a</option>
+                                    <option value="divorziato">Divorziato/a</option>
+                                </select>
+                            </div>
+                            
+                            <div id="spouseField" class="hidden">
+                                <label class="block text-sm font-bold text-gray-900 mb-2">Nome del Coniuge/Ex-Coniuge</label>
+                                <input type="text" id="spouseName" placeholder="Es: Maria Bianchi" class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                                <small class="text-gray-600">Inserire il nome del coniuge attuale o del coniuge premorto (per vedovi) o dell'ex-coniuge (per divorziati)</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Età -->
                     <div>
-                        <label class="block text-sm font-bold text-gray-900 mb-2">Età *</label>
-                        <input type="number" id="age" required min="0" max="120" class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
-                        <small class="text-gray-600">Verrà calcolata automaticamente dalle date</small>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">Età</label>
+                        <input type="number" id="age" min="0" max="120" class="w-full p-4 border border-gray-300 rounded-xl focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all">
+                        <small class="text-gray-600">Verrà calcolata automaticamente dalle date (se inserite) o inserire manualmente</small>
                     </div>
 
                     <!-- Foto -->
@@ -865,8 +890,18 @@
                 if (birthDate && deathDate) {
                     const birth = new Date(birthDate);
                     const death = new Date(deathDate);
-                    const age = death.getFullYear() - birth.getFullYear();
+                    let age = death.getFullYear() - birth.getFullYear();
+                    const monthDiff = death.getMonth() - birth.getMonth();
+                    
+                    // Aggiusta l'età se il compleanno non è ancora passato
+                    if (monthDiff < 0 || (monthDiff === 0 && death.getDate() < birth.getDate())) {
+                        age--;
+                    }
+                    
                     document.getElementById('age').value = age;
+                } else if (!birthDate && deathDate) {
+                    // Se non c'è data di nascita, lascia il campo età vuoto
+                    document.getElementById('age').value = '';
                 }
             }
 
@@ -1016,14 +1051,19 @@
                     `<p class="text-sm text-blue-600 mt-2"><i class="fas fa-file-alt mr-2"></i>Manifesto: ${formData.manifestoFile.name || (formData.manifestoFile instanceof File ? formData.manifestoFile.name : 'Manifesto caricato')}</p>` : 
                     '';
 
+                // Info stato civile se presente
+                const maritalInfo = formData.maritalStatus ? 
+                    `<p class="text-sm text-gray-600 mt-1"><i class="fas fa-heart mr-2"></i>${this.getMaritalStatusText(formData.maritalStatus, formData.spouseName)}</p>` : '';
+
                 this.preview.innerHTML = `
                     <div class="necrologio-card bg-white p-6 rounded-xl shadow-md">
                         <div class="flex items-start gap-4">
                             ${photoHtml}
                             <div class="flex-1">
                                 <h3 class="text-xl font-bold text-gray-900">${formData.name}</h3>
-                                <p class="text-gray-600">${formData.birthDate} - ${formData.deathDate} (${formData.age} anni)</p>
+                                <p class="text-gray-600">${formData.birthDate || 'Data nascita non specificata'} - ${formData.deathDate} ${formData.age ? '(' + formData.age + ' anni)' : ''}</p>
                                 <p class="text-sm text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${formData.city}</p>
+                                ${maritalInfo}
                                 ${funeralInfo}
                                 ${manifestoInfo}
                                 ${formData.description ? `<p class="text-gray-700 mt-3">${formData.description}</p>` : ''}
@@ -1035,7 +1075,29 @@
 
             }
 
-
+            getMaritalStatusText(maritalStatus, spouseName) {
+                const statusMap = {
+                    'celibe': 'Celibe',
+                    'nubile': 'Nubile', 
+                    'coniugato': 'Coniugato/a',
+                    'vedovo': 'Vedovo/a',
+                    'divorziato': 'Divorziato/a'
+                };
+                
+                let text = statusMap[maritalStatus] || maritalStatus;
+                
+                if (spouseName && (maritalStatus === 'coniugato' || maritalStatus === 'vedovo' || maritalStatus === 'divorziato')) {
+                    if (maritalStatus === 'coniugato') {
+                        text += ` con ${spouseName}`;
+                    } else if (maritalStatus === 'vedovo') {
+                        text += ` di ${spouseName}`;
+                    } else if (maritalStatus === 'divorziato') {
+                        text += ` da ${spouseName}`;
+                    }
+                }
+                
+                return text;
+            }
 
             getFormData() {
                 const data = {
@@ -1049,7 +1111,9 @@
                     manifestoFile: this.uploadedManifestoData || null,
                     description: document.getElementById('description').value,
                     funeralDate: document.getElementById('funeralDate').value,
-                    funeralLocation: document.getElementById('funeralLocation').value
+                    funeralLocation: document.getElementById('funeralLocation').value,
+                    maritalStatus: document.getElementById('maritalStatus').value,
+                    spouseName: document.getElementById('spouseName').value
                 };
 
                 // Se stiamo modificando, aggiungi info immagini esistenti
@@ -1358,6 +1422,11 @@
                 document.getElementById('description').value = obituary.description || '';
                 document.getElementById('funeralDate').value = obituary.funeralDate || '';
                 document.getElementById('funeralLocation').value = obituary.funeralLocation || '';
+                document.getElementById('maritalStatus').value = obituary.maritalStatus || '';
+                document.getElementById('spouseName').value = obituary.spouseName || '';
+                
+                // Mostra il campo coniuge se necessario
+                toggleSpouseField();
                 
                 // Gestione foto
                 if (obituary.photoFile && obituary.photoFile.data) {
@@ -1554,6 +1623,8 @@
             document.getElementById('obituaryForm').reset();
             document.getElementById('preview').innerHTML = '<p class="text-gray-500 text-center italic">Compila il form per vedere l\'anteprima...</p>';
 
+            // Nascondi il campo coniuge
+            document.getElementById('spouseField').classList.add('hidden');
             
             // Pulisci anche i file caricati
             clearPhotoFile();
@@ -1688,6 +1759,19 @@
                 setTimeout(() => {
                     message.remove();
                 }, 3000);
+            }
+        }
+
+        // Funzione per mostrare/nascondere il campo coniuge
+        function toggleSpouseField() {
+            const maritalStatus = document.getElementById('maritalStatus').value;
+            const spouseField = document.getElementById('spouseField');
+            
+            if (maritalStatus === 'coniugato' || maritalStatus === 'vedovo' || maritalStatus === 'divorziato') {
+                spouseField.classList.remove('hidden');
+            } else {
+                spouseField.classList.add('hidden');
+                document.getElementById('spouseName').value = '';
             }
         }
 

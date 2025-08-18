@@ -350,6 +350,8 @@ CREATE TABLE ${this.tableName} (
                 description: obituaryData.description || null,
                 funeral_date: obituaryData.funeralDate || null,
                 funeral_location: obituaryData.funeralLocation || null,
+                marital_status: obituaryData.maritalStatus || null,
+                spouse_name: obituaryData.spouseName || null,
                 
                 // Info foto - priorità: nuovo upload > dati passati > dati esistenti nel DB
                 photo_url: photoStorageInfo?.downloadURL || obituaryData.existingPhotoUrl || obituaryData.photo || existingData?.photo_url || null,
@@ -447,6 +449,8 @@ CREATE TABLE ${this.tableName} (
                 description: row.description,
                 funeralDate: row.funeral_date,
                 funeralLocation: row.funeral_location,
+                maritalStatus: row.marital_status,
+                spouseName: row.spouse_name,
                 
                 // URLs diretti per le immagini
                 photoURL: row.photo_url,

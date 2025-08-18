@@ -160,6 +160,8 @@ class ObituariesManager {
                         dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate,
                         testo: obit.description,
                         comune: obit.city,
+                        maritalStatus: obit.maritalStatus,
+                        spouseName: obit.spouseName,
                         condoglianze: [], // Le condoglianze verranno caricate separatamente quando necessario
                         source: 'supabase'
                     }));
@@ -220,6 +222,8 @@ class ObituariesManager {
                 dataEsequie: obit.funeralDate ? obit.funeralDate.split('T')[0] : obit.deathDate,
                 testo: obit.description,
                 comune: obit.city,
+                maritalStatus: obit.maritalStatus,
+                spouseName: obit.spouseName,
                 condoglianze: [],
                 source: 'admin'
             }));
@@ -592,60 +596,8 @@ class ObituariesManager {
     loadDefaultObituaries() {
         // Fallback con dati predefiniti se necessario
         console.log('📋 Caricando necrologi di fallback...');
-        this.obituaries = [
-            {
-                id: 'fallback_1',
-                nome: "Mario Rossi",
-                dataNascita: "1950-03-15",
-                dataMorte: "2024-01-10",
-                eta: 74,
-                foto: "images/placeholder-mario.svg",
-                photoFile: null,
-                manifestoFile: null,
-                luogoEsequie: "Chiesa San Giuseppe, Via Roma 45, Nola",
-                oraEsequie: "10:00",
-                dataEsequie: "2024-01-12",
-                testo: "Con profondo dolore annunciamo la scomparsa del caro Mario, padre e nonno esemplare.",
-                comune: "Nola",
-                condoglianze: [],
-                source: 'fallback'
-            },
-            {
-                id: 'fallback_2',
-                nome: "Anna Bianchi",
-                dataNascita: "1945-07-22",
-                dataMorte: "2024-01-08",
-                eta: 79,
-                foto: "images/placeholder-anna.svg",
-                photoFile: null,
-                manifestoFile: null,
-                luogoEsequie: "Casa Funeraria Santaniello",
-                oraEsequie: "15:00",
-                dataEsequie: "2024-01-10",
-                testo: "Anna ci ha lasciati serenamente, circondata dall'amore della sua famiglia.",
-                comune: "Nola",
-                condoglianze: [],
-                source: 'fallback'
-            },
-            {
-                id: 'fallback_3',
-                nome: "Giuseppe Verdi",
-                dataNascita: "1940-11-08",
-                dataMorte: "2024-01-05",
-                eta: 84,
-                foto: "images/placeholder-giuseppe.svg",
-                photoFile: null,
-                manifestoFile: null,
-                luogoEsequie: "Chiesa Santa Maria delle Grazie",
-                oraEsequie: "11:00",
-                dataEsequie: "2024-01-07",
-                testo: "Maestro di vita e di lavoro, ha lasciato un segno indelebile in tutti coloro che hanno avuto la fortuna di conoscerlo.",
-                comune: "Torre del Greco",
-                condoglianze: [],
-                source: 'fallback'
-            }
-        ];
-        console.log('📋 Caricati 3 necrologi di fallback');
+        this.obituaries = [];
+        console.log('📋 Nessun necrologio di fallback caricato');
     }
 }
 

@@ -154,10 +154,10 @@ class ObituariesPage {
                             <h2 class="text-xl font-bold text-funeral-dark mb-2">${obituary.nome}</h2>
                             
                             <div class="space-y-1 text-sm text-gray-600 mb-3">
-                                <p>
+                                ${obituary.dataNascita ? `<p>
                                     <i class="fas fa-calendar text-funeral-gold mr-2"></i>
                                     <span class="font-medium">Nato:</span> ${this.formatDate(obituary.dataNascita)}
-                                </p>
+                                </p>` : ''}
                                 <p>
                                     <i class="fas fa-heart text-funeral-gold mr-2"></i>
                                     <span class="font-medium">Morto:</span> ${this.formatDate(obituary.dataMorte)}
@@ -166,6 +166,10 @@ class ObituariesPage {
                                     <i class="fas fa-map-marker-alt text-funeral-gold mr-2"></i>
                                     <span class="font-medium">Comune:</span> ${obituary.comune}
                                 </p>
+                                ${obituary.maritalStatus ? `<p>
+                                    <i class="fas fa-ring text-funeral-gold mr-2"></i>
+                                    <span class="font-medium">Stato Civile:</span> ${this.getMaritalStatusText(obituary.maritalStatus, obituary.spouseName)}
+                                </p>` : ''}
                             </div>
                             
                             ${obituary.testo ? `<p class="text-gray-700 text-sm line-clamp-3 mb-4">${obituary.testo}</p>` : '<p class="text-sm text-gray-500 italic mb-4">Nessun testo commemorativo</p>'}
@@ -324,6 +328,30 @@ class ObituariesPage {
     getObituaryLink(obituary) {
         // Sempre usa la pagina dinamica per consistenza
         return `necrologio-detail.html?id=${encodeURIComponent(obituary.id)}`;
+    }
+
+    getMaritalStatusText(maritalStatus, spouseName) {
+        const statusMap = {
+            'celibe': 'Celibe',
+            'nubile': 'Nubile', 
+            'coniugato': 'Coniugato/a',
+            'vedovo': 'Vedovo/a',
+            'divorziato': 'Divorziato/a'
+        };
+        
+        let text = statusMap[maritalStatus] || maritalStatus;
+        
+        if (spouseName && (maritalStatus === 'coniugato' || maritalStatus === 'vedovo' || maritalStatus === 'divorziato')) {
+            if (maritalStatus === 'coniugato') {
+                text += ` con ${spouseName}`;
+            } else if (maritalStatus === 'vedovo') {
+                text += ` di ${spouseName}`;
+            } else if (maritalStatus === 'divorziato') {
+                text += ` da ${spouseName}`;
+            }
+        }
+        
+        return text;
     }
 }
 
