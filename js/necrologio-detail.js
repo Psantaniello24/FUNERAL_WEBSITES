@@ -389,6 +389,7 @@ class ObituaryDetailPage {
         document.getElementById('og-title').setAttribute('content', shareTitle);
         document.getElementById('og-description').setAttribute('content', shareDescription);
         document.getElementById('og-image').setAttribute('content', shareImage);
+        document.getElementById('og-updated-time').setAttribute('content', new Date().toISOString());
         
         // Aggiorna meta tag Twitter
         document.getElementById('twitter-url').setAttribute('content', currentUrl);

@@ -12,16 +12,91 @@
     <meta property="og:url" content="" id="og-url">
     <meta property="og:title" content="Necrologio - Onoranze Funebri Santaniello" id="og-title">
     <meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia." id="og-description">
-    <meta property="og:image" content="images/placeholder-person.svg" id="og-image">
+    <meta property="og:image" content="" id="og-image">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:site_name" content="Onoranze Funebri Santaniello">
     <meta property="og:locale" content="it_IT">
+    <meta property="og:updated_time" content="" id="og-updated-time">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="" id="twitter-url">
     <meta property="twitter:title" content="Necrologio - Onoranze Funebri Santaniello" id="twitter-title">
     <meta property="twitter:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia." id="twitter-description">
-    <meta property="twitter:image" content="images/placeholder-person.svg" id="twitter-image">
+    <meta property="twitter:image" content="" id="twitter-image">
+    
+    <!-- Pre-load meta tags for social sharing -->
+    <script>
+        // Preleva l'ID del necrologio dall'URL e pre-popola i meta tag
+        (function() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const obituaryId = urlParams.get('id');
+                const currentUrl = window.location.href;
+                
+                // Aggiorna URL nei meta tag
+                document.getElementById('og-url').setAttribute('content', currentUrl);
+                document.getElementById('twitter-url').setAttribute('content', currentUrl);
+                
+                // Se c'è un ID, prova a caricare i dati dal localStorage per pre-popolare
+                if (obituaryId) {
+                    const adminData = JSON.parse(localStorage.getItem('obituaries') || '[]');
+                    const obituary = adminData.find(obit => 
+                        `admin_${obit.id}` === obituaryId || 
+                        obit.id === obituaryId ||
+                        obit.id === obituaryId.replace('admin_', '')
+                    );
+                    
+                    if (obituary) {
+                        const shareTitle = `Ci ha lasciati ${obituary.name}`;
+                        let shareDescription = `Ci ha lasciati ${obituary.name}`;
+                        
+                        if (obituary.funeralDate && obituary.funeralLocation) {
+                            const funeralDate = new Date(obituary.funeralDate).toLocaleDateString('it-IT');
+                            const funeralTime = obituary.funeralDate ? new Date(obituary.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : '';
+                            shareDescription += `. I funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${obituary.funeralLocation}`;
+                        }
+                        shareDescription += '. Invia le tue condoglianze alla famiglia.';
+                        
+                        // Determina l'immagine
+                        let shareImage = window.location.origin + '/images/placeholder-person.svg';
+                        if (obituary.photoFile && obituary.photoFile.data) {
+                            if (obituary.photoFile.data.startsWith('http')) {
+                                shareImage = obituary.photoFile.data;
+                            } else if (obituary.photoFile.data.startsWith('data:')) {
+                                // Per immagini base64, usa il placeholder per i social (potrebbero non supportarle)
+                                shareImage = window.location.origin + '/images/placeholder-person.svg';
+                            } else {
+                                shareImage = window.location.origin + '/' + obituary.photoFile.data.replace(/^\//, '');
+                            }
+                        } else if (obituary.photo && obituary.photo !== 'images/placeholder-person.svg') {
+                            if (obituary.photo.startsWith('http')) {
+                                shareImage = obituary.photo;
+                            } else {
+                                shareImage = window.location.origin + '/' + obituary.photo.replace(/^\//, '');
+                            }
+                        }
+                        
+                        // Aggiorna i meta tag
+                        document.title = `${obituary.name} - Necrologio | Onoranze Funebri Santaniello`;
+                        document.querySelector('meta[name="description"]').setAttribute('content', shareDescription);
+                        document.getElementById('og-title').setAttribute('content', shareTitle);
+                        document.getElementById('og-description').setAttribute('content', shareDescription);
+                        document.getElementById('og-image').setAttribute('content', shareImage);
+                        document.getElementById('twitter-title').setAttribute('content', shareTitle);
+                        document.getElementById('twitter-description').setAttribute('content', shareDescription);
+                        document.getElementById('twitter-image').setAttribute('content', shareImage);
+                        
+                        console.log('🔗 Meta tag pre-popolati per:', obituary.name);
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Errore pre-popolazione meta tag:', error);
+            }
+        })();
+    </script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
