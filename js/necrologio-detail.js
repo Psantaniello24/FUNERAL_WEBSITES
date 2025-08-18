@@ -287,6 +287,9 @@ class ObituaryDetailPage {
         // Update page title in head
         document.title = `${this.obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
 
+        // Update social media meta tags for sharing
+        this.updateSocialMetaTags();
+
         // Update condolence button with correct ID
         const condolenceBtn = document.getElementById('condolence-btn');
         console.log('🔍 Debug condoglianze:', {
@@ -347,6 +350,91 @@ class ObituaryDetailPage {
         }
         
         return text;
+    }
+
+    updateSocialMetaTags() {
+        // Genera il messaggio di condivisione personalizzato
+        const currentUrl = window.location.href;
+        const shareTitle = `Ci ha lasciati ${this.obituary.nome}`;
+        
+        // Crea la descrizione personalizzata per la condivisione
+        let shareDescription = `Ci ha lasciati ${this.obituary.nome}`;
+        
+        // Aggiungi informazioni sui funerali se disponibili
+        if (this.obituary.dataEsequie && this.obituary.luogoEsequie) {
+            const funeralDate = Utils.formatDate(this.obituary.dataEsequie);
+            const funeralTime = this.obituary.oraEsequie || '';
+            shareDescription += `. I funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${this.obituary.luogoEsequie}`;
+        } else if (this.obituary.luogoEsequie) {
+            shareDescription += `. I funerali si svolgeranno presso ${this.obituary.luogoEsequie}`;
+        } else if (this.obituary.dataEsequie) {
+            const funeralDate = Utils.formatDate(this.obituary.dataEsequie);
+            shareDescription += `. I funerali si svolgeranno ${funeralDate}`;
+        }
+        
+        shareDescription += `. Per fare le condoglianze clicca su: ${currentUrl}`;
+        
+        // Determina l'immagine da usare per la condivisione
+        let shareImage = window.location.origin + '/images/placeholder-person.svg'; // Default
+        
+        if (this.obituary.photoFile && this.obituary.photoFile.data) {
+            // Se è una foto caricata (base64 o URL completo)
+            if (this.obituary.photoFile.data.startsWith('http')) {
+                shareImage = this.obituary.photoFile.data;
+            } else if (this.obituary.photoFile.data.startsWith('data:')) {
+                // Per base64, mantieni il placeholder per ora (i social network non supportano base64)
+                shareImage = window.location.origin + '/images/placeholder-person.svg';
+            }
+        } else if (this.obituary.foto && this.obituary.foto !== 'images/placeholder-person.svg') {
+            // Se è un URL relativo, rendilo assoluto
+            if (this.obituary.foto.startsWith('http')) {
+                shareImage = this.obituary.foto;
+            } else {
+                shareImage = window.location.origin + '/' + this.obituary.foto.replace(/^\//, '');
+            }
+        }
+        
+        // Data di pubblicazione e aggiornamento
+        const publishDate = new Date().toISOString();
+        
+        // Aggiorna meta tag Open Graph
+        const ogUrl = document.getElementById('og-url');
+        const ogTitle = document.getElementById('og-title');
+        const ogDescription = document.getElementById('og-description');
+        const ogImage = document.getElementById('og-image');
+        const ogPublishedTime = document.getElementById('og-published-time');
+        const ogUpdatedTime = document.getElementById('og-updated-time');
+        
+        if (ogUrl) ogUrl.setAttribute('content', currentUrl);
+        if (ogTitle) ogTitle.setAttribute('content', shareTitle);
+        if (ogDescription) ogDescription.setAttribute('content', shareDescription);
+        if (ogImage) ogImage.setAttribute('content', shareImage);
+        if (ogPublishedTime) ogPublishedTime.setAttribute('content', publishDate);
+        if (ogUpdatedTime) ogUpdatedTime.setAttribute('content', publishDate);
+        
+        // Aggiorna meta tag Twitter
+        const twitterUrl = document.getElementById('twitter-url');
+        const twitterTitle = document.getElementById('twitter-title');
+        const twitterDescription = document.getElementById('twitter-description');
+        const twitterImage = document.getElementById('twitter-image');
+        
+        if (twitterUrl) twitterUrl.setAttribute('content', currentUrl);
+        if (twitterTitle) twitterTitle.setAttribute('content', shareTitle);
+        if (twitterDescription) twitterDescription.setAttribute('content', shareDescription);
+        if (twitterImage) twitterImage.setAttribute('content', shareImage);
+        
+        // Aggiorna anche la meta description standard
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+            metaDescription.setAttribute('content', shareDescription);
+        }
+        
+        console.log('🔗 Meta tag social aggiornati:', {
+            title: shareTitle,
+            description: shareDescription,
+            image: shareImage,
+            url: currentUrl
+        });
     }
 
     // 📄 Mostra il manifesto inline se presente
@@ -832,11 +920,27 @@ function shareObituary() {
     const obituary = obituaryDetailPage.obituary;
     if (!obituary) return;
 
+    // Genera il messaggio di condivisione personalizzato
+    const shareTitle = `Ci ha lasciati ${obituary.nome}`;
+    let shareText = `Ci ha lasciati ${obituary.nome}`;
+    
+    // Aggiungi informazioni sui funerali se disponibili
+    if (obituary.dataEsequie && obituary.luogoEsequie) {
+        const funeralDate = Utils.formatDate(obituary.dataEsequie);
+        const funeralTime = obituary.oraEsequie || '';
+        shareText += `. I funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${obituary.luogoEsequie}`;
+    } else if (obituary.luogoEsequie) {
+        shareText += `. I funerali si svolgeranno presso ${obituary.luogoEsequie}`;
+    } else if (obituary.dataEsequie) {
+        const funeralDate = Utils.formatDate(obituary.dataEsequie);
+        shareText += `. I funerali si svolgeranno ${funeralDate}`;
+    }
+    
+    shareText += `. Per fare le condoglianze: ${window.location.href}`;
+
     const shareData = {
-        title: `Necrologio di ${obituary.nome}`,
-        text: obituary.testo ? 
-            `${obituary.nome} (${new Date(obituary.dataNascita).getFullYear()}-${new Date(obituary.dataMorte).getFullYear()}) - ${obituary.testo.substring(0, 100)}...` :
-            `${obituary.nome} (${new Date(obituary.dataNascita).getFullYear()}-${new Date(obituary.dataMorte).getFullYear()})`,
+        title: shareTitle,
+        text: shareText,
         url: window.location.href
     };
 
@@ -921,7 +1025,23 @@ function shareToFacebook(url) {
 }
 
 function shareToWhatsApp(url) {
-    const text = `Necrologio di ${obituaryDetailPage.obituary.nome} - ${url}`;
+    const obituary = obituaryDetailPage.obituary;
+    let text = `Ci ha lasciati ${obituary.nome}`;
+    
+    // Aggiungi informazioni sui funerali se disponibili
+    if (obituary.dataEsequie && obituary.luogoEsequie) {
+        const funeralDate = Utils.formatDate(obituary.dataEsequie);
+        const funeralTime = obituary.oraEsequie || '';
+        text += `. I funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${obituary.luogoEsequie}`;
+    } else if (obituary.luogoEsequie) {
+        text += `. I funerali si svolgeranno presso ${obituary.luogoEsequie}`;
+    } else if (obituary.dataEsequie) {
+        const funeralDate = Utils.formatDate(obituary.dataEsequie);
+        text += `. I funerali si svolgeranno ${funeralDate}`;
+    }
+    
+    text += `. Per fare le condoglianze: ${url}`;
+    
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     closeShareModal();
 }
