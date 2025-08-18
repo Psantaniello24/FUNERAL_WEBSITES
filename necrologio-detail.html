@@ -4,71 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Necrologio - Onoranze Funebri Santaniello</title>
+    <meta name="description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">
     <meta name="keywords" content="necrologio, condoglianze, agenzia funebre, Santaniello">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="" id="og-url">
-    <meta property="og:title" content="" id="og-title">
-    <meta property="og:description" content="" id="og-description">
-    <meta property="og:image" content="" id="og-image">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:site_name" content="Onoranze Funebri Santaniello">
-    <meta property="og:locale" content="it_IT">
-    <meta property="og:updated_time" content="" id="og-updated-time">
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="" id="twitter-url">
-    <meta property="twitter:title" content="" id="twitter-title">
-    <meta property="twitter:description" content="" id="twitter-description">
-    <meta property="twitter:image" content="" id="twitter-image">
-    
-    <!-- Pre-populate meta tags during HTML parsing -->
-    <script>
-        // Usa document.write per scrivere i meta tag durante il parsing HTML
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const currentUrl = window.location.href;
-            
-            // Leggi i parametri di condivisione dall'URL
-            const shareName = urlParams.get('name');
-            const shareDesc = urlParams.get('desc');
-            const shareImg = urlParams.get('img');
-            
-            let shareTitle = 'Necrologio - Onoranze Funebri Santaniello';
-            let shareDescription = 'Visualizza i dettagli del necrologio e invia le tue condoglianze alla famiglia.';
-            let shareImage = window.location.origin + '/images/placeholder-person.svg';
-            
-            if (shareName) {
-                shareTitle = `Ci ha lasciati ${decodeURIComponent(shareName)}`;
-                shareDescription = shareDesc ? decodeURIComponent(shareDesc) : `Ci ha lasciati ${decodeURIComponent(shareName)}. Invia le tue condoglianze alla famiglia.`;
-                shareImage = shareImg ? decodeURIComponent(shareImg) : shareImage;
-                
-                // Aggiorna anche il title della pagina
-                document.title = shareTitle + ' | Onoranze Funebri Santaniello';
-                
-                console.log('✅ Meta tag pre-popolati da URL per:', decodeURIComponent(shareName));
-            }
-            
-            // Scrivi i meta tag durante il parsing HTML usando document.write
-            document.write('<meta property="og:url" content="' + currentUrl + '">');
-            document.write('<meta property="og:title" content="' + shareTitle.replace(/"/g, '&quot;') + '">');
-            document.write('<meta property="og:description" content="' + shareDescription.replace(/"/g, '&quot;') + '">');
-            document.write('<meta property="og:image" content="' + shareImage + '">');
-            document.write('<meta property="og:updated_time" content="' + new Date().toISOString() + '">');
-            
-            document.write('<meta property="twitter:url" content="' + currentUrl + '">');
-            document.write('<meta property="twitter:title" content="' + shareTitle.replace(/"/g, '&quot;') + '">');
-            document.write('<meta property="twitter:description" content="' + shareDescription.replace(/"/g, '&quot;') + '">');
-            document.write('<meta property="twitter:image" content="' + shareImage + '">');
-            
-            // Aggiorna anche la meta description standard
-            document.write('<meta name="description" content="' + shareDescription.replace(/"/g, '&quot;') + '">');
-        })();
-    </script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
