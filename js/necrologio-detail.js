@@ -372,10 +372,11 @@ class ObituaryDetailPage {
             shareDescription += `. I funerali si svolgeranno ${funeralDate}`;
         }
         
-        shareDescription += `. Per fare le condoglianze clicca su: ${currentUrl}`;
+        shareDescription += `. Per fare le condoglianze clicca qui.`;
         
         // Determina l'immagine da usare per la condivisione
         let shareImage = window.location.origin + '/images/placeholder-person.svg'; // Default
+        let imageAlt = `Foto di ${this.obituary.nome}`;
         
         if (this.obituary.photoFile && this.obituary.photoFile.data) {
             // Se è una foto caricata (base64 o URL completo)
@@ -384,6 +385,7 @@ class ObituaryDetailPage {
             } else if (this.obituary.photoFile.data.startsWith('data:')) {
                 // Per base64, mantieni il placeholder per ora (i social network non supportano base64)
                 shareImage = window.location.origin + '/images/placeholder-person.svg';
+                imageAlt = `Necrologio di ${this.obituary.nome}`;
             }
         } else if (this.obituary.foto && this.obituary.foto !== 'images/placeholder-person.svg') {
             // Se è un URL relativo, rendilo assoluto
@@ -392,6 +394,8 @@ class ObituaryDetailPage {
             } else {
                 shareImage = window.location.origin + '/' + this.obituary.foto.replace(/^\//, '');
             }
+        } else {
+            imageAlt = `Necrologio di ${this.obituary.nome}`;
         }
         
         // Data di pubblicazione e aggiornamento
@@ -402,6 +406,8 @@ class ObituaryDetailPage {
         const ogTitle = document.getElementById('og-title');
         const ogDescription = document.getElementById('og-description');
         const ogImage = document.getElementById('og-image');
+        const ogImageSecure = document.getElementById('og-image-secure');
+        const ogImageAlt = document.getElementById('og-image-alt');
         const ogPublishedTime = document.getElementById('og-published-time');
         const ogUpdatedTime = document.getElementById('og-updated-time');
         
@@ -409,6 +415,8 @@ class ObituaryDetailPage {
         if (ogTitle) ogTitle.setAttribute('content', shareTitle);
         if (ogDescription) ogDescription.setAttribute('content', shareDescription);
         if (ogImage) ogImage.setAttribute('content', shareImage);
+        if (ogImageSecure) ogImageSecure.setAttribute('content', shareImage);
+        if (ogImageAlt) ogImageAlt.setAttribute('content', imageAlt);
         if (ogPublishedTime) ogPublishedTime.setAttribute('content', publishDate);
         if (ogUpdatedTime) ogUpdatedTime.setAttribute('content', publishDate);
         
@@ -423,18 +431,41 @@ class ObituaryDetailPage {
         if (twitterDescription) twitterDescription.setAttribute('content', shareDescription);
         if (twitterImage) twitterImage.setAttribute('content', shareImage);
         
-        // Aggiorna anche la meta description standard
+        // Aggiorna anche la meta description standard e il title
         const metaDescription = document.querySelector('meta[name="description"]');
         if (metaDescription) {
             metaDescription.setAttribute('content', shareDescription);
         }
         
+        // Aggiorna il title della pagina
+        document.title = shareTitle + ' - Onoranze Funebri Santaniello';
+        
         console.log('🔗 Meta tag social aggiornati:', {
             title: shareTitle,
             description: shareDescription,
             image: shareImage,
+            imageAlt: imageAlt,
             url: currentUrl
         });
+        
+        // Forza il refresh dei meta tag per Facebook
+        this.forceFacebookRefresh();
+    }
+    
+    forceFacebookRefresh() {
+        // Aggiunge un parametro timestamp per forzare Facebook a ricaricare i meta tag
+        const currentUrl = window.location.href;
+        const urlWithoutParams = currentUrl.split('?')[0];
+        const timestamp = Date.now();
+        const refreshUrl = `${urlWithoutParams}?t=${timestamp}`;
+        
+        // Aggiorna l'URL nei meta tag per Facebook
+        const ogUrl = document.getElementById('og-url');
+        if (ogUrl) {
+            ogUrl.setAttribute('content', refreshUrl);
+        }
+        
+        console.log('🔄 URL aggiornato per Facebook refresh:', refreshUrl);
     }
 
     // 📄 Mostra il manifesto inline se presente
@@ -1153,3 +1184,29 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     console.log('Obituary detail page initialized');
 });
+
+// Funzioni di debug per Facebook
+function debugFacebookShare() {
+    const currentUrl = window.location.href;
+    const debugUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(currentUrl)}`;
+    console.log('🔧 Aprendo Facebook Debugger per:', currentUrl);
+    window.open(debugUrl, '_blank');
+}
+
+// Funzione per testare i meta tag
+function logMetaTags() {
+    const metaTags = {
+        title: document.querySelector('meta[property="og:title"]')?.content,
+        description: document.querySelector('meta[property="og:description"]')?.content,
+        image: document.querySelector('meta[property="og:image"]')?.content,
+        url: document.querySelector('meta[property="og:url"]')?.content,
+        imageAlt: document.querySelector('meta[property="og:image:alt"]')?.content
+    };
+    
+    console.log('🔍 Meta tag attuali:', metaTags);
+    return metaTags;
+}
+
+// Rendi le funzioni globali per debugging
+window.debugFacebookShare = debugFacebookShare;
+window.logMetaTags = logMetaTags;
