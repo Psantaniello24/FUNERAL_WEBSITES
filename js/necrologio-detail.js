@@ -437,38 +437,27 @@ class ObituaryDetailPage {
             shareImage = this.obituary.foto;
         }
         
-        // Crea URL ottimizzato per la condivisione social
-        const baseUrl = window.location.origin + window.location.pathname;
-        const shareParams = new URLSearchParams({
-            id: this.obituaryId,
-            name: this.obituary.nome,
-            desc: shareDescription
-        });
+        // Crea URL corto per la condivisione social
+        const shortUrl = `${window.location.origin}/share.html?id=${this.obituaryId}`;
         
-        if (shareImage) {
-            shareParams.set('img', shareImage);
-        }
-        
-        const optimizedUrl = `${baseUrl}?${shareParams.toString()}`;
-        
-        shareText += `.\n\nInvia le tue condoglianze: ${optimizedUrl}`;
+        shareText += `.\n\nInvia le tue condoglianze: ${shortUrl}`;
         
         // Usa Web Share API se disponibile (mobile)
         if (navigator.share) {
             navigator.share({
                 title: shareTitle,
                 text: shareText,
-                url: optimizedUrl
+                url: shortUrl
             }).then(() => {
                 console.log('✅ Condivisione completata');
             }).catch((error) => {
                 console.log('❌ Errore condivisione:', error);
                 // Fallback alla copia del link
-                this.fallbackShare(shareText, optimizedUrl);
+                this.fallbackShare(shareText, shortUrl);
             });
         } else {
             // Fallback per desktop: mostra opzioni di condivisione
-            this.showShareOptions(shareTitle, shareText, optimizedUrl);
+            this.showShareOptions(shareTitle, shareText, shortUrl);
         }
     }
 
