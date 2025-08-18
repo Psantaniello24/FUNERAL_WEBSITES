@@ -324,10 +324,42 @@ class ObituariesPage {
         }
     }
 
-    // Generate the correct link for an obituary
+    // Generate the correct link for an obituary with social sharing optimization
     getObituaryLink(obituary) {
-        // Sempre usa la pagina dinamica per consistenza
-        return `necrologio-detail.html?id=${encodeURIComponent(obituary.id)}`;
+        const baseUrl = 'necrologio-detail.html';
+        const params = new URLSearchParams({
+            id: obituary.id
+        });
+        
+        // Aggiungi parametri per l'ottimizzazione social se disponibili
+        if (obituary.nome) {
+            params.set('name', obituary.nome);
+            
+            // Crea descrizione ottimizzata
+            let description = `Ci ha lasciati ${obituary.nome}`;
+            if (obituary.dataEsequie && obituary.luogoEsequie) {
+                try {
+                    const funeralDate = Utils.formatDate(obituary.dataEsequie);
+                    const funeralTime = obituary.oraEsequie || '';
+                    description += `, i funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${obituary.luogoEsequie}`;
+                } catch (error) {
+                    if (obituary.luogoEsequie) {
+                        description += `, i funerali si svolgeranno presso ${obituary.luogoEsequie}`;
+                    }
+                }
+            }
+            description += '. Invia le tue condoglianze alla famiglia.';
+            params.set('desc', description);
+            
+            // Aggiungi immagine se disponibile
+            if (obituary.photoFile && obituary.photoFile.data && obituary.photoFile.data.startsWith('http')) {
+                params.set('img', obituary.photoFile.data);
+            } else if (obituary.foto && obituary.foto.startsWith('http')) {
+                params.set('img', obituary.foto);
+            }
+        }
+        
+        return `${baseUrl}?${params.toString()}`;
     }
 
     getMaritalStatusText(maritalStatus, spouseName) {

@@ -413,36 +413,62 @@ class ObituaryDetailPage {
 
     // 🔗 Funzione per condividere il necrologio
     shareObituary() {
-        const currentUrl = window.location.href;
         const shareTitle = `Ci ha lasciati ${this.obituary.nome}`;
         
         // Crea il messaggio di condivisione
         let shareText = `Ci ha lasciati ${this.obituary.nome}`;
+        let shareDescription = shareText;
         
         if (this.obituary.dataEsequie && this.obituary.luogoEsequie) {
             const funeralDate = Utils.formatDate(this.obituary.dataEsequie);
             const funeralTime = this.obituary.oraEsequie || '';
-            shareText += `. I funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${this.obituary.luogoEsequie}`;
+            const funeralInfo = `, i funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${this.obituary.luogoEsequie}`;
+            shareText += funeralInfo;
+            shareDescription += funeralInfo;
         }
         
-        shareText += `.\n\nInvia le tue condoglianze: ${currentUrl}`;
+        shareDescription += '. Invia le tue condoglianze alla famiglia.';
+        
+        // Determina l'immagine da condividere
+        let shareImage = '';
+        if (this.obituary.photoFile && this.obituary.photoFile.data && this.obituary.photoFile.data.startsWith('http')) {
+            shareImage = this.obituary.photoFile.data;
+        } else if (this.obituary.foto && this.obituary.foto.startsWith('http')) {
+            shareImage = this.obituary.foto;
+        }
+        
+        // Crea URL ottimizzato per la condivisione social
+        const baseUrl = window.location.origin + window.location.pathname;
+        const shareParams = new URLSearchParams({
+            id: this.obituaryId,
+            name: this.obituary.nome,
+            desc: shareDescription
+        });
+        
+        if (shareImage) {
+            shareParams.set('img', shareImage);
+        }
+        
+        const optimizedUrl = `${baseUrl}?${shareParams.toString()}`;
+        
+        shareText += `.\n\nInvia le tue condoglianze: ${optimizedUrl}`;
         
         // Usa Web Share API se disponibile (mobile)
         if (navigator.share) {
             navigator.share({
                 title: shareTitle,
                 text: shareText,
-                url: currentUrl
+                url: optimizedUrl
             }).then(() => {
                 console.log('✅ Condivisione completata');
             }).catch((error) => {
                 console.log('❌ Errore condivisione:', error);
                 // Fallback alla copia del link
-                this.fallbackShare(shareText, currentUrl);
+                this.fallbackShare(shareText, optimizedUrl);
             });
         } else {
             // Fallback per desktop: mostra opzioni di condivisione
-            this.showShareOptions(shareTitle, shareText, currentUrl);
+            this.showShareOptions(shareTitle, shareText, optimizedUrl);
         }
     }
 

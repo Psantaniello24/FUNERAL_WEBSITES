@@ -29,10 +29,9 @@
     
     <!-- Pre-load meta tags for social sharing -->
     <script>
-        // Preleva l'ID del necrologio dall'URL e pre-popola i meta tag IMMEDIATAMENTE
+        // Leggi i parametri dall'URL per popolare i meta tag IMMEDIATAMENTE
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const obituaryId = urlParams.get('id');
             const currentUrl = window.location.href;
             
             // Aggiorna sempre l'URL nei meta tag
@@ -41,77 +40,18 @@
             if (ogUrl) ogUrl.setAttribute('content', currentUrl);
             if (twitterUrl) twitterUrl.setAttribute('content', currentUrl);
             
-            // Se c'è un ID, prova IMMEDIATAMENTE a caricare i dati
-            if (obituaryId) {
-                try {
-                    // Prova prima dal localStorage (più veloce)
-                    let obituary = null;
-                    const adminData = JSON.parse(localStorage.getItem('obituaries') || '[]');
-                    obituary = adminData.find(obit => 
-                        `admin_${obit.id}` === obituaryId || 
-                        obit.id === obituaryId ||
-                        obit.id === obituaryId.replace('admin_', '') ||
-                        String(obit.id) === obituaryId.replace('admin_', '') ||
-                        `admin_${obit.id}` === obituaryId.replace('supabase_', 'admin_')
-                    );
-                    
-                    if (obituary) {
-                        // AGGIORNA IMMEDIATAMENTE I META TAG
-                        updateMetaTags(obituary);
-                    } else {
-                        console.log('🔍 Necrologio non trovato in localStorage, ID:', obituaryId);
-                        // Prova a fare una richiesta sincrona per Supabase (ultimo tentativo)
-                        tryLoadFromSupabase(obituaryId);
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Errore caricamento dati necrologio:', error);
-                    setDefaultMetaTags();
-                }
-            } else {
-                setDefaultMetaTags();
-            }
+            // Leggi i parametri di condivisione dall'URL se presenti
+            const shareName = urlParams.get('name');
+            const shareDesc = urlParams.get('desc');
+            const shareImg = urlParams.get('img');
             
-            function updateMetaTags(obituary) {
-                const shareTitle = `Ci ha lasciati ${obituary.name}`;
-                let shareDescription = `Ci ha lasciati ${obituary.name}`;
+            if (shareName) {
+                // Se abbiamo parametri di condivisione nell'URL, usali immediatamente
+                const shareTitle = `Ci ha lasciati ${decodeURIComponent(shareName)}`;
+                const shareDescription = shareDesc ? decodeURIComponent(shareDesc) : `Ci ha lasciati ${decodeURIComponent(shareName)}. Invia le tue condoglianze alla famiglia.`;
+                const shareImage = shareImg ? decodeURIComponent(shareImg) : window.location.origin + '/images/placeholder-person.svg';
                 
-                // Aggiungi info funerale se disponibili
-                if (obituary.funeralDate && obituary.funeralLocation) {
-                    try {
-                        const funeralDate = new Date(obituary.funeralDate).toLocaleDateString('it-IT', {
-                            day: 'numeric',
-                            month: 'long', 
-                            year: 'numeric'
-                        });
-                        const funeralTime = obituary.funeralDate ? new Date(obituary.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : '';
-                        shareDescription += `, i funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${obituary.funeralLocation}`;
-                    } catch (dateError) {
-                        if (obituary.funeralLocation) {
-                            shareDescription += `, i funerali si svolgeranno presso ${obituary.funeralLocation}`;
-                        }
-                    }
-                } else if (obituary.funeralLocation) {
-                    shareDescription += `, i funerali si svolgeranno presso ${obituary.funeralLocation}`;
-                }
-                shareDescription += '. Invia le tue condoglianze alla famiglia.';
-                
-                // Determina l'immagine da usare
-                let shareImage = window.location.origin + '/images/placeholder-person.svg';
-                if (obituary.photoFile && obituary.photoFile.data) {
-                    if (obituary.photoFile.data.startsWith('http')) {
-                        shareImage = obituary.photoFile.data;
-                    } else if (!obituary.photoFile.data.startsWith('data:')) {
-                        shareImage = window.location.origin + '/' + obituary.photoFile.data.replace(/^\//, '');
-                    }
-                } else if (obituary.photo && obituary.photo !== 'images/placeholder-person.svg') {
-                    if (obituary.photo.startsWith('http')) {
-                        shareImage = obituary.photo;
-                    } else {
-                        shareImage = window.location.origin + '/' + obituary.photo.replace(/^\//, '');
-                    }
-                }
-                
-                // Aggiorna TUTTI i meta tag immediatamente
+                // Aggiorna i meta tag immediatamente
                 document.title = shareTitle + ' | Onoranze Funebri Santaniello';
                 
                 const metaDesc = document.querySelector('meta[name="description"]');
@@ -131,11 +71,80 @@
                 if (twitterDesc) twitterDesc.setAttribute('content', shareDescription);
                 if (twitterImage) twitterImage.setAttribute('content', shareImage);
                 
-                console.log('✅ Meta tag aggiornati per:', obituary.name, {
+                console.log('✅ Meta tag aggiornati da parametri URL:', {
                     title: shareTitle,
                     description: shareDescription.substring(0, 100) + '...',
                     image: shareImage
                 });
+            } else {
+                // Fallback: prova a caricare dal localStorage come prima
+                const obituaryId = urlParams.get('id');
+                if (obituaryId) {
+                    try {
+                        const adminData = JSON.parse(localStorage.getItem('obituaries') || '[]');
+                        const obituary = adminData.find(obit => 
+                            `admin_${obit.id}` === obituaryId || 
+                            obit.id === obituaryId ||
+                            obit.id === obituaryId.replace('admin_', '') ||
+                            String(obit.id) === obituaryId.replace('admin_', '')
+                        );
+                        
+                        if (obituary) {
+                            updateMetaTagsFromData(obituary);
+                        } else {
+                            setDefaultMetaTags();
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Errore caricamento dati necrologio:', error);
+                        setDefaultMetaTags();
+                    }
+                } else {
+                    setDefaultMetaTags();
+                }
+            }
+            
+            function updateMetaTagsFromData(obituary) {
+                const shareTitle = `Ci ha lasciati ${obituary.name}`;
+                let shareDescription = `Ci ha lasciati ${obituary.name}`;
+                
+                if (obituary.funeralDate && obituary.funeralLocation) {
+                    try {
+                        const funeralDate = new Date(obituary.funeralDate).toLocaleDateString('it-IT', {
+                            day: 'numeric',
+                            month: 'long', 
+                            year: 'numeric'
+                        });
+                        const funeralTime = obituary.funeralDate ? new Date(obituary.funeralDate).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'}) : '';
+                        shareDescription += `, i funerali si svolgeranno ${funeralDate}${funeralTime ? ' alle ' + funeralTime : ''} presso ${obituary.funeralLocation}`;
+                    } catch (dateError) {
+                        if (obituary.funeralLocation) {
+                            shareDescription += `, i funerali si svolgeranno presso ${obituary.funeralLocation}`;
+                        }
+                    }
+                }
+                shareDescription += '. Invia le tue condoglianze alla famiglia.';
+                
+                let shareImage = window.location.origin + '/images/placeholder-person.svg';
+                if (obituary.photoFile && obituary.photoFile.data && obituary.photoFile.data.startsWith('http')) {
+                    shareImage = obituary.photoFile.data;
+                } else if (obituary.photo && obituary.photo.startsWith('http')) {
+                    shareImage = obituary.photo;
+                }
+                
+                document.title = shareTitle + ' | Onoranze Funebri Santaniello';
+                
+                const metaDesc = document.querySelector('meta[name="description"]');
+                if (metaDesc) metaDesc.setAttribute('content', shareDescription);
+                
+                const ogTitle = document.getElementById('og-title');
+                const ogDesc = document.getElementById('og-description');
+                const ogImage = document.getElementById('og-image');
+                
+                if (ogTitle) ogTitle.setAttribute('content', shareTitle);
+                if (ogDesc) ogDesc.setAttribute('content', shareDescription);
+                if (ogImage) ogImage.setAttribute('content', shareImage);
+                
+                console.log('✅ Meta tag aggiornati da localStorage per:', obituary.name);
             }
             
             function setDefaultMetaTags() {
@@ -154,12 +163,6 @@
                 if (ogTitle) ogTitle.setAttribute('content', defaultTitle);
                 if (ogDesc) ogDesc.setAttribute('content', defaultDesc);
                 if (ogImage) ogImage.setAttribute('content', defaultImage);
-            }
-            
-            function tryLoadFromSupabase(id) {
-                // Questo è un tentativo di backup - potrebbe non funzionare sempre
-                console.log('🔄 Tentativo caricamento da Supabase per ID:', id);
-                setDefaultMetaTags(); // Usa i valori di default per ora
             }
         })();
     </script>
