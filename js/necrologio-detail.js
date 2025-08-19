@@ -162,8 +162,91 @@ class ObituaryDetailPage {
             metaDescription.content = `Necrologio di ${this.obituary.nome} (${new Date(this.obituary.dataNascita).getFullYear()}-${new Date(this.obituary.dataMorte).getFullYear()}). Invia le tue condoglianze alla famiglia. Agenzia Funebre Santaniello.`;
         }
         
+        // Update Open Graph meta tags for social sharing
+        this.updateOpenGraphTags();
+        
         // Update the page content with obituary data
         this.updatePageContent();
+    }
+
+    // Aggiorna i meta tag Open Graph per la condivisione social
+    updateOpenGraphTags() {
+        if (!this.obituary) {
+            console.warn('⚠️ Impossibile aggiornare Open Graph: obituary non caricato');
+            return;
+        }
+
+        // Costruisci il titolo: "In memoria di [nome_defunto]"
+        const ogTitle = `In memoria di ${this.obituary.nome}`;
+        
+        // Costruisci la descrizione con i dati del funerale
+        const dataFunerale = Utils.formatDate(this.obituary.dataEsequie);
+        const luogoFunerale = this.obituary.luogoEsequie || 'Chiesa da definire';
+        const ogDescription = `Ci ha lasciato ${this.obituary.nome}, i funerali si terranno il ${dataFunerale} presso ${luogoFunerale}.`;
+        
+        // Ottieni l'URL dell'immagine del defunto
+        const ogImage = this.getObituaryImageUrl();
+        
+        // URL canonico della pagina
+        const ogUrl = window.location.href;
+        
+        // Aggiorna i meta tag Open Graph
+        this.updateMetaTag('property', 'og:title', ogTitle);
+        this.updateMetaTag('property', 'og:description', ogDescription);
+        this.updateMetaTag('property', 'og:image', ogImage);
+        this.updateMetaTag('property', 'og:url', ogUrl);
+        
+        // Aggiorna anche title e meta description per coerenza
+        document.title = ogTitle + ' - Onoranze Funebri Santaniello';
+        this.updateMetaTag('name', 'description', ogDescription);
+        
+        console.log('✅ Meta tag Open Graph aggiornati:', {
+            title: ogTitle,
+            description: ogDescription,
+            image: ogImage,
+            url: ogUrl
+        });
+    }
+
+    // Metodo helper per aggiornare un meta tag
+    updateMetaTag(attribute, value, content) {
+        let metaTag = document.querySelector(`meta[${attribute}="${value}"]`);
+        if (metaTag) {
+            metaTag.setAttribute('content', content);
+        } else {
+            // Crea il meta tag se non esiste
+            metaTag = document.createElement('meta');
+            metaTag.setAttribute(attribute, value);
+            metaTag.setAttribute('content', content);
+            document.head.appendChild(metaTag);
+        }
+    }
+
+    // Ottieni l'URL pubblico dell'immagine del defunto
+    getObituaryImageUrl() {
+        let imageUrl = '';
+        
+        // Priorità: photoFile -> foto/photo -> placeholder
+        if (this.obituary.photoFile && this.obituary.photoFile.data) {
+            // Usa la foto caricata (base64 o URL)
+            imageUrl = this.obituary.photoFile.data;
+        } else if (this.obituary.foto || this.obituary.photo) {
+            // Usa URL foto (compatibilità italiano/inglese)
+            imageUrl = this.obituary.foto || this.obituary.photo;
+        } else if (this.obituary.photoURL) {
+            // URL da Supabase Storage
+            imageUrl = this.obituary.photoURL;
+        } else {
+            // Placeholder se nessuna foto disponibile - usa URL assoluto
+            imageUrl = new URL('images/placeholder-person.svg', window.location.origin).href;
+        }
+        
+        // Assicurati che l'URL sia assoluto per Open Graph
+        if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
+            imageUrl = new URL(imageUrl, window.location.origin).href;
+        }
+        
+        return imageUrl;
     }
 
     showNotFoundMessage() {
@@ -286,14 +369,6 @@ class ObituaryDetailPage {
 
         // Update page title in head
         document.title = `${this.obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
-
-        // Update Open Graph meta tags for social sharing
-        if (typeof updateMetaTags === 'function') {
-            updateMetaTags(this.obituary);
-        }
-
-        // Salva in cache per pre-caricamento futuro dei meta tag
-        this.cacheObituaryForMetaTags();
 
         // Update condolence button with correct ID
         const condolenceBtn = document.getElementById('condolence-btn');
@@ -513,38 +588,6 @@ class ObituaryDetailPage {
             
         } catch (error) {
             console.error('❌ Errore inserimento manifesto:', error);
-        }
-    }
-
-    // 💾 Salva obituary corrente in cache per pre-caricamento meta tag
-    cacheObituaryForMetaTags() {
-        try {
-            if (!this.obituary) return;
-            
-            // Carica cache esistente
-            let cachedObituaries = [];
-            const existingCache = localStorage.getItem('obituaries_cache');
-            if (existingCache) {
-                cachedObituaries = JSON.parse(existingCache);
-            }
-            
-            // Rimuovi eventuale versione precedente dello stesso obituary
-            cachedObituaries = cachedObituaries.filter(o => o.id !== this.obituary.id);
-            
-            // Aggiungi obituary corrente
-            cachedObituaries.push(this.obituary);
-            
-            // Mantieni solo gli ultimi 20 obituari per evitare cache troppo grande
-            if (cachedObituaries.length > 20) {
-                cachedObituaries = cachedObituaries.slice(-20);
-            }
-            
-            // Salva in localStorage
-            localStorage.setItem('obituaries_cache', JSON.stringify(cachedObituaries));
-            console.log('💾 Obituary salvato in cache per meta tag:', this.obituary.nome);
-            
-        } catch (error) {
-            console.warn('⚠️ Errore salvataggio cache meta tag:', error.message);
         }
     }
 
