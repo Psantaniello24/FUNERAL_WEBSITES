@@ -348,7 +348,35 @@
             const name = obituary.nome || obituary.name || 'Defunto';
             const description = `Ci ha lasciati ${name}, sempre nei nostri cuori.`;
             const title = `In memoria di ${name}`;
-            const imageUrl = obituary.foto || obituary.photoURL || 'https://tuosito.it/images/placeholder-person.svg';
+            
+            // Gestione intelligente dell'immagine del defunto per Open Graph
+            let imageUrl = 'https://tuosito.it/images/placeholder-person.svg'; // fallback
+            
+            // Priorità 1: URL pubblico da Supabase Storage (photoURL)
+            if (obituary.photoURL && obituary.photoURL.startsWith('http') && !obituary.photoURL.includes('placeholder')) {
+                imageUrl = obituary.photoURL;
+                console.log('📸 Usando photoURL di Supabase per meta tags:', imageUrl);
+            }
+            // Priorità 2: URL foto generico (foto field) se è un URL valido
+            else if (obituary.foto && obituary.foto.startsWith('http') && !obituary.foto.includes('placeholder')) {
+                imageUrl = obituary.foto;
+                console.log('📸 Usando obituary.foto (URL pubblico) per meta tags:', imageUrl);
+            }
+            // Priorità 3: Se foto è un path relativo, lo convertiamo in assoluto
+            else if (obituary.foto && !obituary.foto.includes('placeholder') && !obituary.foto.startsWith('data:')) {
+                imageUrl = obituary.foto.startsWith('/') ? `https://tuosito.it${obituary.foto}` : `https://tuosito.it/${obituary.foto}`;
+                console.log('📸 Usando obituary.foto (path convertito) per meta tags:', imageUrl);
+            }
+            // NOTA: Non usiamo photoFile.data (base64) perché Facebook non supporta immagini base64
+            else {
+                console.log('📸 Nessuna foto pubblica trovata, usando placeholder per meta tags');
+                // Verifica se c'è un'immagine base64 che dovrebbe essere caricata su storage
+                if (obituary.photoFile && obituary.photoFile.data && obituary.photoFile.data.startsWith('data:')) {
+                    console.warn('⚠️ ATTENZIONE: Trovata immagine base64 che non può essere usata per Open Graph');
+                    console.warn('💡 Suggerimento: L\'immagine dovrebbe essere salvata su Supabase Storage per essere condivisibile');
+                }
+            }
+            
             const pageUrl = window.location.href;
             
             // Aggiorna title e meta description
@@ -368,6 +396,24 @@
             document.getElementById('twitter-image').setAttribute('content', imageUrl);
             
             console.log('✅ Meta tags aggiornati per:', name);
+            console.log('📸 Debug immagine meta tags:', {
+                hasPhotoFile: !!obituary.photoFile,
+                hasPhotoFileData: !!(obituary.photoFile && obituary.photoFile.data),
+                photoFileType: obituary.photoFile?.data?.substring(0, 20) + '...',
+                foto: obituary.foto,
+                photoURL: obituary.photoURL,
+                finalImageUrl: imageUrl,
+                isBase64: imageUrl.startsWith('data:'),
+                isHttp: imageUrl.startsWith('http'),
+                isPlaceholder: imageUrl.includes('placeholder'),
+                isSupabaseUrl: imageUrl.includes('supabase.co')
+            });
+            
+            // Avviso se stiamo usando il placeholder
+            if (imageUrl.includes('placeholder')) {
+                console.warn('⚠️ ATTENZIONE: Usando immagine placeholder per Open Graph');
+                console.warn('💡 Per una condivisione ottimale, carica una foto reale del defunto');
+            }
         }
         
         // Initialize dynamic obituary page
