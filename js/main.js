@@ -143,6 +143,13 @@ class ObituariesManager {
                         dataMorte: obit.deathDate,
                         eta: obit.age,
                         foto: obit.photoURL || "images/placeholder-person.svg",
+                        
+                        // CAMPI AGGIUNTIVI DA SUPABASE PER OPEN GRAPH
+                        photoURL: obit.photoURL, // URL diretto da Supabase Storage
+                        photoFileName: obit.photoFileName, // Nome file per generare URL
+                        photoFileType: obit.photoFileType,
+                        photoFileSize: obit.photoFileSize,
+                        
                         photoFile: obit.photoURL ? {
                             data: obit.photoURL,
                             name: obit.photoFileName,
