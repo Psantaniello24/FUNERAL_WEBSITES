@@ -287,6 +287,11 @@ class ObituaryDetailPage {
         // Update page title in head
         document.title = `${this.obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
 
+        // Update Open Graph meta tags for social sharing
+        if (typeof updateMetaTags === 'function') {
+            updateMetaTags(this.obituary);
+        }
+
         // Update condolence button with correct ID
         const condolenceBtn = document.getElementById('condolence-btn');
         console.log('🔍 Debug condoglianze:', {
