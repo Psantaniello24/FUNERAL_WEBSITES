@@ -292,6 +292,9 @@ class ObituaryDetailPage {
             updateMetaTags(this.obituary);
         }
 
+        // Salva in cache per pre-caricamento futuro dei meta tag
+        this.cacheObituaryForMetaTags();
+
         // Update condolence button with correct ID
         const condolenceBtn = document.getElementById('condolence-btn');
         console.log('🔍 Debug condoglianze:', {
@@ -510,6 +513,38 @@ class ObituaryDetailPage {
             
         } catch (error) {
             console.error('❌ Errore inserimento manifesto:', error);
+        }
+    }
+
+    // 💾 Salva obituary corrente in cache per pre-caricamento meta tag
+    cacheObituaryForMetaTags() {
+        try {
+            if (!this.obituary) return;
+            
+            // Carica cache esistente
+            let cachedObituaries = [];
+            const existingCache = localStorage.getItem('obituaries_cache');
+            if (existingCache) {
+                cachedObituaries = JSON.parse(existingCache);
+            }
+            
+            // Rimuovi eventuale versione precedente dello stesso obituary
+            cachedObituaries = cachedObituaries.filter(o => o.id !== this.obituary.id);
+            
+            // Aggiungi obituary corrente
+            cachedObituaries.push(this.obituary);
+            
+            // Mantieni solo gli ultimi 20 obituari per evitare cache troppo grande
+            if (cachedObituaries.length > 20) {
+                cachedObituaries = cachedObituaries.slice(-20);
+            }
+            
+            // Salva in localStorage
+            localStorage.setItem('obituaries_cache', JSON.stringify(cachedObituaries));
+            console.log('💾 Obituary salvato in cache per meta tag:', this.obituary.nome);
+            
+        } catch (error) {
+            console.warn('⚠️ Errore salvataggio cache meta tag:', error.message);
         }
     }
 

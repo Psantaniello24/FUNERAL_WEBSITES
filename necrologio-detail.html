@@ -14,7 +14,7 @@
     <meta property="og:type" content="article">
     <meta property="og:title" content="Necrologio - Onoranze Funebri Santaniello" id="og-title">
     <meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia." id="og-description">
-    <meta property="og:image" content="https://tuosito.it/images/placeholder-person.svg" id="og-image">
+    <meta property="og:image" content="https://funeral-websites-2.onrender.com/images/placeholder-person.svg" id="og-image">
     <meta property="og:url" content="" id="og-url">
     
     <!-- Meta tag aggiuntivi per ottimizzazione condivisione -->
@@ -29,7 +29,57 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Necrologio - Onoranze Funebri Santaniello" id="twitter-title">
     <meta name="twitter:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia." id="twitter-description">
-    <meta name="twitter:image" content="https://tuosito.it/images/placeholder-person.svg" id="twitter-image">
+    <meta name="twitter:image" content="https://funeral-websites-2.onrender.com/images/placeholder-person.svg" id="twitter-image">
+    
+    <!-- Script per pre-renderizzazione meta tag da URL parameters -->
+    <script>
+        // Aggiorna i meta tag immediatamente se ci sono parametri URL
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            
+            if (id) {
+                // Aggiorna URL canonico immediatamente
+                document.getElementById('og-url').setAttribute('content', window.location.href);
+                
+                // Prova a caricare dati dal localStorage se disponibili
+                try {
+                    const cachedData = localStorage.getItem('obituaries_cache');
+                    if (cachedData) {
+                        const obituaries = JSON.parse(cachedData);
+                        const obituary = obituaries.find(o => o.id == id || o.id === id);
+                        
+                        if (obituary) {
+                            console.log('📋 Pre-caricamento meta tag da cache per:', obituary.nome || obituary.name);
+                            
+                            const name = obituary.nome || obituary.name;
+                            const title = `In memoria di ${name}`;
+                            const description = `Ci ha lasciati ${name}, sempre nei nostri cuori. I funerali si terranno il ${obituary.dataEsequie || obituary.funeralDate || 'data da definire'} presso ${obituary.luogoEsequie || obituary.funeralLocation || 'luogo da definire'}.`;
+                            
+                            // Aggiorna immediatamente i meta tag
+                            document.getElementById('page-title').textContent = title;
+                            document.getElementById('page-description').setAttribute('content', description);
+                            document.getElementById('og-title').setAttribute('content', title);
+                            document.getElementById('og-description').setAttribute('content', description);
+                            document.getElementById('twitter-title').setAttribute('content', title);
+                            document.getElementById('twitter-description').setAttribute('content', description);
+                            document.getElementById('og-image-alt').setAttribute('content', `${title} - Onoranze Funebri Santaniello`);
+                            
+                            // Aggiorna immagine se disponibile
+                            if (obituary.photoURL && obituary.photoURL.startsWith('http')) {
+                                document.getElementById('og-image').setAttribute('content', obituary.photoURL);
+                                document.getElementById('twitter-image').setAttribute('content', obituary.photoURL);
+                            }
+                            
+                            console.log('✅ Meta tag pre-caricati da cache');
+                        }
+                    }
+                } catch (e) {
+                    console.log('⚠️ Cache non disponibile per pre-caricamento meta tag');
+                }
+            }
+        })();
+    </script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -346,7 +396,39 @@
             if (!obituary) return;
             
             const name = obituary.nome || obituary.name || 'Defunto';
-            const description = `Ci ha lasciati ${name}, sempre nei nostri cuori.`;
+            
+            // Crea una descrizione più completa con informazioni sui funerali
+            let description = `Ci ha lasciati ${name}, sempre nei nostri cuori.`;
+            
+            // Aggiungi informazioni sui funerali se disponibili
+            const funeralDate = obituary.dataEsequie || obituary.funeralDate;
+            const funeralLocation = obituary.luogoEsequie || obituary.funeralLocation;
+            const funeralTime = obituary.oraEsequie || obituary.funeralTime;
+            
+            if (funeralDate && funeralLocation) {
+                let funeralInfo = ` I funerali si terranno il ${funeralDate}`;
+                if (funeralTime) {
+                    funeralInfo += ` alle ${funeralTime}`;
+                }
+                funeralInfo += ` presso ${funeralLocation}.`;
+                description += funeralInfo;
+            } else if (funeralDate) {
+                description += ` I funerali si terranno il ${funeralDate}.`;
+            } else if (funeralLocation) {
+                description += ` I funerali si terranno presso ${funeralLocation}.`;
+            }
+            
+            // Aggiungi età e città se disponibili
+            const age = obituary.eta || obituary.age;
+            const city = obituary.comune || obituary.city;
+            if (age && city) {
+                description += ` ${name} aveva ${age} anni ed era di ${city}.`;
+            } else if (age) {
+                description += ` ${name} aveva ${age} anni.`;
+            } else if (city) {
+                description += ` ${name} era di ${city}.`;
+            }
+            
             const title = `In memoria di ${name}`;
             
             // Gestione intelligente dell'immagine del defunto per Open Graph
