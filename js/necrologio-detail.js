@@ -154,18 +154,13 @@ class ObituaryDetailPage {
         }
 
         // Update page title and meta
-        document.title = `In memoria di ${this.obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
+        document.title = `${this.obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
         
         // Update meta description
         const metaDescription = document.querySelector('meta[name="description"]');
         if (metaDescription) {
-            const funeralDate = this.obituary.dataEsequie ? Utils.formatDate(this.obituary.dataEsequie) : 'data da definire';
-            const funeralLocation = this.obituary.luogoEsequie || 'luogo da definire';
-            metaDescription.content = `Ci ha lasciato ${this.obituary.nome}, i funerali si terranno il ${funeralDate} presso ${funeralLocation}. Invia le tue condoglianze alla famiglia.`;
+            metaDescription.content = `Necrologio di ${this.obituary.nome} (${new Date(this.obituary.dataNascita).getFullYear()}-${new Date(this.obituary.dataMorte).getFullYear()}). Invia le tue condoglianze alla famiglia. Agenzia Funebre Santaniello.`;
         }
-        
-        // Update Open Graph meta tags
-        this.updateOpenGraphTags();
         
         // Update the page content with obituary data
         this.updatePageContent();
@@ -289,8 +284,8 @@ class ObituaryDetailPage {
         const breadcrumbName = document.getElementById('breadcrumb-name');
         if (breadcrumbName) breadcrumbName.textContent = this.obituary.nome;
 
-        // Update page title in head (mantieni coerenza con og:title)
-        document.title = `In memoria di ${this.obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
+        // Update page title in head
+        document.title = `${this.obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
 
         // Update condolence button with correct ID
         const condolenceBtn = document.getElementById('condolence-btn');
@@ -307,73 +302,6 @@ class ObituaryDetailPage {
             console.log('✅ Bottone condoglianze configurato correttamente');
         } else {
             console.warn('⚠️ Bottone condoglianze (#condolence-btn) non trovato nel DOM');
-        }
-    }
-
-    // Aggiorna i meta tag Open Graph con i dati del necrologio
-    updateOpenGraphTags() {
-        if (!this.obituary) {
-            console.warn('⚠️ Impossibile aggiornare Open Graph: obituary non caricato');
-            return;
-        }
-
-        const currentUrl = window.location.href;
-        const funeralDate = this.obituary.dataEsequie ? Utils.formatDate(this.obituary.dataEsequie) : 'data da definire';
-        const funeralLocation = this.obituary.luogoEsequie || 'luogo da definire';
-        
-        // Determina l'URL dell'immagine
-        let imageUrl = 'images/placeholder-person.svg'; // Default fallback
-        if (this.obituary.photoFile && this.obituary.photoFile.data) {
-            imageUrl = this.obituary.photoFile.data;
-        } else if (this.obituary.foto) {
-            imageUrl = this.obituary.foto;
-        }
-        
-        // Converte URL relativo in assoluto se necessario
-        if (imageUrl.startsWith('images/') || imageUrl.startsWith('./')) {
-            imageUrl = new URL(imageUrl, window.location.origin).href;
-        }
-
-        const ogTitle = `In memoria di ${this.obituary.nome}`;
-        const ogDescription = `Ci ha lasciato ${this.obituary.nome}, i funerali si terranno il ${funeralDate} presso ${funeralLocation}.`;
-
-        // Aggiorna tutti i meta tag Open Graph
-        this.updateMetaTag('property', 'og:title', ogTitle);
-        this.updateMetaTag('property', 'og:description', ogDescription);
-        this.updateMetaTag('property', 'og:image', imageUrl);
-        this.updateMetaTag('property', 'og:url', currentUrl);
-        
-        // Aggiorna anche i meta tag Twitter
-        this.updateMetaTag('name', 'twitter:title', ogTitle);
-        this.updateMetaTag('name', 'twitter:description', ogDescription);
-        this.updateMetaTag('name', 'twitter:image', imageUrl);
-        
-        // Aggiorna URL canonico
-        const canonicalLink = document.querySelector('link[rel="canonical"]');
-        if (canonicalLink) {
-            canonicalLink.href = currentUrl;
-        }
-
-        console.log('✅ Meta tag Open Graph aggiornati per:', this.obituary.nome);
-        console.log('📊 Dati Open Graph:', {
-            title: ogTitle,
-            description: ogDescription,
-            image: imageUrl,
-            url: currentUrl
-        });
-    }
-
-    // Metodo helper per aggiornare un meta tag
-    updateMetaTag(attribute, name, content) {
-        let metaTag = document.querySelector(`meta[${attribute}="${name}"]`);
-        if (metaTag) {
-            metaTag.content = content;
-        } else {
-            // Crea il meta tag se non esiste
-            metaTag = document.createElement('meta');
-            metaTag.setAttribute(attribute, name);
-            metaTag.content = content;
-            document.head.appendChild(metaTag);
         }
     }
 
