@@ -197,10 +197,16 @@ class ObituaryDetailPage {
         this.updateMetaTag('property', 'og:image', ogImage);
         this.updateMetaTag('property', 'og:url', ogUrl);
         
-        // Aggiungi meta tag aggiuntivi per una migliore condivisione
+        // Aggiungi meta tag critici per Facebook
+        this.updateMetaTag('property', 'og:image:secure_url', ogImage); // URL HTTPS per Facebook
+        this.updateMetaTag('property', 'og:image:type', this.getImageMimeType(ogImage));
         this.updateMetaTag('property', 'og:image:width', '1200');
         this.updateMetaTag('property', 'og:image:height', '630');
         this.updateMetaTag('property', 'og:image:alt', `Foto di ${this.obituary.nome}`);
+        
+        // Meta tag aggiuntivi per forzare il refresh di Facebook
+        this.updateMetaTag('property', 'og:updated_time', new Date().toISOString());
+        this.updateMetaTag('name', 'robots', 'index,follow');
         
         // Aggiorna anche i meta tag Twitter
         this.updateMetaTag('name', 'twitter:image', ogImage);
@@ -230,16 +236,26 @@ class ObituaryDetailPage {
 
     // Metodo helper per aggiornare un meta tag
     updateMetaTag(attribute, value, content) {
-        let metaTag = document.querySelector(`meta[${attribute}="${value}"]`);
-        if (metaTag) {
-            metaTag.setAttribute('content', content);
+        // Rimuovi tag esistente se presente
+        const existingTag = document.querySelector(`meta[${attribute}="${value}"]`);
+        if (existingTag) {
+            existingTag.remove();
+        }
+        
+        // Crea nuovo meta tag
+        const metaTag = document.createElement('meta');
+        metaTag.setAttribute(attribute, value);
+        metaTag.setAttribute('content', content);
+        
+        // Inserisci nel head, preferibilmente dopo il title
+        const titleTag = document.querySelector('title');
+        if (titleTag && titleTag.nextSibling) {
+            document.head.insertBefore(metaTag, titleTag.nextSibling);
         } else {
-            // Crea il meta tag se non esiste
-            metaTag = document.createElement('meta');
-            metaTag.setAttribute(attribute, value);
-            metaTag.setAttribute('content', content);
             document.head.appendChild(metaTag);
         }
+        
+        console.log(`📝 Meta tag aggiornato: ${attribute}="${value}" content="${content.substring(0, 50)}..."`);
     }
 
     // Ottieni l'URL pubblico dell'immagine del defunto per Open Graph
@@ -337,16 +353,35 @@ class ObituaryDetailPage {
         return fallbackUrl;
     }
 
+    // Determina il tipo MIME dell'immagine dall'URL
+    getImageMimeType(imageUrl) {
+        const extension = imageUrl.split('.').pop()?.toLowerCase();
+        const mimeTypes = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'svg': 'image/svg+xml'
+        };
+        return mimeTypes[extension] || 'image/jpeg'; // Default a JPEG
+    }
+
     // Metodo di test per verificare i meta tag Open Graph (utilizzabile dalla console)
     testOpenGraphTags() {
-        console.log('🧪 Test meta tag Open Graph:');
+        console.log('🧪 Test completo meta tag Open Graph:');
         
         const ogTags = {
             'og:title': document.querySelector('meta[property="og:title"]')?.content,
             'og:description': document.querySelector('meta[property="og:description"]')?.content,
             'og:image': document.querySelector('meta[property="og:image"]')?.content,
+            'og:image:secure_url': document.querySelector('meta[property="og:image:secure_url"]')?.content,
+            'og:image:type': document.querySelector('meta[property="og:image:type"]')?.content,
+            'og:image:width': document.querySelector('meta[property="og:image:width"]')?.content,
+            'og:image:height': document.querySelector('meta[property="og:image:height"]')?.content,
             'og:url': document.querySelector('meta[property="og:url"]')?.content,
-            'og:type': document.querySelector('meta[property="og:type"]')?.content
+            'og:type': document.querySelector('meta[property="og:type"]')?.content,
+            'og:updated_time': document.querySelector('meta[property="og:updated_time"]')?.content
         };
         
         console.table(ogTags);
@@ -354,20 +389,156 @@ class ObituaryDetailPage {
         // Test specifico per l'immagine
         const imageUrl = ogTags['og:image'];
         if (imageUrl) {
-            console.log('🔍 Test immagine Open Graph:');
+            console.log('🔍 Analisi dettagliata immagine Open Graph:');
             console.log('URL:', imageUrl);
             console.log('È HTTPS:', imageUrl.startsWith('https://'));
             console.log('È Supabase:', imageUrl.includes('supabase.co'));
             console.log('È pubblico:', imageUrl.includes('/storage/v1/object/public/'));
+            console.log('Tipo MIME:', ogTags['og:image:type']);
+            console.log('Dimensioni:', `${ogTags['og:image:width']}x${ogTags['og:image:height']}`);
             
-            // Test di accessibilità (solo per debug)
-            if (imageUrl.startsWith('https://')) {
-                console.log('✅ URL sembra valido per Facebook Debugger');
-                console.log('🔗 Test Facebook Debugger:', `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(window.location.href)}`);
-            }
+            // Test di accessibilità dell'immagine
+            this.testImageAccessibility(imageUrl);
+            
+            // Link utili per debug
+            console.log('🔗 Facebook Debugger:', `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(window.location.href)}`);
+            console.log('🔗 Facebook Batch Invalidator:', `https://developers.facebook.com/tools/debug/og/batch/`);
         }
         
         return ogTags;
+    }
+
+    // Testa l'accessibilità dell'immagine
+    testImageAccessibility(imageUrl) {
+        console.log('🌐 Test accessibilità immagine...');
+        
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+            console.log('✅ Immagine accessibile! Dimensioni reali:', `${img.naturalWidth}x${img.naturalHeight}`);
+            if (img.naturalWidth < 200 || img.naturalHeight < 200) {
+                console.warn('⚠️ Immagine troppo piccola per Facebook (minimo raccomandato: 200x200)');
+            }
+            if (img.naturalWidth < 600 || img.naturalHeight < 315) {
+                console.warn('⚠️ Immagine non ottimale per Facebook (raccomandato: 1200x630)');
+            }
+        };
+        
+        img.onerror = (error) => {
+            console.error('❌ Immagine NON accessibile! Errore:', error);
+            console.log('🔍 Possibili cause:');
+            console.log('- URL non pubblico');
+            console.log('- CORS non configurato correttamente');
+            console.log('- File non esistente');
+            console.log('- Permessi Supabase Storage non corretti');
+        };
+        
+        img.src = imageUrl;
+    }
+
+    // Forza Facebook a ricaricare i meta tag
+    refreshFacebookCache() {
+        const currentUrl = window.location.href;
+        
+        console.log('🔄 Forzando Facebook a ricaricare i meta tag...');
+        
+        // Aggiorna il timestamp per forzare il refresh
+        this.updateMetaTag('property', 'og:updated_time', new Date().toISOString());
+        
+        // Apri Facebook Debugger in una nuova finestra
+        const debugUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(currentUrl)}`;
+        window.open(debugUrl, '_blank');
+        
+        console.log('✅ Facebook Debugger aperto. Clicca "Scrape Again" per forzare il refresh.');
+        console.log('🔗 URL Debug:', debugUrl);
+        
+        // Istruzioni per l'utente
+        console.log('📋 Istruzioni:');
+        console.log('1. Nella finestra del Facebook Debugger, clicca "Scrape Again"');
+        console.log('2. Verifica che l\'immagine sia ora visibile');
+        console.log('3. Se necessario, usa "Batch Invalidator" per URLs multiple');
+        
+        return debugUrl;
+    }
+
+    // Diagnosi completa dei problemi Open Graph
+    diagnoseOpenGraphIssues() {
+        console.log('🔍 DIAGNOSI COMPLETA OPEN GRAPH');
+        console.log('================================');
+        
+        // 1. Verifica presenza obituary
+        if (!this.obituary) {
+            console.error('❌ PROBLEMA: Nessun obituary caricato');
+            return;
+        }
+        
+        console.log('✅ Obituary caricato:', this.obituary.nome);
+        
+        // 2. Analizza dati immagine disponibili
+        console.log('\n📊 DATI IMMAGINE DISPONIBILI:');
+        console.log('- foto:', this.obituary.foto);
+        console.log('- photo:', this.obituary.photo);
+        console.log('- photoFile:', this.obituary.photoFile ? {
+            hasData: !!this.obituary.photoFile.data,
+            dataPreview: this.obituary.photoFile.data?.substring(0, 100),
+            name: this.obituary.photoFile.name,
+            type: this.obituary.photoFile.type
+        } : 'null');
+        console.log('- source:', this.obituary.source);
+        
+        // 3. Test URL immagine
+        const imageUrl = this.getObituaryImageUrl();
+        console.log('\n🎯 URL IMMAGINE FINALE:', imageUrl);
+        
+        // 4. Verifica requisiti Facebook
+        console.log('\n✅ VERIFICA REQUISITI FACEBOOK:');
+        const checks = {
+            'HTTPS': imageUrl.startsWith('https://'),
+            'URL Pubblico': !imageUrl.startsWith('data:') && !imageUrl.includes('localhost'),
+            'Supabase Storage': imageUrl.includes('supabase.co/storage/v1/object/public/'),
+            'Estensione Valida': /\.(jpg|jpeg|png|gif|webp)$/i.test(imageUrl)
+        };
+        
+        Object.entries(checks).forEach(([check, passed]) => {
+            console.log(`${passed ? '✅' : '❌'} ${check}:`, passed);
+        });
+        
+        // 5. Test accessibilità immagine
+        console.log('\n🌐 TEST ACCESSIBILITÀ IMMAGINE:');
+        this.testImageAccessibility(imageUrl);
+        
+        // 6. Verifica meta tag
+        console.log('\n📝 META TAG ATTUALI:');
+        this.testOpenGraphTags();
+        
+        // 7. Possibili soluzioni
+        console.log('\n💡 POSSIBILI SOLUZIONI:');
+        if (!checks['HTTPS']) {
+            console.log('🔧 Problema HTTPS: Assicurati che l\'immagine sia servita via HTTPS');
+        }
+        if (!checks['URL Pubblico']) {
+            console.log('🔧 Problema URL: L\'immagine deve essere pubblicamente accessibile');
+        }
+        if (!checks['Supabase Storage']) {
+            console.log('🔧 Problema Supabase: Verifica che l\'immagine sia caricata su Supabase Storage');
+        }
+        if (!checks['Estensione Valida']) {
+            console.log('🔧 Problema formato: Usa JPG, PNG, GIF o WebP');
+        }
+        
+        console.log('\n🔄 PASSI PER RISOLVERE:');
+        console.log('1. Verifica che l\'immagine sia caricata correttamente su Supabase');
+        console.log('2. Controlla i permessi del bucket Supabase (deve essere pubblico)');
+        console.log('3. Usa refreshFacebookCache() per forzare Facebook a ricaricare');
+        console.log('4. Verifica nel Facebook Debugger che non ci siano errori CORS');
+        
+        return {
+            obituary: !!this.obituary,
+            imageUrl,
+            checks,
+            recommendations: Object.entries(checks).filter(([, passed]) => !passed).map(([check]) => check)
+        };
     }
 
     showNotFoundMessage() {
@@ -1223,8 +1394,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Make obituaryDetailPage globally available for testing
     window.obituaryDetailPage = obituaryDetailPage;
     
-    // Rendi disponibile il test Open Graph globalmente
+    // Rendi disponibili le funzioni di debug globalmente
     window.testOpenGraph = () => obituaryDetailPage?.testOpenGraphTags();
+    window.refreshFacebookCache = () => obituaryDetailPage?.refreshFacebookCache();
+    window.diagnoseOpenGraph = () => obituaryDetailPage?.diagnoseOpenGraphIssues();
     
     // Override form handler for condolences
     const formHandler = new CondolenceFormHandler();
