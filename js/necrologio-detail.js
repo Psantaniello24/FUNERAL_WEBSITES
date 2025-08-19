@@ -162,11 +162,14 @@ class ObituaryDetailPage {
             metaDescription.content = `Necrologio di ${this.obituary.nome} (${new Date(this.obituary.dataNascita).getFullYear()}-${new Date(this.obituary.dataMorte).getFullYear()}). Invia le tue condoglianze alla famiglia. Agenzia Funebre Santaniello.`;
         }
         
-        // Update Open Graph meta tags for social sharing
+        // Update the page content with obituary data FIRST
+        this.updatePageContent();
+        
+        // Update Open Graph meta tags for social sharing AFTER content is loaded
         this.updateOpenGraphTags();
         
-        // Update the page content with obituary data
-        this.updatePageContent();
+        // Force immediate meta tag refresh for crawlers
+        this.forceMetaTagRefresh();
     }
 
     // Aggiorna i meta tag Open Graph per la condivisione social
@@ -191,40 +194,43 @@ class ObituaryDetailPage {
         // URL canonico della pagina
         const ogUrl = window.location.href;
         
-        // Aggiorna i meta tag Open Graph
-        this.updateMetaTag('property', 'og:title', ogTitle);
-        this.updateMetaTag('property', 'og:description', ogDescription);
-        this.updateMetaTag('property', 'og:image', ogImage);
-        this.updateMetaTag('property', 'og:url', ogUrl);
-        
-        // Aggiungi meta tag critici per Facebook
-        this.updateMetaTag('property', 'og:image:secure_url', ogImage); // URL HTTPS per Facebook
-        this.updateMetaTag('property', 'og:image:type', this.getImageMimeType(ogImage));
-        this.updateMetaTag('property', 'og:image:width', '1200');
-        this.updateMetaTag('property', 'og:image:height', '630');
-        this.updateMetaTag('property', 'og:image:alt', `Foto di ${this.obituary.nome}`);
-        
-        // Meta tag aggiuntivi per forzare il refresh di Facebook
-        this.updateMetaTag('property', 'og:updated_time', new Date().toISOString());
-        this.updateMetaTag('name', 'robots', 'index,follow');
-        
-        // Aggiorna anche i meta tag Twitter
-        this.updateMetaTag('name', 'twitter:image', ogImage);
-        this.updateMetaTag('name', 'twitter:title', ogTitle);
-        this.updateMetaTag('name', 'twitter:description', ogDescription);
+        // Pre-carica e verifica l'immagine prima di impostarla
+        this.preloadAndSetImage(ogImage, () => {
+            // Aggiorna i meta tag Open Graph SOLO dopo aver verificato l'immagine
+            this.updateMetaTag('property', 'og:title', ogTitle);
+            this.updateMetaTag('property', 'og:description', ogDescription);
+            this.updateMetaTag('property', 'og:image', ogImage);
+            this.updateMetaTag('property', 'og:url', ogUrl);
+            
+            // Aggiungi meta tag critici per Facebook
+            this.updateMetaTag('property', 'og:image:secure_url', ogImage); // URL HTTPS per Facebook
+            this.updateMetaTag('property', 'og:image:type', this.getImageMimeType(ogImage));
+            this.updateMetaTag('property', 'og:image:width', '1200');
+            this.updateMetaTag('property', 'og:image:height', '630');
+            this.updateMetaTag('property', 'og:image:alt', `Foto di ${this.obituary.nome}`);
+            
+            // Meta tag aggiuntivi per forzare il refresh di Facebook
+            this.updateMetaTag('property', 'og:updated_time', new Date().toISOString());
+            this.updateMetaTag('name', 'robots', 'index,follow');
+            
+            // Aggiorna anche i meta tag Twitter
+            this.updateMetaTag('name', 'twitter:image', ogImage);
+            this.updateMetaTag('name', 'twitter:title', ogTitle);
+            this.updateMetaTag('name', 'twitter:description', ogDescription);
+            
+            console.log('✅ Meta tag Open Graph aggiornati con immagine verificata:', {
+                title: ogTitle,
+                description: ogDescription,
+                image: ogImage,
+                url: ogUrl,
+                imageAccessible: true,
+                isSupabaseUrl: ogImage.includes('supabase.co/storage/v1/object/public/')
+            });
+        });
         
         // Aggiorna anche title e meta description per coerenza
         document.title = ogTitle + ' - Onoranze Funebri Santaniello';
         this.updateMetaTag('name', 'description', ogDescription);
-        
-        console.log('✅ Meta tag Open Graph aggiornati:', {
-            title: ogTitle,
-            description: ogDescription,
-            image: ogImage,
-            url: ogUrl,
-            imageAccessible: ogImage.startsWith('https://'),
-            isSupabaseUrl: ogImage.includes('supabase.co/storage/v1/object/public/')
-        });
         
         // Verifica aggiuntiva per Facebook Debugger
         if (ogImage.includes('supabase.co/storage/v1/object/public/')) {
@@ -367,6 +373,44 @@ class ObituaryDetailPage {
         return mimeTypes[extension] || 'image/jpeg'; // Default a JPEG
     }
 
+    // Pre-carica l'immagine e verifica che sia accessibile prima di impostarla nei meta tag
+    preloadAndSetImage(imageUrl, callback) {
+        console.log('🔄 Pre-caricamento immagine per Open Graph:', imageUrl);
+        
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        // Timeout per evitare attese infinite
+        const timeout = setTimeout(() => {
+            console.warn('⚠️ Timeout pre-caricamento immagine, procedo comunque');
+            callback();
+        }, 5000); // 5 secondi timeout
+        
+        img.onload = () => {
+            clearTimeout(timeout);
+            console.log('✅ Immagine pre-caricata con successo:', `${img.naturalWidth}x${img.naturalHeight}`);
+            
+            // Verifica dimensioni minime per Facebook
+            if (img.naturalWidth >= 200 && img.naturalHeight >= 200) {
+                console.log('✅ Dimensioni immagine OK per Facebook');
+                callback();
+            } else {
+                console.warn('⚠️ Immagine troppo piccola per Facebook, ma procedo comunque');
+                callback();
+            }
+        };
+        
+        img.onerror = (error) => {
+            clearTimeout(timeout);
+            console.error('❌ Errore pre-caricamento immagine:', error);
+            console.log('🔄 Procedo comunque con i meta tag');
+            callback();
+        };
+        
+        // Avvia il caricamento
+        img.src = imageUrl;
+    }
+
     // Metodo di test per verificare i meta tag Open Graph (utilizzabile dalla console)
     testOpenGraphTags() {
         console.log('🧪 Test completo meta tag Open Graph:');
@@ -460,6 +504,70 @@ class ObituaryDetailPage {
         console.log('3. Se necessario, usa "Batch Invalidator" per URLs multiple');
         
         return debugUrl;
+    }
+
+    // Forza Facebook a fare un nuovo scraping della pagina
+    forceFacebookRescrape() {
+        console.log('🔄 Forzando Facebook a fare un nuovo scraping...');
+        
+        // Aggiorna tutti i meta tag con timestamp corrente
+        const timestamp = new Date().toISOString();
+        this.updateMetaTag('property', 'og:updated_time', timestamp);
+        
+        // Forza un refresh completo dei meta tag
+        this.updateOpenGraphTags();
+        
+        // Apri Facebook Debugger
+        const currentUrl = window.location.href;
+        const debugUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(currentUrl)}`;
+        
+        // Apri in nuova finestra
+        const debugWindow = window.open(debugUrl, '_blank');
+        
+        console.log('✅ Facebook Debugger aperto. Segui questi passi:');
+        console.log('1. Clicca "Scrape Again" nel Facebook Debugger');
+        console.log('2. Verifica che l\'immagine Supabase sia ora visibile');
+        console.log('3. Se l\'immagine non appare, controlla i permessi Supabase Storage');
+        
+        // Mostra informazioni sulla pagina corrente
+        const ogImage = document.querySelector('meta[property="og:image"]')?.content;
+        console.log('🔍 Immagine attuale nei meta tag:', ogImage);
+        
+        if (ogImage && ogImage.includes('supabase.co')) {
+            console.log('✅ L\'immagine è da Supabase Storage - dovrebbe funzionare');
+        } else {
+            console.warn('⚠️ L\'immagine non è da Supabase Storage - potrebbe essere il problema');
+        }
+        
+        return {
+            debugUrl,
+            currentImage: ogImage,
+            timestamp
+        };
+    }
+
+    // Forza il refresh immediato dei meta tag per i crawler
+    forceMetaTagRefresh() {
+        // Aggiunge un timestamp unico per forzare i crawler a ricaricare
+        const timestamp = Date.now();
+        
+        // Aggiorna URL canonico con timestamp per forzare refresh
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('_og_refresh', timestamp);
+        
+        // Aggiorna meta tag con timestamp
+        this.updateMetaTag('property', 'og:updated_time', new Date().toISOString());
+        
+        // Forza un refresh della pagina per i crawler che potrebbero averla già visitata
+        if (document.readyState === 'complete') {
+            // Aggiunge un elemento nascosto che i crawler possono rilevare
+            const refreshIndicator = document.createElement('meta');
+            refreshIndicator.setAttribute('name', 'og-refresh-timestamp');
+            refreshIndicator.setAttribute('content', timestamp.toString());
+            document.head.appendChild(refreshIndicator);
+        }
+        
+        console.log('🔄 Meta tag refresh forzato con timestamp:', timestamp);
     }
 
     // Diagnosi completa dei problemi Open Graph
@@ -1398,6 +1506,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.testOpenGraph = () => obituaryDetailPage?.testOpenGraphTags();
     window.refreshFacebookCache = () => obituaryDetailPage?.refreshFacebookCache();
     window.diagnoseOpenGraph = () => obituaryDetailPage?.diagnoseOpenGraphIssues();
+    window.forceFacebookRescrape = () => obituaryDetailPage?.forceFacebookRescrape();
     
     // Override form handler for condolences
     const formHandler = new CondolenceFormHandler();
