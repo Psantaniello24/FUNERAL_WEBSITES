@@ -170,6 +170,7 @@ class ObituaryDetailPage {
     }
 
     // Aggiorna i meta tag Open Graph per la condivisione social
+    // Questo metodo popola dinamicamente i meta tag quando i dati del necrologio vengono caricati
     updateOpenGraphTags() {
         if (!this.obituary) {
             console.warn('⚠️ Impossibile aggiornare Open Graph: obituary non caricato');
@@ -195,6 +196,16 @@ class ObituaryDetailPage {
         this.updateMetaTag('property', 'og:description', ogDescription);
         this.updateMetaTag('property', 'og:image', ogImage);
         this.updateMetaTag('property', 'og:url', ogUrl);
+        
+        // Aggiungi meta tag aggiuntivi per una migliore condivisione
+        this.updateMetaTag('property', 'og:image:width', '1200');
+        this.updateMetaTag('property', 'og:image:height', '630');
+        this.updateMetaTag('property', 'og:image:alt', `Foto di ${this.obituary.nome}`);
+        
+        // Aggiorna anche i meta tag Twitter
+        this.updateMetaTag('name', 'twitter:image', ogImage);
+        this.updateMetaTag('name', 'twitter:title', ogTitle);
+        this.updateMetaTag('name', 'twitter:description', ogDescription);
         
         // Aggiorna anche title e meta description per coerenza
         document.title = ogTitle + ' - Onoranze Funebri Santaniello';
@@ -222,28 +233,54 @@ class ObituaryDetailPage {
         }
     }
 
-    // Ottieni l'URL pubblico dell'immagine del defunto
+    // Ottieni l'URL pubblico dell'immagine del defunto per Open Graph
     getObituaryImageUrl() {
         let imageUrl = '';
         
-        // Priorità: photoFile -> foto/photo -> placeholder
-        if (this.obituary.photoFile && this.obituary.photoFile.data) {
-            // Usa la foto caricata (base64 o URL)
-            imageUrl = this.obituary.photoFile.data;
-        } else if (this.obituary.foto || this.obituary.photo) {
-            // Usa URL foto (compatibilità italiano/inglese)
-            imageUrl = this.obituary.foto || this.obituary.photo;
-        } else if (this.obituary.photoURL) {
-            // URL da Supabase Storage
-            imageUrl = this.obituary.photoURL;
-        } else {
-            // Placeholder se nessuna foto disponibile - usa URL assoluto
-            imageUrl = new URL('images/placeholder-person.svg', window.location.origin).href;
+        // PRIORITÀ PER OPEN GRAPH: Solo URL pubblici accessibili da Facebook
+        // 1. URL da Supabase Storage mappato in 'foto' (pubblico)
+        if (this.obituary.foto && this.obituary.foto.startsWith('http')) {
+            imageUrl = this.obituary.foto;
+            console.log('✅ Usando URL Supabase (foto) per Open Graph:', imageUrl);
         }
-        
-        // Assicurati che l'URL sia assoluto per Open Graph
-        if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
-            imageUrl = new URL(imageUrl, window.location.origin).href;
+        // 2. URL photo alternativo (se pubblico)
+        else if (this.obituary.photo && this.obituary.photo.startsWith('http')) {
+            imageUrl = this.obituary.photo;
+            console.log('✅ Usando URL photo per Open Graph:', imageUrl);
+        }
+        // 3. photoFile.data se è un URL pubblico (non base64)
+        else if (this.obituary.photoFile && this.obituary.photoFile.data && 
+                 this.obituary.photoFile.data.startsWith('http')) {
+            imageUrl = this.obituary.photoFile.data;
+            console.log('✅ Usando photoFile.data URL per Open Graph:', imageUrl);
+        }
+        // 4. URL relativi convertiti in assoluti (solo se non sono base64)
+        else if ((this.obituary.foto || this.obituary.photo) && 
+                 !(this.obituary.foto?.startsWith('data:') || this.obituary.photo?.startsWith('data:'))) {
+            const relativeUrl = this.obituary.foto || this.obituary.photo;
+            imageUrl = new URL(relativeUrl, window.location.origin).href;
+            console.log('✅ Convertito URL relativo per Open Graph:', imageUrl);
+        }
+        // 5. Immagine di default del sito come fallback per Open Graph
+        else {
+            // Usa un'immagine di default del sito invece del placeholder generico
+            imageUrl = new URL('images/old_photos/FINALE_1.png', window.location.origin).href;
+            console.log('⚠️ Usando immagine default del sito per Open Graph:', imageUrl);
+            
+            // Debug: mostra perché non abbiamo trovato un'immagine valida
+            console.log('🔍 Debug immagine necrologio:', {
+                foto: this.obituary.foto,
+                photo: this.obituary.photo,
+                photoFile: this.obituary.photoFile ? {
+                    hasData: !!this.obituary.photoFile.data,
+                    dataType: this.obituary.photoFile.data?.startsWith('data:') ? 'base64' : 
+                             this.obituary.photoFile.data?.startsWith('http') ? 'url' : 'unknown',
+                    data: this.obituary.photoFile.data?.substring(0, 50) + '...'
+                } : 'assente',
+                obituaryId: this.obituary.id,
+                obituaryName: this.obituary.nome,
+                source: this.obituary.source
+            });
         }
         
         return imageUrl;
