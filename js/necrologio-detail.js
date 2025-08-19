@@ -531,41 +531,76 @@ class ObituaryDetailPage {
 
     // Forza Facebook a fare un nuovo scraping della pagina
     forceFacebookRescrape() {
-        console.log('🔄 Forzando Facebook a fare un nuovo scraping...');
+        console.log('🔄 FORZANDO FACEBOOK A RICARICARE I META TAG...');
+        console.log('===============================================');
         
-        // Aggiorna tutti i meta tag con timestamp corrente
+        // 1. Aggiorna tutti i meta tag con timestamp corrente
         const timestamp = new Date().toISOString();
         this.updateMetaTag('property', 'og:updated_time', timestamp);
         
-        // Forza un refresh completo dei meta tag
+        // 2. Forza un refresh completo dei meta tag
         this.updateOpenGraphTags();
         
-        // Apri Facebook Debugger
-        const currentUrl = window.location.href;
-        const debugUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(currentUrl)}`;
+        // 3. Aggiunge parametri di cache-busting all'URL
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('fb_refresh', Date.now());
+        const refreshUrl = currentUrl.toString();
+        
+        // 4. Aggiorna meta tag con URL cache-busted
+        this.updateMetaTag('property', 'og:url', refreshUrl);
+        
+        // 5. Apri Facebook Debugger con URL cache-busted
+        const debugUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(refreshUrl)}`;
+        
+        console.log('🔗 URL con cache-busting:', refreshUrl);
+        console.log('🔗 Facebook Debugger URL:', debugUrl);
         
         // Apri in nuova finestra
         const debugWindow = window.open(debugUrl, '_blank');
         
-        console.log('✅ Facebook Debugger aperto. Segui questi passi:');
-        console.log('1. Clicca "Scrape Again" nel Facebook Debugger');
-        console.log('2. Verifica che l\'immagine Supabase sia ora visibile');
-        console.log('3. Se l\'immagine non appare, controlla i permessi Supabase Storage');
-        
-        // Mostra informazioni sulla pagina corrente
+        // Mostra informazioni dettagliate
         const ogImage = document.querySelector('meta[property="og:image"]')?.content;
-        console.log('🔍 Immagine attuale nei meta tag:', ogImage);
+        console.log('');
+        console.log('📊 STATO ATTUALE META TAG:');
+        console.log(`- og:image: ${ogImage}`);
+        console.log(`- og:url: ${refreshUrl}`);
+        console.log(`- og:updated_time: ${timestamp}`);
         
+        console.log('');
+        console.log('✅ ISTRUZIONI DETTAGLIATE:');
+        console.log('1. Nel Facebook Debugger che si è aperto:');
+        console.log('2. Clicca "Scrape Again" (potrebbe richiedere più tentativi)');
+        console.log('3. Verifica che l\'immagine mostrata sia quella di Supabase');
+        console.log('4. Se ancora mostra il fallback, usa "Batch Invalidator"');
+        console.log('5. Inserisci l\'URL della pagina e clicca "Batch Invalidate"');
+        
+        // Verifica immagine
         if (ogImage && ogImage.includes('supabase.co')) {
-            console.log('✅ L\'immagine è da Supabase Storage - dovrebbe funzionare');
+            console.log('✅ IMMAGINE CORRETTA: Meta tag contiene URL Supabase');
+            console.log('   Facebook dovrebbe caricare questa immagine dopo "Scrape Again"');
         } else {
-            console.warn('⚠️ L\'immagine non è da Supabase Storage - potrebbe essere il problema');
+            console.error('❌ PROBLEMA: Meta tag non contiene URL Supabase');
+            console.log('   Esegui debugImageData() per diagnosticare il problema');
         }
+        
+        // Auto-refresh della pagina dopo 2 secondi per applicare le modifiche
+        setTimeout(() => {
+            console.log('🔄 Aggiornando la pagina per applicare le modifiche...');
+            // Aggiorna solo i meta tag senza ricaricare la pagina
+            this.updateOpenGraphTags();
+        }, 2000);
         
         return {
             debugUrl,
+            refreshUrl,
             currentImage: ogImage,
-            timestamp
+            timestamp,
+            instructions: [
+                'Apri Facebook Debugger',
+                'Clicca "Scrape Again"',
+                'Verifica immagine Supabase',
+                'Usa "Batch Invalidator" se necessario'
+            ]
         };
     }
 
@@ -669,6 +704,51 @@ class ObituaryDetailPage {
             imageUrl,
             checks,
             recommendations: Object.entries(checks).filter(([, passed]) => !passed).map(([check]) => check)
+        };
+    }
+
+    // Apre il Batch Invalidator di Facebook per forzare il refresh
+    openBatchInvalidator() {
+        const currentUrl = window.location.href;
+        const batchUrl = 'https://developers.facebook.com/tools/debug/og/batch/';
+        
+        console.log('🔄 APRENDO FACEBOOK BATCH INVALIDATOR...');
+        console.log('=========================================');
+        console.log('');
+        console.log('📋 ISTRUZIONI PASSO-PASSO:');
+        console.log('1. Si aprirà il Facebook Batch Invalidator');
+        console.log('2. Incolla questo URL nella casella di testo:');
+        console.log(`   ${currentUrl}`);
+        console.log('3. Clicca "Batch Invalidate"');
+        console.log('4. Attendi che Facebook elabori la richiesta');
+        console.log('5. Testa di nuovo la condivisione');
+        console.log('');
+        console.log('💡 SUGGERIMENTO:');
+        console.log('Il Batch Invalidator è più potente di "Scrape Again"');
+        console.log('e dovrebbe forzare Facebook a ricaricare completamente i meta tag.');
+        
+        // Apri Batch Invalidator
+        window.open(batchUrl, '_blank');
+        
+        // Copia automaticamente l'URL negli appunti se possibile
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                console.log('✅ URL copiato negli appunti! Incollalo nel Batch Invalidator.');
+            }).catch(() => {
+                console.log('⚠️ Impossibile copiare automaticamente. Copia manualmente l\'URL sopra.');
+            });
+        }
+        
+        return {
+            batchUrl,
+            currentUrl,
+            instructions: [
+                'Apri Batch Invalidator',
+                'Incolla URL della pagina',
+                'Clicca "Batch Invalidate"',
+                'Attendi elaborazione',
+                'Testa condivisione'
+            ]
         };
     }
 
@@ -1608,6 +1688,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.diagnoseOpenGraph = () => obituaryDetailPage?.diagnoseOpenGraphIssues();
     window.forceFacebookRescrape = () => obituaryDetailPage?.forceFacebookRescrape();
     window.debugImageData = () => obituaryDetailPage?.debugImageData();
+    window.openBatchInvalidator = () => obituaryDetailPage?.openBatchInvalidator();
     
     // Override form handler for condolences
     const formHandler = new CondolenceFormHandler();
