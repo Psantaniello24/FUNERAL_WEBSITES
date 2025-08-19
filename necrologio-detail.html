@@ -7,6 +7,13 @@
     <meta name="description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello." id="page-description">
     <meta name="keywords" content="necrologio, condoglianze, agenzia funebre, Santaniello">
     
+    <!-- Forza refresh cache Facebook se è il debugger -->
+    <meta property="og:updated_time" content="">
+    <script>
+        // Aggiorna timestamp per forzare refresh Facebook
+        document.querySelector('meta[property="og:updated_time"]').setAttribute('content', new Date().toISOString());
+    </script>
+    
     <!-- Facebook App ID (richiesto per il debugger) -->
     <meta property="fb:app_id" content="YOUR_FACEBOOK_APP_ID">
     
@@ -14,7 +21,7 @@
     <meta property="og:type" content="article">
     <meta property="og:title" content="Necrologio - Onoranze Funebri Santaniello" id="og-title">
     <meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia." id="og-description">
-    <meta property="og:image" content="https://via.placeholder.com/1200x630/374151/ffffff?text=Necrologio+Onoranze+Funebri+Santaniello" id="og-image">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=630&fit=crop&crop=face" id="og-image">
     <meta property="og:url" content="" id="og-url">
     
     <!-- Meta tag aggiuntivi per ottimizzazione condivisione -->
@@ -29,7 +36,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Necrologio - Onoranze Funebri Santaniello" id="twitter-title">
     <meta name="twitter:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia." id="twitter-description">
-    <meta name="twitter:image" content="https://via.placeholder.com/1200x630/374151/ffffff?text=Necrologio+Onoranze+Funebri+Santaniello" id="twitter-image">
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=630&fit=crop&crop=face" id="twitter-image">
     
     <!-- Script per pre-renderizzazione meta tag da URL parameters -->
     <script>
@@ -41,6 +48,18 @@
             if (id) {
                 // Aggiorna URL canonico immediatamente
                 document.getElementById('og-url').setAttribute('content', window.location.href);
+                
+                // Aggiorna meta tag di base immediatamente, anche senza cache
+                const basicTitle = `Necrologio - Onoranze Funebri Santaniello`;
+                const basicDescription = `Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.`;
+                
+                console.log('🔄 Aggiornamento meta tag di base per ID:', id);
+                document.getElementById('page-title').textContent = basicTitle;
+                document.getElementById('page-description').setAttribute('content', basicDescription);
+                document.getElementById('og-title').setAttribute('content', basicTitle);
+                document.getElementById('og-description').setAttribute('content', basicDescription);
+                document.getElementById('twitter-title').setAttribute('content', basicTitle);
+                document.getElementById('twitter-description').setAttribute('content', basicDescription);
                 
                 // Prova a caricare dati dal localStorage se disponibili
                 try {
@@ -79,7 +98,7 @@
                             document.getElementById('og-image-alt').setAttribute('content', `${title} - Onoranze Funebri Santaniello`);
                             
                             // Aggiorna immagine se disponibile
-                            let imageUrl = 'https://via.placeholder.com/1200x630/374151/ffffff?text=Necrologio+Onoranze+Funebri+Santaniello';
+                            let imageUrl = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=630&fit=crop&crop=face';
                             
                             // Priorità 1: URL pubblico da Supabase Storage (photoURL)
                             if (obituary.photoURL && obituary.photoURL.startsWith('http') && !obituary.photoURL.includes('placeholder')) {
@@ -497,7 +516,7 @@
             const title = `In memoria di ${name}`;
             
             // Gestione intelligente dell'immagine del defunto per Open Graph
-            let imageUrl = 'https://via.placeholder.com/1200x630/374151/ffffff?text=Necrologio+Onoranze+Funebri+Santaniello'; // fallback accessibile
+            let imageUrl = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=630&fit=crop&crop=face'; // fallback accessibile
             
             // Priorità 1: URL pubblico da Supabase Storage (photoURL)
             if (obituary.photoURL && obituary.photoURL.startsWith('http') && !obituary.photoURL.includes('placeholder')) {
