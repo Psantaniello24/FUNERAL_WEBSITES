@@ -14,7 +14,7 @@
     <meta property="og:type" content="article">
     <meta property="og:title" content="Necrologio - Onoranze Funebri Santaniello" id="og-title">
     <meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia." id="og-description">
-    <meta property="og:image" content="https://funeral-websites-2.onrender.com/images/placeholder-person.svg" id="og-image">
+    <meta property="og:image" content="https://via.placeholder.com/1200x630/374151/ffffff?text=Necrologio+Onoranze+Funebri+Santaniello" id="og-image">
     <meta property="og:url" content="" id="og-url">
     
     <!-- Meta tag aggiuntivi per ottimizzazione condivisione -->
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Necrologio - Onoranze Funebri Santaniello" id="twitter-title">
     <meta name="twitter:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia." id="twitter-description">
-    <meta name="twitter:image" content="https://funeral-websites-2.onrender.com/images/placeholder-person.svg" id="twitter-image">
+    <meta name="twitter:image" content="https://via.placeholder.com/1200x630/374151/ffffff?text=Necrologio+Onoranze+Funebri+Santaniello" id="twitter-image">
     
     <!-- Script per pre-renderizzazione meta tag da URL parameters -->
     <script>
@@ -45,12 +45,25 @@
                 // Prova a caricare dati dal localStorage se disponibili
                 try {
                     const cachedData = localStorage.getItem('obituaries_cache');
+                    console.log('🔍 Debug cache:', {
+                        hasCachedData: !!cachedData,
+                        cacheLength: cachedData ? JSON.parse(cachedData).length : 0,
+                        searchingForId: id
+                    });
+                    
                     if (cachedData) {
                         const obituaries = JSON.parse(cachedData);
-                        const obituary = obituaries.find(o => o.id == id || o.id === id);
+                        console.log('📋 IDs in cache:', obituaries.map(o => ({ id: o.id, nome: o.nome || o.name })));
+                        
+                        const obituary = obituaries.find(o => String(o.id) === String(id));
                         
                         if (obituary) {
                             console.log('📋 Pre-caricamento meta tag da cache per:', obituary.nome || obituary.name);
+                            console.log('📸 Debug immagine in cache:', {
+                                photoURL: obituary.photoURL,
+                                foto: obituary.foto,
+                                hasPhotoFile: !!obituary.photoFile
+                            });
                             
                             const name = obituary.nome || obituary.name;
                             const title = `In memoria di ${name}`;
@@ -66,10 +79,28 @@
                             document.getElementById('og-image-alt').setAttribute('content', `${title} - Onoranze Funebri Santaniello`);
                             
                             // Aggiorna immagine se disponibile
-                            if (obituary.photoURL && obituary.photoURL.startsWith('http')) {
-                                document.getElementById('og-image').setAttribute('content', obituary.photoURL);
-                                document.getElementById('twitter-image').setAttribute('content', obituary.photoURL);
+                            let imageUrl = 'https://via.placeholder.com/1200x630/374151/ffffff?text=Necrologio+Onoranze+Funebri+Santaniello';
+                            
+                            // Priorità 1: URL pubblico da Supabase Storage (photoURL)
+                            if (obituary.photoURL && obituary.photoURL.startsWith('http') && !obituary.photoURL.includes('placeholder')) {
+                                imageUrl = obituary.photoURL;
+                                console.log('📸 Pre-caricamento: Usando photoURL di Supabase:', imageUrl);
                             }
+                            // Priorità 2: URL foto generico (foto field) se è un URL valido
+                            else if (obituary.foto && obituary.foto.startsWith('http') && !obituary.foto.includes('placeholder')) {
+                                imageUrl = obituary.foto;
+                                console.log('📸 Pre-caricamento: Usando obituary.foto (URL pubblico):', imageUrl);
+                            }
+                            // Priorità 3: Se foto è un path relativo, lo convertiamo in assoluto
+                            else if (obituary.foto && !obituary.foto.includes('placeholder') && !obituary.foto.startsWith('data:')) {
+                                imageUrl = obituary.foto.startsWith('/') ? `https://funeral-websites-2.onrender.com${obituary.foto}` : `https://funeral-websites-2.onrender.com/${obituary.foto}`;
+                                console.log('📸 Pre-caricamento: Usando obituary.foto (path convertito):', imageUrl);
+                            } else {
+                                console.log('📸 Pre-caricamento: Usando placeholder per meta tags');
+                            }
+                            
+                            document.getElementById('og-image').setAttribute('content', imageUrl);
+                            document.getElementById('twitter-image').setAttribute('content', imageUrl);
                             
                             console.log('✅ Meta tag pre-caricati da cache');
                         }
@@ -77,8 +108,42 @@
                 } catch (e) {
                     console.log('⚠️ Cache non disponibile per pre-caricamento meta tag');
                 }
+            } else {
+                console.log('🔍 Nessun ID necrologio trovato nei parametri URL');
             }
         })();
+        
+        // Funzione di debug per ispezionare la cache (disponibile nella console)
+        window.debugObituaryCache = function() {
+            try {
+                const cachedData = localStorage.getItem('obituaries_cache');
+                if (cachedData) {
+                    const obituaries = JSON.parse(cachedData);
+                    console.log('📋 CACHE OBITUARIES DEBUG:');
+                    console.table(obituaries.map(o => ({
+                        id: o.id,
+                        nome: o.nome || o.name,
+                        hasPhotoURL: !!o.photoURL,
+                        photoURL: o.photoURL,
+                        hasFoto: !!o.foto,
+                        foto: o.foto
+                    })));
+                    return obituaries;
+                } else {
+                    console.log('❌ Nessuna cache trovata');
+                    return [];
+                }
+            } catch (e) {
+                console.error('❌ Errore lettura cache:', e);
+                return null;
+            }
+        };
+        
+        // Funzione per pulire la cache
+        window.clearObituaryCache = function() {
+            localStorage.removeItem('obituaries_cache');
+            console.log('🗑️ Cache obituaries pulita');
+        };
     </script>
     
     <!-- Tailwind CSS -->
@@ -432,7 +497,7 @@
             const title = `In memoria di ${name}`;
             
             // Gestione intelligente dell'immagine del defunto per Open Graph
-            let imageUrl = 'https://tuosito.it/images/placeholder-person.svg'; // fallback
+            let imageUrl = 'https://via.placeholder.com/1200x630/374151/ffffff?text=Necrologio+Onoranze+Funebri+Santaniello'; // fallback accessibile
             
             // Priorità 1: URL pubblico da Supabase Storage (photoURL)
             if (obituary.photoURL && obituary.photoURL.startsWith('http') && !obituary.photoURL.includes('placeholder')) {
