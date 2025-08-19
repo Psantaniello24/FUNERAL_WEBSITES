@@ -215,8 +215,17 @@ class ObituaryDetailPage {
             title: ogTitle,
             description: ogDescription,
             image: ogImage,
-            url: ogUrl
+            url: ogUrl,
+            imageAccessible: ogImage.startsWith('https://'),
+            isSupabaseUrl: ogImage.includes('supabase.co/storage/v1/object/public/')
         });
+        
+        // Verifica aggiuntiva per Facebook Debugger
+        if (ogImage.includes('supabase.co/storage/v1/object/public/')) {
+            console.log('🎯 URL perfetto per Facebook Debugger! Tipo:', ogImage.includes('necrologi-files') ? 'Supabase Storage' : 'Altro');
+        } else {
+            console.log('⚠️ URL potrebbe non essere ottimale per Facebook. Verificare che sia pubblicamente accessibile.');
+        }
     }
 
     // Metodo helper per aggiornare un meta tag
@@ -237,53 +246,128 @@ class ObituaryDetailPage {
     getObituaryImageUrl() {
         let imageUrl = '';
         
+        console.log('🔍 Debug completo immagine necrologio:', {
+            nome: this.obituary.nome,
+            id: this.obituary.id,
+            source: this.obituary.source,
+            foto: this.obituary.foto,
+            photo: this.obituary.photo,
+            photoFile: this.obituary.photoFile ? {
+                hasData: !!this.obituary.photoFile.data,
+                dataType: this.obituary.photoFile.data?.startsWith('data:') ? 'base64' : 
+                         this.obituary.photoFile.data?.startsWith('http') ? 'url' : 'unknown',
+                dataPreview: this.obituary.photoFile.data?.substring(0, 100) + '...'
+            } : null
+        });
+        
         // PRIORITÀ PER OPEN GRAPH: Solo URL pubblici accessibili da Facebook
         // 1. URL da Supabase Storage mappato in 'foto' (pubblico)
-        if (this.obituary.foto && this.obituary.foto.startsWith('http')) {
+        if (this.obituary.foto && this.obituary.foto.startsWith('https://')) {
             imageUrl = this.obituary.foto;
             console.log('✅ Usando URL Supabase (foto) per Open Graph:', imageUrl);
+            
+            // Verifica che sia un URL di Supabase Storage valido
+            if (imageUrl.includes('supabase.co/storage/v1/object/public/')) {
+                console.log('✅ Confermato: URL Supabase Storage valido per Facebook');
+            }
         }
         // 2. URL photo alternativo (se pubblico)
-        else if (this.obituary.photo && this.obituary.photo.startsWith('http')) {
+        else if (this.obituary.photo && this.obituary.photo.startsWith('https://')) {
             imageUrl = this.obituary.photo;
             console.log('✅ Usando URL photo per Open Graph:', imageUrl);
         }
-        // 3. photoFile.data se è un URL pubblico (non base64)
+        // 3. photoFile.data se è un URL pubblico di Supabase (non base64)
         else if (this.obituary.photoFile && this.obituary.photoFile.data && 
-                 this.obituary.photoFile.data.startsWith('http')) {
+                 this.obituary.photoFile.data.startsWith('https://') &&
+                 this.obituary.photoFile.data.includes('supabase.co')) {
             imageUrl = this.obituary.photoFile.data;
-            console.log('✅ Usando photoFile.data URL per Open Graph:', imageUrl);
+            console.log('✅ Usando photoFile.data URL Supabase per Open Graph:', imageUrl);
         }
-        // 4. URL relativi convertiti in assoluti (solo se non sono base64)
+        // 4. Tenta di generare URL pubblico se abbiamo accesso a Supabase
+        else if (window.supabaseManager && this.obituary.source === 'supabase') {
+            console.log('🔄 Tentando di generare URL pubblico da Supabase...');
+            imageUrl = this.tryGenerateSupabaseUrl();
+        }
+        // 5. URL relativi convertiti in assoluti (solo se non sono base64)
         else if ((this.obituary.foto || this.obituary.photo) && 
                  !(this.obituary.foto?.startsWith('data:') || this.obituary.photo?.startsWith('data:'))) {
             const relativeUrl = this.obituary.foto || this.obituary.photo;
             imageUrl = new URL(relativeUrl, window.location.origin).href;
             console.log('✅ Convertito URL relativo per Open Graph:', imageUrl);
         }
-        // 5. Immagine di default del sito come fallback per Open Graph
+        // 6. Immagine di default del sito come fallback per Open Graph
         else {
-            // Usa un'immagine di default del sito invece del placeholder generico
-            imageUrl = new URL('images/old_photos/FINALE_1.png', window.location.origin).href;
-            console.log('⚠️ Usando immagine default del sito per Open Graph:', imageUrl);
-            
-            // Debug: mostra perché non abbiamo trovato un'immagine valida
-            console.log('🔍 Debug immagine necrologio:', {
-                foto: this.obituary.foto,
-                photo: this.obituary.photo,
-                photoFile: this.obituary.photoFile ? {
-                    hasData: !!this.obituary.photoFile.data,
-                    dataType: this.obituary.photoFile.data?.startsWith('data:') ? 'base64' : 
-                             this.obituary.photoFile.data?.startsWith('http') ? 'url' : 'unknown',
-                    data: this.obituary.photoFile.data?.substring(0, 50) + '...'
-                } : 'assente',
-                obituaryId: this.obituary.id,
-                obituaryName: this.obituary.nome,
-                source: this.obituary.source
-            });
+            imageUrl = this.generateFallbackImage();
         }
         
+        console.log('🎯 URL finale per Open Graph:', imageUrl);
         return imageUrl;
+    }
+
+    // Tenta di generare URL pubblico Supabase se possibile
+    tryGenerateSupabaseUrl() {
+        try {
+            // Se abbiamo informazioni sul file foto, tentiamo di generare l'URL pubblico
+            if (this.obituary.photoFileName && window.supabaseManager && window.supabaseManager.supabase) {
+                // Costruisci il path del file basato sul nome del file
+                const filePath = `photos/${this.obituary.photoFileName}`;
+                
+                // Genera URL pubblico usando Supabase
+                const { data } = window.supabaseManager.supabase.storage
+                    .from('necrologi-files')
+                    .getPublicUrl(filePath);
+                
+                if (data && data.publicUrl) {
+                    console.log('✅ Generato URL pubblico Supabase:', data.publicUrl);
+                    return data.publicUrl;
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Errore generazione URL Supabase:', error);
+        }
+        
+        // Fallback se non riusciamo a generare l'URL
+        return this.generateFallbackImage();
+    }
+
+    // Genera immagine di fallback per Open Graph
+    generateFallbackImage() {
+        const fallbackUrl = new URL('images/old_photos/FINALE_1.png', window.location.origin).href;
+        console.log('⚠️ Usando immagine default del sito per Open Graph:', fallbackUrl);
+        return fallbackUrl;
+    }
+
+    // Metodo di test per verificare i meta tag Open Graph (utilizzabile dalla console)
+    testOpenGraphTags() {
+        console.log('🧪 Test meta tag Open Graph:');
+        
+        const ogTags = {
+            'og:title': document.querySelector('meta[property="og:title"]')?.content,
+            'og:description': document.querySelector('meta[property="og:description"]')?.content,
+            'og:image': document.querySelector('meta[property="og:image"]')?.content,
+            'og:url': document.querySelector('meta[property="og:url"]')?.content,
+            'og:type': document.querySelector('meta[property="og:type"]')?.content
+        };
+        
+        console.table(ogTags);
+        
+        // Test specifico per l'immagine
+        const imageUrl = ogTags['og:image'];
+        if (imageUrl) {
+            console.log('🔍 Test immagine Open Graph:');
+            console.log('URL:', imageUrl);
+            console.log('È HTTPS:', imageUrl.startsWith('https://'));
+            console.log('È Supabase:', imageUrl.includes('supabase.co'));
+            console.log('È pubblico:', imageUrl.includes('/storage/v1/object/public/'));
+            
+            // Test di accessibilità (solo per debug)
+            if (imageUrl.startsWith('https://')) {
+                console.log('✅ URL sembra valido per Facebook Debugger');
+                console.log('🔗 Test Facebook Debugger:', `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(window.location.href)}`);
+            }
+        }
+        
+        return ogTags;
     }
 
     showNotFoundMessage() {
@@ -1138,6 +1222,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Make obituaryDetailPage globally available for testing
     window.obituaryDetailPage = obituaryDetailPage;
+    
+    // Rendi disponibile il test Open Graph globalmente
+    window.testOpenGraph = () => obituaryDetailPage?.testOpenGraphTags();
     
     // Override form handler for condolences
     const formHandler = new CondolenceFormHandler();
