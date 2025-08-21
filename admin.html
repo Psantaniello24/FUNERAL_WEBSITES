@@ -1345,7 +1345,8 @@
                 const currentUrl = window.location.origin;
                 // URL della pagina statica che l'utente scaricherà e caricherà sul server
                 const staticFilename = `necrologio-${obituaryId}.html`;
-                const obituaryUrl = `${currentUrl}/${staticFilename}`;
+                // URL reale della pagina sul sito a cui vogliamo indirizzare l'utente quando clicca l'anteprima
+                const obituaryUrl = `${currentUrl}/necrologio-detail.html?id=${encodeURIComponent(obituaryId)}`;
                 // Scegli URL pubblico della foto (Supabase) se disponibile, altrimenti placeholder
                 const publicPhotoUrl = options.photoUrl || data.photoURL || data.existingPhotoUrl || null;
                 const photoUrl = publicPhotoUrl || `${currentUrl}/images/placeholder-person.svg`;
@@ -1392,6 +1393,14 @@
                 htmlTemplate = htmlTemplate.replace(
                     '<meta property="og:image" content="">',
                     `<meta property="og:image" content="${photoUrl}">`
+                );
+                
+                // Inserisci canonical e redirect automatico alla pagina del sito
+                htmlTemplate = htmlTemplate.replace(
+                    '</head>',
+                    `<link rel="canonical" href="${obituaryUrl}">
+<meta http-equiv="refresh" content="0;url=${obituaryUrl}">
+</head>`
                 );
                 
                 // Crea un blob con il contenuto HTML
