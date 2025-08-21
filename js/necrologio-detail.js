@@ -827,17 +827,76 @@ function closeCondolenceModalDetail() {
 // Assign to global immediately after function definition
 window.closeCondolenceModalDetail = closeCondolenceModalDetail;
 
+// Helper: costruisci descrizione OG
+async function buildOgDescriptionFromObituary(obituary) {
+    const date = obituary.dataEsequie || obituary.funeralDate || null;
+    const location = obituary.luogoEsequie || obituary.funeralLocation || 'Luogo da definire';
+    const dateText = date ? Utils.formatDate(date) : 'Data da definire';
+    return `Ci ha lasciati ${obituary.nome}, i funerali si terranno ${dateText} presso ${location}`;
+}
+
+// Helper: trova URL pubblico della foto se disponibile
+function getPublicPhotoUrl(obituary) {
+    const candidate = obituary.photoURL || obituary.foto || obituary.photo || '';
+    if (typeof candidate === 'string' && candidate.startsWith('http')) return candidate;
+    return `${window.location.origin}/images/placeholder-person.svg`;
+}
+
+// Genera HTML statico per condivisione con OG tag corretti
+async function generateShareHtml(obituary) {
+    const resp = await fetch('necrologio-detail.html');
+    let template = await resp.text();
+    const pageTitle = `${obituary.nome} - Necrologio | Agenzia Funebre Santaniello`;
+    const ogDescription = await buildOgDescriptionFromObituary(obituary);
+    const ogImage = getPublicPhotoUrl(obituary);
+    const filename = `necrologio-${encodeURIComponent(String(obituary.id))}.html`;
+    const ogUrl = `${window.location.origin}/${filename}`;
+
+    template = template.replace('<title>Necrologio - Onoranze Funebri Santaniello</title>', `<title>${pageTitle}</title>`);
+    template = template.replace('content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello."', `content="${ogDescription}"`);
+    template = template.replace('<meta property="og:url" content="">', `<meta property=\"og:url\" content=\"${ogUrl}\">`);
+    template = template.replace('<meta property="og:title" content="Necrologio - Onoranze Funebri Santaniello">', `<meta property=\"og:title\" content=\"${pageTitle}\">`);
+    template = template.replace('<meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">', `<meta property=\"og:description\" content=\"${ogDescription}\">`);
+    template = template.replace('<meta property="og:image" content="">', `<meta property=\"og:image\" content=\"${ogImage}\">`);
+
+    return { html: template, filename };
+}
+
+// Carica HTML su Supabase Storage e restituisce URL pubblico
+async function uploadShareHtmlAndGetUrl(html, filename) {
+    if (!window.supabaseManager || !window.supabaseManager.isInitialized) return null;
+    const blob = new Blob([html], { type: 'text/html' });
+    const file = new File([blob], filename, { type: 'text/html' });
+    const uploadInfo = await window.supabaseManager.uploadFile(file, 'pages');
+    return uploadInfo?.downloadURL || null;
+}
+
+// Prepara URL condivisibile con anteprima OG
+async function ensureShareableUrl() {
+    const obituary = obituaryDetailPage?.obituary;
+    if (!obituary) return window.location.href;
+    try {
+        if (window.supabaseManager && window.supabaseManager.isInitialized) {
+            const { html, filename } = await generateShareHtml(obituary);
+            const publicUrl = await uploadShareHtmlAndGetUrl(html, filename);
+            if (publicUrl) return publicUrl;
+        }
+    } catch (e) {
+        console.warn('⚠️ Condivisione: fallback URL pagina corrente per errore upload:', e);
+    }
+    return window.location.href;
+}
+
 // Share functionality
-function shareObituary() {
+async function shareObituary() {
     const obituary = obituaryDetailPage.obituary;
     if (!obituary) return;
 
+    const shareUrl = await ensureShareableUrl();
     const shareData = {
         title: `Necrologio di ${obituary.nome}`,
-        text: obituary.testo ? 
-            `${obituary.nome} (${new Date(obituary.dataNascita).getFullYear()}-${new Date(obituary.dataMorte).getFullYear()}) - ${obituary.testo.substring(0, 100)}...` :
-            `${obituary.nome} (${new Date(obituary.dataNascita).getFullYear()}-${new Date(obituary.dataMorte).getFullYear()})`,
-        url: window.location.href
+        text: await buildOgDescriptionFromObituary(obituary),
+        url: shareUrl
     };
 
     // Check if Web Share API is supported
@@ -848,16 +907,14 @@ function shareObituary() {
             })
             .catch((error) => {
                 console.log('Error sharing:', error);
-                fallbackShare();
+                fallbackShareWithUrl(shareUrl);
             });
     } else {
-        fallbackShare();
+        fallbackShareWithUrl(shareUrl);
     }
 }
 
-function fallbackShare() {
-    const url = window.location.href;
-    
+async function fallbackShareWithUrl(shareUrl) {
     const modal = document.createElement('div');
     modal.className = 'modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     modal.id = 'share-modal';
@@ -873,7 +930,7 @@ function fallbackShare() {
             
             <div class="space-y-3">
                 <button 
-                    onclick="shareToFacebook('${url}')" 
+                    onclick="shareToFacebook('${shareUrl}')" 
                     class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
                 >
                     <i class="fab fa-facebook-f mr-2"></i>
@@ -881,7 +938,7 @@ function fallbackShare() {
                 </button>
                 
                 <button 
-                    onclick="shareToWhatsApp('${url}')" 
+                    onclick="shareToWhatsApp('${shareUrl}')" 
                     class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
                 >
                     <i class="fab fa-whatsapp mr-2"></i>
@@ -889,7 +946,7 @@ function fallbackShare() {
                 </button>
                 
                 <button 
-                    onclick="copyToClipboard('${url}')" 
+                    onclick="copyToClipboard('${shareUrl}')" 
                     class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center"
                 >
                     <i class="fas fa-copy mr-2"></i>
@@ -898,7 +955,7 @@ function fallbackShare() {
             </div>
             
             <div class="mt-4 p-3 bg-gray-100 rounded-lg">
-                <p class="text-xs text-gray-600 break-all">${url}</p>
+                <p class="text-xs text-gray-600 break-all">${shareUrl}</p>
             </div>
         </div>
     `;
