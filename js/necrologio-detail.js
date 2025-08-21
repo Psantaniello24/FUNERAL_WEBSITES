@@ -209,23 +209,10 @@ class ObituaryDetailPage {
             ogDescription += `. Invia le tue condoglianze alla famiglia.`;
         }
         
-        // Determina l'URL dell'immagine
-        let ogImage = '';
-        if (this.obituary.photoFile && this.obituary.photoFile.data) {
-            // Usa la foto caricata (base64) - nota: potrebbe non funzionare per Open Graph
-            ogImage = this.obituary.photoFile.data;
-        } else if (this.obituary.foto && this.obituary.foto.startsWith('http')) {
-            // Usa URL assoluto della foto
-            ogImage = this.obituary.foto;
-        } else if (this.obituary.foto && !this.obituary.foto.startsWith('http')) {
-            // Converti percorso relativo in assoluto
-            const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
-            ogImage = baseUrl + this.obituary.foto.replace(/^\.?\//, '');
-        } else {
-            // Usa placeholder assoluto
-            const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
-            ogImage = baseUrl + 'images/placeholder-person.svg';
-        }
+        // Determina l'URL dell'immagine per Open Graph
+        let ogImage = this.getOpenGraphImageUrl();
+        
+        console.log('🖼️ URL immagine Open Graph determinato:', ogImage);
 
         // Aggiorna i meta tag Open Graph
         this.updateMetaTag('property', 'og:type', 'article');
@@ -233,6 +220,12 @@ class ObituaryDetailPage {
         this.updateMetaTag('property', 'og:description', ogDescription);
         this.updateMetaTag('property', 'og:image', ogImage);
         this.updateMetaTag('property', 'og:url', currentUrl);
+        this.updateMetaTag('property', 'og:site_name', 'Onoranze Funebri Santaniello');
+        this.updateMetaTag('property', 'og:locale', 'it_IT');
+        
+        // Determina il tipo di immagine
+        const imageType = this.getImageType(ogImage);
+        this.updateMetaTag('property', 'og:image:type', imageType);
         
         // Aggiorna anche i meta tag Twitter Card
         this.updateMetaTag('name', 'twitter:title', ogTitle);
@@ -248,6 +241,64 @@ class ObituaryDetailPage {
 
         // Debug: verifica che i meta tag siano stati impostati correttamente
         this.debugOpenGraphTags();
+    }
+
+    getOpenGraphImageUrl() {
+        const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+        
+        // Priorità 1: URL Supabase pubblico (se disponibile e valido)
+        if (this.obituary.photoURL && this.obituary.photoURL.startsWith('http')) {
+            console.log('📸 Usando photoURL Supabase:', this.obituary.photoURL);
+            return this.obituary.photoURL;
+        }
+        
+        // Priorità 2: URL foto diretto (se HTTP/HTTPS)
+        if (this.obituary.foto && this.obituary.foto.startsWith('http')) {
+            console.log('📸 Usando foto URL diretta:', this.obituary.foto);
+            return this.obituary.foto;
+        }
+        
+        // Priorità 3: Percorso relativo convertito in assoluto
+        if (this.obituary.foto && !this.obituary.foto.startsWith('http') && !this.obituary.foto.startsWith('data:')) {
+            const absoluteUrl = baseUrl + this.obituary.foto.replace(/^\.?\//, '');
+            console.log('📸 Convertendo percorso relativo in assoluto:', absoluteUrl);
+            return absoluteUrl;
+        }
+        
+        // Priorità 4: Immagini locali del team (fallback per test)
+        if (this.obituary.foto && this.obituary.foto.includes('team/')) {
+            const absoluteUrl = baseUrl + this.obituary.foto.replace(/^\.?\//, '');
+            console.log('📸 Usando immagine team locale:', absoluteUrl);
+            return absoluteUrl;
+        }
+        
+        // Evita immagini base64 per Open Graph (non supportate dai social)
+        if (this.obituary.photoFile && this.obituary.photoFile.data && this.obituary.photoFile.data.startsWith('data:')) {
+            console.warn('⚠️ Immagine base64 rilevata, usando placeholder per Open Graph (i social non supportano base64)');
+        }
+        
+        // Fallback: placeholder assoluto
+        const placeholderUrl = baseUrl + 'images/placeholder-person.svg';
+        console.log('📸 Usando placeholder assoluto:', placeholderUrl);
+        return placeholderUrl;
+    }
+
+    getImageType(imageUrl) {
+        // Determina il tipo MIME dell'immagine dall'estensione
+        if (imageUrl.includes('.jpg') || imageUrl.includes('.jpeg')) {
+            return 'image/jpeg';
+        } else if (imageUrl.includes('.png')) {
+            return 'image/png';
+        } else if (imageUrl.includes('.gif')) {
+            return 'image/gif';
+        } else if (imageUrl.includes('.webp')) {
+            return 'image/webp';
+        } else if (imageUrl.includes('.svg')) {
+            return 'image/svg+xml';
+        }
+        
+        // Default per immagini senza estensione chiara
+        return 'image/jpeg';
     }
 
     updateMetaTag(attribute, name, content) {
@@ -299,14 +350,60 @@ class ObituaryDetailPage {
             // Test URL immagine
             if (ogTags['og:image']) {
                 console.log('🖼️ Test caricamento immagine Open Graph:', ogTags['og:image']);
-                const img = new Image();
-                img.onload = () => console.log('✅ Immagine Open Graph caricata correttamente');
-                img.onerror = () => console.error('❌ Errore caricamento immagine Open Graph');
-                img.src = ogTags['og:image'];
+                this.testImageAccessibility(ogTags['og:image']);
             }
             
             return ogTags;
         };
+    }
+
+    testImageAccessibility(imageUrl) {
+        console.log('🧪 Testando accessibilità immagine:', imageUrl);
+        
+        // Test 1: Caricamento immagine nel browser
+        const img = new Image();
+        img.onload = () => {
+            console.log('✅ Immagine caricabile nel browser');
+            console.log(`📏 Dimensioni: ${img.naturalWidth}x${img.naturalHeight}px`);
+            
+            // Verifica dimensioni minime per Open Graph (raccomandato 1200x630)
+            if (img.naturalWidth < 200 || img.naturalHeight < 200) {
+                console.warn('⚠️ Immagine potrebbe essere troppo piccola per Open Graph (raccomandato: almeno 1200x630px)');
+            }
+        };
+        img.onerror = () => {
+            console.error('❌ Errore caricamento immagine nel browser');
+            console.error('   Possibili cause:');
+            console.error('   - URL non accessibile pubblicamente');
+            console.error('   - Problemi CORS');
+            console.error('   - File non esistente');
+        };
+        img.src = imageUrl;
+        
+        // Test 2: Verifica HTTP response con fetch (se possibile)
+        if (imageUrl.startsWith('http')) {
+            fetch(imageUrl, { method: 'HEAD', mode: 'no-cors' })
+                .then(() => {
+                    console.log('✅ URL immagine risponde alle richieste HTTP');
+                })
+                .catch(error => {
+                    console.warn('⚠️ Possibili problemi di accesso HTTP:', error.message);
+                    console.warn('   Nota: Questo potrebbe essere normale a causa delle policy CORS');
+                });
+        }
+        
+        // Test 3: Verifica che non sia base64
+        if (imageUrl.startsWith('data:')) {
+            console.error('❌ PROBLEMA: Immagine base64 rilevata per Open Graph!');
+            console.error('   I social network (Facebook, WhatsApp, Twitter) NON supportano immagini base64');
+            console.error('   Soluzione: Caricare l\'immagine su un server pubblico o usare Supabase Storage pubblico');
+        }
+        
+        // Suggerimenti per il debug
+        console.log('💡 Per testare Open Graph:');
+        console.log('   - Facebook Debugger: https://developers.facebook.com/tools/debug/');
+        console.log('   - Twitter Validator: https://cards-dev.twitter.com/validator');
+        console.log('   - LinkedIn Inspector: https://www.linkedin.com/post-inspector/');
     }
 
     updatePageContent() {
