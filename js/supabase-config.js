@@ -315,7 +315,7 @@ CREATE TABLE ${this.tableName} (
     }
 
     // 📤 Upload file HTML nel bucket og-pages (se disponibile), ritorna URL pubblico
-    async uploadPublicPageFile(file, path = 'pages') {
+    async uploadPublicPageFile(file, path = 'pages', options = {}) {
         if (!this.isInitialized || !file) {
             throw new Error('Supabase non inizializzato o file mancante');
         }
@@ -324,17 +324,20 @@ CREATE TABLE ${this.tableName} (
             const ok = await this.ensurePagesBucket();
             const bucket = ok ? this.pagesBucketName : this.bucketName; // fallback al bucket principale se non possiamo creare og-pages
 
-            const timestamp = Date.now();
-            const safeName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-            const fullPath = `${path}/${safeName}`;
+            const upsert = options.upsert === true;
+            const fullPath = options.fullPath || (() => {
+                const timestamp = Date.now();
+                const safeName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                return `${path}/${safeName}`;
+            })();
 
-            console.log('📤 Upload HTML page su Supabase Storage:', { bucket, fullPath, type: file.type });
+            console.log('📤 Upload HTML page su Supabase Storage:', { bucket, fullPath, type: file.type, upsert });
 
             const { error } = await this.supabase.storage
                 .from(bucket)
                 .upload(fullPath, file, {
                     cacheControl: '3600',
-                    upsert: false
+                    upsert
                 });
 
             if (error) {
@@ -354,6 +357,20 @@ CREATE TABLE ${this.tableName} (
         } catch (e) {
             console.warn('⚠️ Upload pagina HTML fallito:', e?.message || e);
             throw e;
+        }
+    }
+
+    // 🌐 Ottieni URL pubblico per un path nel bucket pagine (og-pages)
+    getPublicUrlForPagesPath(path) {
+        try {
+            if (!this.isInitialized || !path) return null;
+            const { data } = this.supabase.storage
+                .from(this.pagesBucketName)
+                .getPublicUrl(path);
+            return data?.publicUrl || null;
+        } catch (error) {
+            console.warn('⚠️ Errore generazione URL pubblico (og-pages):', error?.message || error);
+            return null;
         }
     }
 

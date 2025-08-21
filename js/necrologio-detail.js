@@ -850,8 +850,10 @@ async function generateShareHtml(obituary) {
     const ogDescription = await buildOgDescriptionFromObituary(obituary);
     const ogImage = getPublicPhotoUrl(obituary);
     const filename = `necrologio-${encodeURIComponent(String(obituary.id))}.html`;
+    // target reale della pagina sito
     const targetUrl = `${window.location.origin}/necrologio-detail.html?id=${encodeURIComponent(String(obituary.id))}`;
-    const ogUrl = targetUrl;
+    // provvisorio: sarà sostituito col publicUrl dopo l'upload
+    let ogUrl = `${window.location.origin}/${filename}`;
 
     template = template.replace('<title>Necrologio - Onoranze Funebri Santaniello</title>', `<title>${pageTitle}</title>`);
     template = template.replace('content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello."', `content="${ogDescription}"`);
@@ -860,18 +862,19 @@ async function generateShareHtml(obituary) {
     template = template.replace('<meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">', `<meta property=\"og:description\" content=\"${ogDescription}\">`);
     template = template.replace('<meta property="og:image" content="">', `<meta property=\"og:image\" content=\"${ogImage}\">`);
 
-    // ensure click-through goes to the real site page
-    template = template.replace('</head>', `<link rel="canonical" href="${targetUrl}">\n<meta http-equiv="refresh" content="0;url=${targetUrl}">\n</head>`);
+    // inject canonical e redirect JS lento (5s) per non disturbare lo scraper
+    template = template.replace('</head>', `<link rel=\"canonical\" href=\"${targetUrl}\">\n<script>setTimeout(function(){ location.replace('${targetUrl}'); }, 5000);<\/script>\n</head>`);
 
     return { html: template, filename };
 }
 
-// Carica HTML su Supabase Storage e restituisce URL pubblico
 async function uploadShareHtmlAndGetUrl(html, filename) {
     if (!window.supabaseManager || !window.supabaseManager.isInitialized) return null;
     const blob = new Blob([html], { type: 'text/html' });
     const file = new File([blob], filename, { type: 'text/html' });
-    const uploadInfo = await window.supabaseManager.uploadPublicPageFile(file, 'pages');
+    // carichiamo con un path stabile basato sull'id per evitare URL sempre diversi
+    const fullPath = `pages/${filename}`;
+    const uploadInfo = await window.supabaseManager.uploadPublicPageFile(file, 'pages', { fullPath, upsert: true });
     return uploadInfo?.downloadURL || null;
 }
 
@@ -881,9 +884,16 @@ async function ensureShareableUrl() {
     if (!obituary) return window.location.href;
     try {
         if (window.supabaseManager && window.supabaseManager.isInitialized) {
-            const { html, filename } = await generateShareHtml(obituary);
+            let { html, filename } = await generateShareHtml(obituary);
+            // upload e ottieni URL pubblico finale
             const publicUrl = await uploadShareHtmlAndGetUrl(html, filename);
-            if (publicUrl) return publicUrl;
+            if (publicUrl) {
+                // allinea og:url al publicUrl per migliorare lo scraping
+                html = html.replace(/(<meta property=\\"og:url\\" content=\\")[^"]+(\\"\/>)/, `$1${publicUrl}$2`);
+                // ricarica file con og:url definitivo (upsert)
+                await uploadShareHtmlAndGetUrl(html, filename);
+                return publicUrl;
+            }
         }
     } catch (e) {
         console.warn('⚠️ Condivisione: fallback URL pagina corrente per errore upload:', e);
