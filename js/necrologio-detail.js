@@ -162,6 +162,9 @@ class ObituaryDetailPage {
             metaDescription.content = `Necrologio di ${this.obituary.nome} (${new Date(this.obituary.dataNascita).getFullYear()}-${new Date(this.obituary.dataMorte).getFullYear()}). Invia le tue condoglianze alla famiglia. Agenzia Funebre Santaniello.`;
         }
         
+        // Update Open Graph meta tags
+        this.updateOpenGraphTags();
+        
         // Update the page content with obituary data
         this.updatePageContent();
     }
@@ -183,6 +186,127 @@ class ObituaryDetailPage {
                 </div>
             `;
         }
+    }
+
+    updateOpenGraphTags() {
+        if (!this.obituary) {
+            console.warn('⚠️ Impossibile aggiornare meta tag Open Graph: obituary non caricato');
+            return;
+        }
+
+        console.log('🔄 Aggiornamento meta tag Open Graph per:', this.obituary.nome);
+
+        // Costruisci i dati per Open Graph
+        const ogTitle = `In memoria di ${this.obituary.nome}`;
+        const currentUrl = window.location.href;
+        
+        // Costruisci la descrizione Open Graph
+        let ogDescription = `Ci ha lasciato ${this.obituary.nome}`;
+        if (this.obituary.dataEsequie && this.obituary.luogoEsequie) {
+            const funeralDate = Utils.formatDate(this.obituary.dataEsequie);
+            ogDescription += `, i funerali si terranno il ${funeralDate} presso ${this.obituary.luogoEsequie}.`;
+        } else {
+            ogDescription += `. Invia le tue condoglianze alla famiglia.`;
+        }
+        
+        // Determina l'URL dell'immagine
+        let ogImage = '';
+        if (this.obituary.photoFile && this.obituary.photoFile.data) {
+            // Usa la foto caricata (base64) - nota: potrebbe non funzionare per Open Graph
+            ogImage = this.obituary.photoFile.data;
+        } else if (this.obituary.foto && this.obituary.foto.startsWith('http')) {
+            // Usa URL assoluto della foto
+            ogImage = this.obituary.foto;
+        } else if (this.obituary.foto && !this.obituary.foto.startsWith('http')) {
+            // Converti percorso relativo in assoluto
+            const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+            ogImage = baseUrl + this.obituary.foto.replace(/^\.?\//, '');
+        } else {
+            // Usa placeholder assoluto
+            const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+            ogImage = baseUrl + 'images/placeholder-person.svg';
+        }
+
+        // Aggiorna i meta tag Open Graph
+        this.updateMetaTag('property', 'og:type', 'article');
+        this.updateMetaTag('property', 'og:title', ogTitle);
+        this.updateMetaTag('property', 'og:description', ogDescription);
+        this.updateMetaTag('property', 'og:image', ogImage);
+        this.updateMetaTag('property', 'og:url', currentUrl);
+        
+        // Aggiorna anche i meta tag Twitter Card
+        this.updateMetaTag('name', 'twitter:title', ogTitle);
+        this.updateMetaTag('name', 'twitter:description', ogDescription);
+        this.updateMetaTag('name', 'twitter:image', ogImage);
+
+        console.log('✅ Meta tag Open Graph aggiornati:', {
+            title: ogTitle,
+            description: ogDescription,
+            image: ogImage,
+            url: currentUrl
+        });
+
+        // Debug: verifica che i meta tag siano stati impostati correttamente
+        this.debugOpenGraphTags();
+    }
+
+    updateMetaTag(attribute, name, content) {
+        // Cerca il meta tag esistente
+        let metaTag = document.querySelector(`meta[${attribute}="${name}"]`);
+        
+        if (metaTag) {
+            // Aggiorna il contenuto esistente
+            metaTag.setAttribute('content', content);
+        } else {
+            // Crea un nuovo meta tag se non esiste
+            metaTag = document.createElement('meta');
+            metaTag.setAttribute(attribute, name);
+            metaTag.setAttribute('content', content);
+            document.head.appendChild(metaTag);
+        }
+    }
+
+    debugOpenGraphTags() {
+        // Debug: controlla tutti i meta tag Open Graph
+        const ogTags = {
+            'og:type': document.querySelector('meta[property="og:type"]')?.content,
+            'og:title': document.querySelector('meta[property="og:title"]')?.content,
+            'og:description': document.querySelector('meta[property="og:description"]')?.content,
+            'og:image': document.querySelector('meta[property="og:image"]')?.content,
+            'og:url': document.querySelector('meta[property="og:url"]')?.content,
+            'twitter:title': document.querySelector('meta[name="twitter:title"]')?.content,
+            'twitter:description': document.querySelector('meta[name="twitter:description"]')?.content,
+            'twitter:image': document.querySelector('meta[name="twitter:image"]')?.content
+        };
+
+        console.log('🔍 Debug meta tag Open Graph attuali:', ogTags);
+
+        // Controlla se tutti i tag necessari sono presenti
+        const requiredTags = ['og:type', 'og:title', 'og:description', 'og:image', 'og:url'];
+        const missingTags = requiredTags.filter(tag => !ogTags[tag]);
+        
+        if (missingTags.length === 0) {
+            console.log('✅ Tutti i meta tag Open Graph richiesti sono presenti');
+        } else {
+            console.warn('⚠️ Meta tag Open Graph mancanti:', missingTags);
+        }
+
+        // Aggiungi un metodo globale per testare i meta tag
+        window.testOpenGraphTags = () => {
+            console.log('🧪 Test meta tag Open Graph:');
+            console.table(ogTags);
+            
+            // Test URL immagine
+            if (ogTags['og:image']) {
+                console.log('🖼️ Test caricamento immagine Open Graph:', ogTags['og:image']);
+                const img = new Image();
+                img.onload = () => console.log('✅ Immagine Open Graph caricata correttamente');
+                img.onerror = () => console.error('❌ Errore caricamento immagine Open Graph');
+                img.src = ogTags['og:image'];
+            }
+            
+            return ogTags;
+        };
     }
 
     updatePageContent() {
