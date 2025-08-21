@@ -219,6 +219,7 @@ class ObituaryDetailPage {
         this.updateMetaTag('property', 'og:title', ogTitle);
         this.updateMetaTag('property', 'og:description', ogDescription);
         this.updateMetaTag('property', 'og:image', ogImage);
+        this.updateMetaTag('property', 'og:image:secure_url', ogImage); // Facebook richiede anche secure_url
         this.updateMetaTag('property', 'og:url', currentUrl);
         this.updateMetaTag('property', 'og:site_name', 'Onoranze Funebri Santaniello');
         this.updateMetaTag('property', 'og:locale', 'it_IT');
@@ -226,6 +227,9 @@ class ObituaryDetailPage {
         // Determina il tipo di immagine
         const imageType = this.getImageType(ogImage);
         this.updateMetaTag('property', 'og:image:type', imageType);
+        
+        // Aggiungi dimensioni immagine (Facebook le richiede)
+        this.updateImageDimensions(ogImage);
         
         // Aggiorna anche i meta tag Twitter Card
         this.updateMetaTag('name', 'twitter:title', ogTitle);
@@ -301,6 +305,37 @@ class ObituaryDetailPage {
         return 'image/jpeg';
     }
 
+    updateImageDimensions(imageUrl) {
+        // Carica l'immagine per ottenere le dimensioni reali
+        const img = new Image();
+        img.onload = () => {
+            const width = img.naturalWidth;
+            const height = img.naturalHeight;
+            
+            console.log(`📏 Dimensioni immagine rilevate: ${width}x${height}px`);
+            
+            // Aggiorna i meta tag con le dimensioni reali
+            this.updateMetaTag('property', 'og:image:width', width.toString());
+            this.updateMetaTag('property', 'og:image:height', height.toString());
+            
+            // Verifica se le dimensioni sono ottimali per Open Graph
+            if (width < 1200 || height < 630) {
+                console.warn('⚠️ Dimensioni immagine non ottimali per Open Graph');
+                console.warn('   Raccomandato: almeno 1200x630px');
+                console.warn(`   Attuale: ${width}x${height}px`);
+            } else {
+                console.log('✅ Dimensioni immagine ottime per Open Graph');
+            }
+        };
+        img.onerror = () => {
+            console.warn('⚠️ Impossibile rilevare dimensioni immagine, usando valori predefiniti');
+            // Usa dimensioni predefinite se l'immagine non è caricabile
+            this.updateMetaTag('property', 'og:image:width', '1200');
+            this.updateMetaTag('property', 'og:image:height', '630');
+        };
+        img.src = imageUrl;
+    }
+
     updateMetaTag(attribute, name, content) {
         // Cerca il meta tag esistente
         let metaTag = document.querySelector(`meta[${attribute}="${name}"]`);
@@ -324,7 +359,13 @@ class ObituaryDetailPage {
             'og:title': document.querySelector('meta[property="og:title"]')?.content,
             'og:description': document.querySelector('meta[property="og:description"]')?.content,
             'og:image': document.querySelector('meta[property="og:image"]')?.content,
+            'og:image:secure_url': document.querySelector('meta[property="og:image:secure_url"]')?.content,
+            'og:image:width': document.querySelector('meta[property="og:image:width"]')?.content,
+            'og:image:height': document.querySelector('meta[property="og:image:height"]')?.content,
+            'og:image:type': document.querySelector('meta[property="og:image:type"]')?.content,
             'og:url': document.querySelector('meta[property="og:url"]')?.content,
+            'og:site_name': document.querySelector('meta[property="og:site_name"]')?.content,
+            'og:locale': document.querySelector('meta[property="og:locale"]')?.content,
             'twitter:title': document.querySelector('meta[name="twitter:title"]')?.content,
             'twitter:description': document.querySelector('meta[name="twitter:description"]')?.content,
             'twitter:image': document.querySelector('meta[name="twitter:image"]')?.content
@@ -334,13 +375,25 @@ class ObituaryDetailPage {
 
         // Controlla se tutti i tag necessari sono presenti
         const requiredTags = ['og:type', 'og:title', 'og:description', 'og:image', 'og:url'];
-        const missingTags = requiredTags.filter(tag => !ogTags[tag]);
+        const facebookRecommendedTags = ['og:image:secure_url', 'og:image:width', 'og:image:height', 'og:image:type', 'og:site_name'];
         
-        if (missingTags.length === 0) {
+        const missingRequired = requiredTags.filter(tag => !ogTags[tag]);
+        const missingRecommended = facebookRecommendedTags.filter(tag => !ogTags[tag]);
+        
+        if (missingRequired.length === 0) {
             console.log('✅ Tutti i meta tag Open Graph richiesti sono presenti');
         } else {
-            console.warn('⚠️ Meta tag Open Graph mancanti:', missingTags);
+            console.error('❌ Meta tag Open Graph OBBLIGATORI mancanti:', missingRequired);
         }
+        
+        if (missingRecommended.length === 0) {
+            console.log('✅ Tutti i meta tag raccomandati da Facebook sono presenti');
+        } else {
+            console.warn('⚠️ Meta tag raccomandati da Facebook mancanti:', missingRecommended);
+        }
+        
+        // Validazione specifica per Facebook
+        this.validateForFacebook(ogTags);
 
         // Aggiungi un metodo globale per testare i meta tag
         window.testOpenGraphTags = () => {
@@ -354,6 +407,38 @@ class ObituaryDetailPage {
             }
             
             return ogTags;
+        };
+        
+        // Funzione per testare Facebook Debugger
+        window.testFacebookDebugger = () => {
+            const currentUrl = window.location.href;
+            const facebookDebuggerUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(currentUrl)}`;
+            
+            console.log('📘 Test Facebook Debugger:');
+            console.log('🔗 URL per Facebook Debugger:', facebookDebuggerUrl);
+            
+            // Mostra riassunto meta tag per Facebook
+            const ogImage = document.querySelector('meta[property="og:image"]')?.content;
+            const ogTitle = document.querySelector('meta[property="og:title"]')?.content;
+            const ogDescription = document.querySelector('meta[property="og:description"]')?.content;
+            
+            console.log('📊 Riassunto per Facebook:');
+            console.log('   Titolo:', ogTitle);
+            console.log('   Descrizione:', ogDescription);
+            console.log('   Immagine:', ogImage);
+            
+            // Apri Facebook Debugger in una nuova finestra
+            if (confirm('Vuoi aprire Facebook Debugger per testare questa pagina?')) {
+                window.open(facebookDebuggerUrl, '_blank');
+            }
+            
+            return {
+                url: currentUrl,
+                debuggerUrl: facebookDebuggerUrl,
+                title: ogTitle,
+                description: ogDescription,
+                image: ogImage
+            };
         };
     }
 
@@ -404,6 +489,59 @@ class ObituaryDetailPage {
         console.log('   - Facebook Debugger: https://developers.facebook.com/tools/debug/');
         console.log('   - Twitter Validator: https://cards-dev.twitter.com/validator');
         console.log('   - LinkedIn Inspector: https://www.linkedin.com/post-inspector/');
+    }
+
+    validateForFacebook(ogTags) {
+        console.log('📘 Validazione specifica per Facebook:');
+        
+        // 1. Verifica og:image
+        if (!ogTags['og:image']) {
+            console.error('❌ Facebook: og:image è OBBLIGATORIO');
+            return false;
+        }
+        
+        // 2. Verifica che og:image sia un URL assoluto
+        if (!ogTags['og:image'].startsWith('http')) {
+            console.error('❌ Facebook: og:image deve essere un URL assoluto (http/https)');
+            return false;
+        }
+        
+        // 3. Verifica og:image:secure_url per HTTPS
+        if (ogTags['og:image'].startsWith('https') && !ogTags['og:image:secure_url']) {
+            console.warn('⚠️ Facebook: og:image:secure_url raccomandato per URL HTTPS');
+        }
+        
+        // 4. Verifica dimensioni
+        const width = parseInt(ogTags['og:image:width']);
+        const height = parseInt(ogTags['og:image:height']);
+        
+        if (width && height) {
+            if (width < 200 || height < 200) {
+                console.error('❌ Facebook: Immagine troppo piccola (minimo 200x200px)');
+            } else if (width < 1200 || height < 630) {
+                console.warn('⚠️ Facebook: Dimensioni non ottimali (raccomandato 1200x630px)');
+            } else {
+                console.log('✅ Facebook: Dimensioni immagine ottime');
+            }
+        }
+        
+        // 5. Verifica lunghezza titolo e descrizione
+        if (ogTags['og:title'] && ogTags['og:title'].length > 60) {
+            console.warn('⚠️ Facebook: Titolo potrebbe essere troncato (>60 caratteri)');
+        }
+        
+        if (ogTags['og:description'] && ogTags['og:description'].length > 160) {
+            console.warn('⚠️ Facebook: Descrizione potrebbe essere troncata (>160 caratteri)');
+        }
+        
+        // 6. Verifica tipo immagine supportato
+        const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (ogTags['og:image:type'] && !supportedTypes.includes(ogTags['og:image:type'])) {
+            console.warn('⚠️ Facebook: Tipo immagine potrebbe non essere supportato:', ogTags['og:image:type']);
+        }
+        
+        console.log('✅ Validazione Facebook completata');
+        return true;
     }
 
     updatePageContent() {
