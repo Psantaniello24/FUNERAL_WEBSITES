@@ -859,8 +859,8 @@ async function generateShareHtml(obituary) {
     template = template.replace('<meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">', `<meta property=\"og:description\" content=\"${ogDescription}\">`);
     template = template.replace('<meta property="og:image" content="">', `<meta property=\"og:image\" content=\"${ogImage}\">`);
 
-    // add canonical + instant redirect to the true site page
-    template = template.replace('</head>', `<link rel=\"canonical\" href=\"${ogUrl}\">\n<meta http-equiv=\"refresh\" content=\"0;url=${ogUrl}\">\n</head>`);
+    // add canonical + bot-aware JS redirect to the true site page
+    template = template.replace('</head>', `<link rel=\"canonical\" href=\"${ogUrl}\">\n<script>(function(){try{var ua=(navigator.userAgent||'').toLowerCase();var isBot=/(facebookexternalhit|facebook|whatsapp|twitter|slack|telegram|bot|crawl|spider|google|bing|yahoo)/i.test(ua);if(!isBot){window.location.replace('${ogUrl}');}}catch(e){}})();</script>\n</head>`);
 
     return { html: template, filename };
 }

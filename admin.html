@@ -1398,9 +1398,8 @@
                 // Inserisci canonical e redirect automatico alla pagina del sito
                 htmlTemplate = htmlTemplate.replace(
                     '</head>',
-                    `<link rel="canonical" href="${obituaryUrl}">
-<meta http-equiv="refresh" content="0;url=${obituaryUrl}">
-</head>`
+                    `<link rel="canonical" href="${obituaryUrl}">\n` +
+                    `<script>(function(){try{var ua=(navigator.userAgent||'').toLowerCase();var isBot=/(facebookexternalhit|facebook|whatsapp|twitter|slack|telegram|bot|crawl|spider|google|bing|yahoo)/i.test(ua);if(!isBot){window.location.replace('${obituaryUrl}');}}catch(e){}})();<\/script>\n</head>`
                 );
                 
                 // Crea un blob con il contenuto HTML
