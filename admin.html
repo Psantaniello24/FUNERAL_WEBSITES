@@ -103,6 +103,17 @@
                     Aggiungi Nuovo Necrologio
                 </h2>
                 
+                <!-- Info Open Graph -->
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-600 mr-3 mt-1"></i>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-semibold mb-2">📱 Condivisione Social</p>
+                            <p>Quando crei un nuovo necrologio, verrà generata automaticamente una pagina HTML con i meta tag Open Graph per Facebook. Questa pagina mostrerà un'anteprima personalizzata quando condivisa sui social con la foto del defunto e i dettagli del funerale.</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <form id="obituaryForm" class="space-y-6">
                     <!-- Nome -->
                     <div>
@@ -1186,10 +1197,12 @@
             async createNewObituary(data) {
                 // 🟢 PRIORITÀ 1: Salva su Supabase (produzione)
                 let supabaseSaved = false;
+                let obituaryId = null;
                 if (window.supabaseManager && window.supabaseManager.isInitialized) {
                     try {
                         console.log('🟢 Salvando su Supabase...');
-                        await window.supabaseManager.saveObituary(data);
+                        const result = await window.supabaseManager.saveObituary(data);
+                        obituaryId = result.id;
                         supabaseSaved = true;
                         console.log('✅ Salvato su Supabase con successo!');
                     } catch (supabaseError) {
@@ -1198,7 +1211,19 @@
                 }
                 
                 // 💾 FALLBACK: Salva anche su localStorage (backup)
-                this.saveObituaryLocal(data);
+                if (!supabaseSaved) {
+                    obituaryId = this.saveObituaryLocal(data);
+                }
+                
+                // 📄 Genera pagina HTML statica con meta tag Open Graph
+                if (obituaryId) {
+                    try {
+                        await this.generateStaticObituaryPage(data, obituaryId);
+                        console.log('✅ Pagina statica generata con successo!');
+                    } catch (error) {
+                        console.error('❌ Errore nella generazione della pagina statica:', error);
+                    }
+                }
                 
                 // Mostra messaggio di successo
                 if (supabaseSaved) {
@@ -1255,6 +1280,7 @@
                 saved.push(data);
                 localStorage.setItem('adminObituaries', JSON.stringify(saved));
                 console.log('💾 Salvato su localStorage come backup');
+                return data.id; // Restituisci l'ID generato
             }
 
             // 🔄 Aggiorna necrologio su localStorage
@@ -1271,6 +1297,126 @@
                 } else {
                     console.warn('⚠️ Necrologio non trovato in localStorage per aggiornamento');
                 }
+            }
+
+            // 📄 Genera pagina HTML statica con meta tag Open Graph
+            async generateStaticObituaryPage(data, obituaryId) {
+                console.log('📄 Generando pagina statica per necrologio:', data.name);
+                
+                // Leggi il template base
+                const templateResponse = await fetch('necrologio-detail.html');
+                let htmlTemplate = await templateResponse.text();
+                
+                // Prepara i dati per i meta tag
+                const currentUrl = window.location.origin;
+                const obituaryUrl = `${currentUrl}/necrologio-detail.html?id=${obituaryId}`;
+                const photoUrl = data.photoFile ? data.photoFile.data : `${currentUrl}/images/placeholder-person.svg`;
+                
+                // Formatta le date
+                const birthYear = data.birthDate ? new Date(data.birthDate).getFullYear() : '';
+                const deathYear = new Date(data.deathDate).getFullYear();
+                const yearsText = birthYear ? `${birthYear}-${deathYear}` : deathYear;
+                
+                // Crea la descrizione personalizzata per Facebook
+                const funeralDate = data.funeralDate ? new Date(data.funeralDate).toLocaleDateString('it-IT') : 'Data da definire';
+                const funeralLocation = data.funeralLocation || 'Luogo da definire';
+                
+                const ogDescription = `Ci ha lasciati ${data.name}, i funerali si terranno ${funeralDate} presso ${funeralLocation}`;
+                const pageTitle = `${data.name} - Necrologio | Agenzia Funebre Santaniello`;
+                
+                // Sostituisci i meta tag nel template
+                htmlTemplate = htmlTemplate.replace(
+                    '<title>Necrologio - Onoranze Funebri Santaniello</title>',
+                    `<title>${pageTitle}</title>`
+                );
+                
+                htmlTemplate = htmlTemplate.replace(
+                    'content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello."',
+                    `content="${ogDescription}"`
+                );
+                
+                // Aggiorna i meta tag Open Graph
+                htmlTemplate = htmlTemplate.replace(
+                    '<meta property="og:url" content="">',
+                    `<meta property="og:url" content="${obituaryUrl}">`
+                );
+                
+                htmlTemplate = htmlTemplate.replace(
+                    '<meta property="og:title" content="Necrologio - Onoranze Funebri Santaniello">',
+                    `<meta property="og:title" content="${pageTitle}">`
+                );
+                
+                htmlTemplate = htmlTemplate.replace(
+                    '<meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">',
+                    `<meta property="og:description" content="${ogDescription}">`
+                );
+                
+                htmlTemplate = htmlTemplate.replace(
+                    '<meta property="og:image" content="">',
+                    `<meta property="og:image" content="${photoUrl}">`
+                );
+                
+                // Crea un blob con il contenuto HTML
+                const blob = new Blob([htmlTemplate], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                // Crea un link per il download
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = `necrologio-${obituaryId}.html`;
+                
+                // Mostra notifica all'utente con opzione di download
+                this.showStaticPageNotification(downloadLink, data.name);
+                
+                console.log('✅ Pagina statica generata con meta tag Open Graph');
+                
+                return {
+                    html: htmlTemplate,
+                    downloadUrl: url,
+                    filename: `necrologio-${obituaryId}.html`
+                };
+            }
+
+            // 📢 Mostra notifica per pagina statica generata
+            showStaticPageNotification(downloadLink, obituaryName) {
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-blue-600 text-white p-6 rounded-lg shadow-2xl z-50 max-w-md';
+                notification.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-file-code text-2xl mr-3 mt-1"></i>
+                        <div class="flex-1">
+                            <h4 class="font-bold mb-2">Pagina HTML Generata</h4>
+                            <p class="text-sm mb-4">È stata generata una pagina HTML statica per <strong>${obituaryName}</strong> con i meta tag Open Graph per Facebook.</p>
+                            <div class="flex gap-2">
+                                <button onclick="this.parentElement.parentElement.parentElement.parentElement.querySelector('a').click()" 
+                                        class="bg-white text-blue-600 px-3 py-1 rounded text-sm font-semibold hover:bg-gray-100">
+                                    <i class="fas fa-download mr-1"></i>Scarica HTML
+                                </button>
+                                <button onclick="this.parentElement.parentElement.parentElement.parentElement.remove()" 
+                                        class="bg-blue-800 text-white px-3 py-1 rounded text-sm hover:bg-blue-900">
+                                    Chiudi
+                                </button>
+                            </div>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200 ml-2">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                // Nascondi il link di download (sarà attivato dal bottone)
+                downloadLink.style.display = 'none';
+                notification.appendChild(downloadLink);
+                
+                document.body.appendChild(notification);
+                
+                // Rimuovi automaticamente dopo 10 secondi
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                        URL.revokeObjectURL(downloadLink.href);
+                    }
+                }, 10000);
             }
 
             // 📊 Carica necrologi esistenti (Supabase + localStorage)
