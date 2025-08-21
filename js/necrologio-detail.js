@@ -162,11 +162,41 @@ class ObituaryDetailPage {
             metaDescription.content = `Necrologio di ${this.obituary.nome} (${new Date(this.obituary.dataNascita).getFullYear()}-${new Date(this.obituary.dataMorte).getFullYear()}). Invia le tue condoglianze alla famiglia. Agenzia Funebre Santaniello.`;
         }
         
+        // Clean any duplicate meta tags first
+        this.cleanDuplicateMetaTags();
+        
         // Update Open Graph meta tags
         this.updateOpenGraphTags();
         
         // Update the page content with obituary data
         this.updatePageContent();
+    }
+
+    cleanDuplicateMetaTags() {
+        console.log('🧹 Pulizia meta tag duplicati...');
+        
+        // Lista dei meta tag Open Graph da controllare
+        const ogProperties = [
+            'og:type', 'og:title', 'og:description', 'og:image', 
+            'og:image:secure_url', 'og:image:width', 'og:image:height', 
+            'og:image:type', 'og:url', 'og:site_name', 'og:locale'
+        ];
+        
+        ogProperties.forEach(property => {
+            const metaTags = document.querySelectorAll(`meta[property="${property}"]`);
+            
+            if (metaTags.length > 1) {
+                console.log(`🔍 Trovati ${metaTags.length} meta tag duplicati per ${property}`);
+                
+                // Mantieni solo il primo, rimuovi gli altri
+                for (let i = 1; i < metaTags.length; i++) {
+                    metaTags[i].remove();
+                    console.log(`🗑️ Rimosso meta tag duplicato: ${property}`);
+                }
+            }
+        });
+        
+        console.log('✅ Pulizia meta tag completata');
     }
 
     showNotFoundMessage() {
@@ -337,18 +367,39 @@ class ObituaryDetailPage {
     }
 
     updateMetaTag(attribute, name, content) {
-        // Cerca il meta tag esistente
-        let metaTag = document.querySelector(`meta[${attribute}="${name}"]`);
+        // Mappa dei meta tag con i loro ID specifici per evitare duplicati
+        const metaTagIds = {
+            'og:title': 'og-title',
+            'og:description': 'og-description', 
+            'og:image': 'og-image',
+            'og:image:secure_url': 'og-image-secure-url',
+            'og:image:width': 'og-image-width',
+            'og:image:height': 'og-image-height',
+            'og:image:type': 'og-image-type',
+            'og:url': 'og-url'
+        };
+        
+        // Cerca prima per ID specifico per evitare duplicati
+        const tagId = metaTagIds[name];
+        let metaTag = tagId ? document.getElementById(tagId) : null;
+        
+        if (!metaTag) {
+            // Se non trovato per ID, cerca per attributo
+            metaTag = document.querySelector(`meta[${attribute}="${name}"]`);
+        }
         
         if (metaTag) {
             // Aggiorna il contenuto esistente
             metaTag.setAttribute('content', content);
+            console.log(`✅ Aggiornato meta tag esistente: ${name} = ${content}`);
         } else {
-            // Crea un nuovo meta tag se non esiste
+            // Crea un nuovo meta tag solo se proprio non esiste
             metaTag = document.createElement('meta');
             metaTag.setAttribute(attribute, name);
             metaTag.setAttribute('content', content);
+            if (tagId) metaTag.id = tagId;
             document.head.appendChild(metaTag);
+            console.log(`➕ Creato nuovo meta tag: ${name} = ${content}`);
         }
     }
 
@@ -439,6 +490,31 @@ class ObituaryDetailPage {
                 description: ogDescription,
                 image: ogImage
             };
+        };
+        
+        // Funzione per forzare il refresh della cache Facebook
+        window.forceFacebookRefresh = () => {
+            const currentUrl = window.location.href;
+            
+            // Aggiungi un parametro timestamp per forzare Facebook a vedere la pagina come "nuova"
+            const refreshUrl = currentUrl + (currentUrl.includes('?') ? '&' : '?') + '_fb_refresh=' + Date.now();
+            const facebookDebuggerUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(refreshUrl)}`;
+            
+            console.log('🔄 Forzando refresh cache Facebook...');
+            console.log('🔗 URL con timestamp:', refreshUrl);
+            console.log('🔗 Facebook Debugger:', facebookDebuggerUrl);
+            
+            if (confirm('Vuoi aprire Facebook Debugger con URL aggiornato per forzare il refresh della cache?')) {
+                window.open(facebookDebuggerUrl, '_blank');
+                
+                // Mostra istruzioni
+                console.log('📋 Istruzioni Facebook Debugger:');
+                console.log('   1. Clicca "Debug" nel debugger');
+                console.log('   2. Clicca "Scrape Again" per forzare l\'aggiornamento');
+                console.log('   3. Verifica che l\'immagine appaia nell\'anteprima');
+            }
+            
+            return refreshUrl;
         };
     }
 
