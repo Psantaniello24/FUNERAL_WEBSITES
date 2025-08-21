@@ -862,8 +862,10 @@ async function generateShareHtml(obituary) {
     template = template.replace('<meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">', `<meta property=\"og:description\" content=\"${ogDescription}\">`);
     template = template.replace('<meta property="og:image" content="">', `<meta property=\"og:image\" content=\"${ogImage}\">`);
 
-    // inject canonical e redirect JS lento (5s) per non disturbare lo scraper
-    template = template.replace('</head>', `<link rel=\"canonical\" href=\"${targetUrl}\">\n<script>setTimeout(function(){ location.replace('${targetUrl}'); }, 5000);<\/script>\n</head>`);
+    // inject canonical e redirect JS immediato per utenti (non bot) + link fallback visibile
+    const redirectScript = `<script>(function(){try{var ua=(navigator.userAgent||'').toLowerCase();var isBot=/(facebookexternalhit|facebot|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|pinterest|skypeuripreview)/.test(ua);if(!isBot){window.location.replace('${targetUrl}');}}catch(e){}})();<\/script>`;
+    template = template.replace('</head>', `<link rel=\"canonical\" href=\"${targetUrl}\">\n${redirectScript}\n</head>`);
+    template = template.replace('</body>', `<div style=\"padding:16px;text-align:center;font-family:sans-serif\">Se non vieni reindirizzato, apri <a href=\"${targetUrl}\">questa pagina</a>.</div>\n</body>`);
 
     return { html: template, filename };
 }
