@@ -12,8 +12,11 @@
     <meta property="og:site_name" content="Onoranze Funebri Santaniello">
     <meta property="og:title" content="Necrologio - Onoranze Funebri Santaniello">
     <meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">
-    <meta property="og:image" content="">
-    <meta property="og:url" content="">
+    <meta property="og:image" content="https://via.placeholder.com/1200x630/1a1a2e/d4af37?text=🕊️+Onoranze+Funebri+Santaniello">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:url" content="" id="og-url">
     <meta property="og:locale" content="it_IT">
     
     <!-- Twitter Card Meta Tags -->
@@ -335,6 +338,110 @@
     <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
     <script src="js/necrologio-detail.js"></script>
+    
+    <!-- Script per impostare URL corrente e tentare pre-caricamento meta tag -->
+    <script>
+        // Imposta URL corrente nei meta tag immediatamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const ogUrl = document.getElementById('og-url');
+            if (ogUrl) {
+                ogUrl.setAttribute('content', window.location.href);
+            }
+            
+            // Tenta di pre-caricare alcuni meta tag se possibile dai dati locali
+            tryPreloadMetaTags();
+        });
+        
+        function tryPreloadMetaTags() {
+            try {
+                // Cerca di ottenere l'ID del necrologio dall'URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const obituaryId = urlParams.get('id');
+                
+                if (obituaryId) {
+                    console.log('🔄 Tentativo pre-caricamento meta tag per ID:', obituaryId);
+                    
+                    // Cerca nei dati locali se disponibili
+                    if (localStorage.getItem('necrologi_cache')) {
+                        try {
+                            const cachedData = JSON.parse(localStorage.getItem('necrologi_cache'));
+                            const obituary = cachedData.find(o => o.id === obituaryId);
+                            
+                            if (obituary) {
+                                console.log('✅ Trovato necrologio in cache, aggiornando meta tag');
+                                updateMetaTagsFromCache(obituary);
+                            }
+                        } catch (e) {
+                            console.log('⚠️ Errore lettura cache necrologi:', e);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('⚠️ Errore pre-caricamento meta tag:', error);
+            }
+        }
+        
+        function updateMetaTagsFromCache(obituary) {
+            // Aggiorna titolo
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            const title = `Necrologio di ${obituary.nome || obituary.name} - Onoranze Funebri Santaniello`;
+            if (ogTitle) {
+                ogTitle.setAttribute('content', title);
+                document.title = title;
+            }
+            
+            // Aggiorna descrizione
+            const ogDescription = document.querySelector('meta[property="og:description"]');
+            if (ogDescription) {
+                let description = `Ci ha lasciati ${obituary.nome || obituary.name}`;
+                
+                // Aggiungi anni se disponibili
+                const birthYear = obituary.dataNascita || obituary.birthDate ? new Date(obituary.dataNascita || obituary.birthDate).getFullYear() : '';
+                const deathYear = obituary.dataMorte || obituary.deathDate ? new Date(obituary.dataMorte || obituary.deathDate).getFullYear() : '';
+                if (birthYear && deathYear) {
+                    description += ` (${birthYear}-${deathYear})`;
+                }
+                
+                // Aggiungi info funerale se disponibili
+                if (obituary.dataEsequie || obituary.funeralDate) {
+                    const funeralDate = new Date(obituary.dataEsequie || obituary.funeralDate);
+                    const funeralDateText = funeralDate.toLocaleDateString('it-IT', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    description += `, i funerali si svolgeranno ${funeralDateText}`;
+                    
+                    if (obituary.luogoEsequie || obituary.funeralLocation) {
+                        description += ` presso la ${obituary.luogoEsequie || obituary.funeralLocation}`;
+                    }
+                }
+                
+                description += '. Onoranze Funebri Santaniello.';
+                ogDescription.setAttribute('content', description);
+                
+                // Aggiorna anche meta description normale
+                const metaDescription = document.querySelector('meta[name="description"]');
+                if (metaDescription) {
+                    metaDescription.setAttribute('content', description);
+                }
+            }
+            
+            // Aggiorna immagine se disponibile
+            const ogImage = document.querySelector('meta[property="og:image"]');
+            if (ogImage && (obituary.foto || obituary.photo || obituary.photoURL)) {
+                const photoUrl = obituary.foto || obituary.photo || obituary.photoURL;
+                if (photoUrl && photoUrl.startsWith('http')) {
+                    ogImage.setAttribute('content', photoUrl);
+                    console.log('✅ Aggiornata og:image con foto del defunto:', photoUrl);
+                }
+            }
+            
+            console.log('✅ Meta tag pre-caricati da cache');
+        }
+    </script>
+    
     <script>
         // Initialize dynamic obituary page
         document.addEventListener('DOMContentLoaded', function() {

@@ -465,6 +465,9 @@ class ObituaryDetailPage {
         console.log('🌐 Meta tag Open Graph aggiornati per condivisione social');
         console.log('📸 Immagine per anteprima:', photoUrl);
         console.log('📝 Descrizione per anteprima:', socialDescription);
+        
+        // Salva i dati del necrologio in cache per future condivisioni
+        this.cacheObituaryForSharing();
     }
 
     // 🔍 Verifica che l'immagine sia accessibile pubblicamente per i social media
@@ -491,6 +494,56 @@ class ObituaryDetailPage {
         setTimeout(() => {
             img.src = imageUrl;
         }, 100);
+    }
+
+    // 💾 Salva i dati del necrologio in cache per migliorare condivisioni future
+    cacheObituaryForSharing() {
+        if (!this.obituary) return;
+        
+        try {
+            // Carica cache esistente
+            let cachedObituaries = [];
+            const existingCache = localStorage.getItem('necrologi_cache');
+            if (existingCache) {
+                cachedObituaries = JSON.parse(existingCache);
+            }
+            
+            // Rimuovi entry esistente per questo ID se presente
+            cachedObituaries = cachedObituaries.filter(o => o.id !== this.obituary.id);
+            
+            // Aggiungi/aggiorna questo necrologio
+            const cacheEntry = {
+                id: this.obituary.id,
+                nome: this.obituary.nome,
+                name: this.obituary.name,
+                dataNascita: this.obituary.dataNascita,
+                birthDate: this.obituary.birthDate,
+                dataMorte: this.obituary.dataMorte,
+                deathDate: this.obituary.deathDate,
+                dataEsequie: this.obituary.dataEsequie,
+                funeralDate: this.obituary.funeralDate,
+                luogoEsequie: this.obituary.luogoEsequie,
+                funeralLocation: this.obituary.funeralLocation,
+                foto: this.obituary.foto,
+                photo: this.obituary.photo,
+                photoURL: this.obituary.photoURL,
+                cached_at: new Date().toISOString()
+            };
+            
+            cachedObituaries.unshift(cacheEntry);
+            
+            // Mantieni solo gli ultimi 50 necrologi in cache
+            if (cachedObituaries.length > 50) {
+                cachedObituaries = cachedObituaries.slice(0, 50);
+            }
+            
+            // Salva in localStorage
+            localStorage.setItem('necrologi_cache', JSON.stringify(cachedObituaries));
+            console.log('💾 Necrologio salvato in cache per condivisioni future');
+            
+        } catch (error) {
+            console.warn('⚠️ Errore salvataggio cache necrologio:', error);
+        }
     }
 
     // 📄 Mostra il manifesto inline se presente
