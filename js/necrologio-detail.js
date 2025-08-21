@@ -162,6 +162,9 @@ class ObituaryDetailPage {
             metaDescription.content = `Necrologio di ${this.obituary.nome} (${new Date(this.obituary.dataNascita).getFullYear()}-${new Date(this.obituary.dataMorte).getFullYear()}). Invia le tue condoglianze alla famiglia. Agenzia Funebre Santaniello.`;
         }
         
+        // Update Open Graph meta tags for social sharing
+        this.updateOpenGraphMetaTags();
+        
         // Update the page content with obituary data
         this.updatePageContent();
     }
@@ -347,6 +350,147 @@ class ObituaryDetailPage {
         }
         
         return text;
+    }
+
+    // 🌐 Aggiorna i meta tag Open Graph per la condivisione social
+    updateOpenGraphMetaTags() {
+        if (!this.obituary) {
+            console.warn('⚠️ Impossibile aggiornare meta tag: obituary non caricato');
+            return;
+        }
+
+        console.log('🌐 Aggiornando meta tag Open Graph per:', this.obituary.nome);
+
+        // Ottieni l'URL dell'immagine del defunto (completo da Supabase)
+        let photoUrl = '';
+        if (this.obituary.photoFile && this.obituary.photoFile.data) {
+            // Usa la foto caricata (base64) - non ideale per OG, ma funziona
+            photoUrl = this.obituary.photoFile.data;
+        } else if (this.obituary.foto || this.obituary.photo) {
+            // Usa URL foto (compatibilità italiano/inglese) - dovrebbe essere URL completo Supabase
+            photoUrl = this.obituary.foto || this.obituary.photo;
+        } else if (this.obituary.photoURL) {
+            // Formato Supabase
+            photoUrl = this.obituary.photoURL;
+        }
+
+        // Assicurati che sia un URL completo (non relativo)
+        if (photoUrl && !photoUrl.startsWith('http')) {
+            // Se è un path relativo, convertilo in URL assoluto
+            photoUrl = new URL(photoUrl, window.location.origin).href;
+        }
+
+        // Fallback per immagine mancante - usa placeholder con logo Santaniello
+        if (!photoUrl) {
+            // Usa un'immagine placeholder appropriata per i social media
+            photoUrl = new URL('images/placeholder-person.svg', window.location.origin).href;
+            console.log('📷 Usando immagine placeholder per condivisione social:', photoUrl);
+        }
+
+        // Verifica che l'URL dell'immagine sia accessibile pubblicamente
+        if (photoUrl) {
+            this.verifyImageAccess(photoUrl);
+        }
+
+        // Crea la descrizione personalizzata per l'anteprima social
+        const birthYear = this.obituary.dataNascita ? new Date(this.obituary.dataNascita).getFullYear() : '';
+        const deathYear = this.obituary.dataMorte ? new Date(this.obituary.dataMorte).getFullYear() : '';
+        const yearsText = birthYear && deathYear ? ` (${birthYear}-${deathYear})` : '';
+        
+        // Formatta la data del funerale
+        let funeralDateText = '';
+        if (this.obituary.dataEsequie) {
+            const funeralDate = new Date(this.obituary.dataEsequie);
+            funeralDateText = funeralDate.toLocaleDateString('it-IT', {
+                weekday: 'long',
+                year: 'numeric', 
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Crea la descrizione per l'anteprima social
+        let socialDescription = `Ci ha lasciati ${this.obituary.nome}${yearsText}`;
+        
+        if (funeralDateText && this.obituary.luogoEsequie) {
+            socialDescription += `, i funerali si svolgeranno ${funeralDateText} presso la ${this.obituary.luogoEsequie}`;
+        } else if (funeralDateText) {
+            socialDescription += `, i funerali si svolgeranno ${funeralDateText}`;
+        } else if (this.obituary.luogoEsequie) {
+            socialDescription += `, i funerali si svolgeranno presso la ${this.obituary.luogoEsequie}`;
+        }
+        
+        socialDescription += '. Onoranze Funebri Santaniello.';
+
+        const currentUrl = window.location.href;
+        const title = `Necrologio di ${this.obituary.nome} - Onoranze Funebri Santaniello`;
+
+        // Aggiorna tutti i meta tag Open Graph
+        const metaTags = [
+            { property: 'og:title', content: title },
+            { property: 'og:description', content: socialDescription },
+            { property: 'og:image', content: photoUrl },
+            { property: 'og:url', content: currentUrl },
+            { name: 'twitter:title', content: title },
+            { name: 'twitter:description', content: socialDescription },
+            { name: 'twitter:image', content: photoUrl }
+        ];
+
+        metaTags.forEach(({ property, name, content }) => {
+            let metaTag;
+            
+            if (property) {
+                metaTag = document.querySelector(`meta[property="${property}"]`);
+            } else if (name) {
+                metaTag = document.querySelector(`meta[name="${name}"]`);
+            }
+            
+            if (metaTag && content) {
+                metaTag.setAttribute('content', content);
+                console.log(`✅ Aggiornato ${property || name}:`, content);
+            } else if (!metaTag && content) {
+                // Crea il meta tag se non esiste
+                metaTag = document.createElement('meta');
+                if (property) {
+                    metaTag.setAttribute('property', property);
+                } else {
+                    metaTag.setAttribute('name', name);
+                }
+                metaTag.setAttribute('content', content);
+                document.head.appendChild(metaTag);
+                console.log(`➕ Creato ${property || name}:`, content);
+            }
+        });
+
+        console.log('🌐 Meta tag Open Graph aggiornati per condivisione social');
+        console.log('📸 Immagine per anteprima:', photoUrl);
+        console.log('📝 Descrizione per anteprima:', socialDescription);
+    }
+
+    // 🔍 Verifica che l'immagine sia accessibile pubblicamente per i social media
+    verifyImageAccess(imageUrl) {
+        if (!imageUrl || imageUrl.startsWith('data:')) {
+            // Skip per immagini base64 o URL vuoti
+            return;
+        }
+
+        // Test rapido di accessibilità dell'immagine
+        const img = new Image();
+        
+        img.onload = () => {
+            console.log('✅ Immagine accessibile per condivisione social:', imageUrl);
+        };
+        
+        img.onerror = () => {
+            console.warn('⚠️ ATTENZIONE: Immagine non accessibile pubblicamente per condivisione social:', imageUrl);
+            console.warn('💡 Verifica le policy di accesso pubblico su Supabase Storage');
+            console.warn('🔧 Dashboard Supabase > Storage > necrologi-files > Policies');
+        };
+        
+        // Timeout per evitare blocchi
+        setTimeout(() => {
+            img.src = imageUrl;
+        }, 100);
     }
 
     // 📄 Mostra il manifesto inline se presente
@@ -921,8 +1065,37 @@ function shareToFacebook(url) {
 }
 
 function shareToWhatsApp(url) {
-    const text = `Necrologio di ${obituaryDetailPage.obituary.nome} - ${url}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    const obituary = obituaryDetailPage.obituary;
+    
+    // Crea un messaggio più ricco per WhatsApp
+    let message = `💔 Ci ha lasciati ${obituary.nome}`;
+    
+    // Aggiungi anni di vita se disponibili
+    const birthYear = obituary.dataNascita ? new Date(obituary.dataNascita).getFullYear() : '';
+    const deathYear = obituary.dataMorte ? new Date(obituary.dataMorte).getFullYear() : '';
+    if (birthYear && deathYear) {
+        message += ` (${birthYear}-${deathYear})`;
+    }
+    
+    // Aggiungi informazioni sul funerale se disponibili
+    if (obituary.dataEsequie && obituary.luogoEsequie) {
+        const funeralDate = new Date(obituary.dataEsequie);
+        const funeralDateText = funeralDate.toLocaleDateString('it-IT', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        message += `\n\n⛪ I funerali si svolgeranno ${funeralDateText} presso la ${obituary.luogoEsequie}`;
+        
+        if (obituary.oraEsequie) {
+            message += ` alle ore ${obituary.oraEsequie}`;
+        }
+    }
+    
+    message += `\n\n🕊️ Onoranze Funebri Santaniello\n${url}`;
+    
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     closeShareModal();
 }
 
