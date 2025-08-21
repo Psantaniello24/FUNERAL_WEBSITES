@@ -1230,7 +1230,7 @@
                             try {
                                 const htmlBlob = new Blob([generation.html], { type: 'text/html' });
                                 const htmlFile = new File([htmlBlob], generation.filename, { type: 'text/html' });
-                                const uploadInfo = await window.supabaseManager.uploadFile(htmlFile, 'pages');
+                                const uploadInfo = await window.supabaseManager.uploadPublicPageFile(htmlFile, 'pages');
                                 const publicUrl = uploadInfo?.downloadURL || null;
                                 if (publicUrl) {
                                     this.showStaticPageUploadedNotification(publicUrl, data.name);

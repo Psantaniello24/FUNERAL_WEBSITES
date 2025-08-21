@@ -33,6 +33,8 @@ class SupabaseManager {
         this.isOnline = navigator.onLine;
         this.tableName = 'necrologi';
         this.bucketName = 'necrologi-files';
+        // Bucket dedicato per contenuti HTML pubblici (Open Graph pages)
+        this.pagesBucketName = 'og-pages';
         
         // Monitora connessione
         window.addEventListener('online', () => {
@@ -207,6 +209,40 @@ CREATE TABLE ${this.tableName} (
         }
     }
 
+    // 🪣 Assicura il bucket per pagine HTML (public, consente text/html)
+    async ensurePagesBucket() {
+        try {
+            const { error: accessError } = await this.supabase.storage
+                .from(this.pagesBucketName)
+                .list('', { limit: 1 });
+
+            if (!accessError) {
+                console.log('✅ Bucket og-pages disponibile');
+                return true;
+            }
+
+            console.warn('⚠️ Accesso og-pages fallito, provo a crearlo:', accessError?.message);
+
+            // Prova a creare il bucket (potrebbe fallire con anon key)
+            const { error: createErr } = await this.supabase.storage.createBucket(this.pagesBucketName, {
+                public: true,
+                allowedMimeTypes: ['text/html'],
+                fileSizeLimit: 10485760
+            });
+
+            if (createErr) {
+                console.warn('⚠️ Creazione automatica og-pages fallita (ok con anon key). Crea manualmente il bucket "og-pages" pubblico con MIME text/html dalla dashboard.');
+                return false;
+            }
+
+            console.log('✅ Bucket og-pages creato');
+            return true;
+        } catch (e) {
+            console.warn('⚠️ ensurePagesBucket error:', e?.message || e);
+            return false;
+        }
+    }
+
     // 🔐 Crea policy di accesso pubblico per storage
     async createPublicStoragePolicy() {
         try {
@@ -275,6 +311,49 @@ CREATE TABLE ${this.tableName} (
         } catch (error) {
             console.error('❌ Errore upload Supabase Storage:', error);
             throw error;
+        }
+    }
+
+    // 📤 Upload file HTML nel bucket og-pages (se disponibile), ritorna URL pubblico
+    async uploadPublicPageFile(file, path = 'pages') {
+        if (!this.isInitialized || !file) {
+            throw new Error('Supabase non inizializzato o file mancante');
+        }
+
+        try {
+            const ok = await this.ensurePagesBucket();
+            const bucket = ok ? this.pagesBucketName : this.bucketName; // fallback al bucket principale se non possiamo creare og-pages
+
+            const timestamp = Date.now();
+            const safeName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+            const fullPath = `${path}/${safeName}`;
+
+            console.log('📤 Upload HTML page su Supabase Storage:', { bucket, fullPath, type: file.type });
+
+            const { error } = await this.supabase.storage
+                .from(bucket)
+                .upload(fullPath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) {
+                console.error('❌ Errore upload pagina HTML:', error);
+                throw error;
+            }
+
+            const { data: urlData } = this.supabase.storage
+                .from(bucket)
+                .getPublicUrl(fullPath);
+
+            return {
+                downloadURL: urlData.publicUrl,
+                fullPath,
+                bucket
+            };
+        } catch (e) {
+            console.warn('⚠️ Upload pagina HTML fallito:', e?.message || e);
+            throw e;
         }
     }
 

@@ -867,7 +867,7 @@ async function uploadShareHtmlAndGetUrl(html, filename) {
     if (!window.supabaseManager || !window.supabaseManager.isInitialized) return null;
     const blob = new Blob([html], { type: 'text/html' });
     const file = new File([blob], filename, { type: 'text/html' });
-    const uploadInfo = await window.supabaseManager.uploadFile(file, 'pages');
+    const uploadInfo = await window.supabaseManager.uploadPublicPageFile(file, 'pages');
     return uploadInfo?.downloadURL || null;
 }
 
