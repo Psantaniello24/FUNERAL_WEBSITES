@@ -32,7 +32,6 @@
     
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/og-upload-config.js"></script>
 </head>
 <body class="bg-gray-50 font-inter">
     <!-- Schermata Login -->
@@ -1229,22 +1228,17 @@
 
                         if (window.supabaseManager && window.supabaseManager.isInitialized) {
                             try {
-                                const publicUrlFromHosting = (typeof window.uploadOgPageToHosting === 'function') ? await window.uploadOgPageToHosting(generation.html, generation.filename) : null;
-                                if (publicUrlFromHosting) {
-                                    this.showStaticPageUploadedNotification(publicUrlFromHosting, data.name);
+                                const htmlBlob = new Blob([generation.html], { type: 'text/html' });
+                                const htmlFile = new File([htmlBlob], generation.filename, { type: 'text/html' });
+                                const uploadInfo = await window.supabaseManager.uploadPublicPageFile(htmlFile, 'pages');
+                                const publicUrl = uploadInfo?.downloadURL || null;
+                                if (publicUrl) {
+                                    this.showStaticPageUploadedNotification(publicUrl, data.name);
                                 } else {
-                                    const htmlBlob = new Blob([generation.html], { type: 'text/html' });
-                                    const htmlFile = new File([htmlBlob], generation.filename, { type: 'text/html' });
-                                    const uploadInfo = await window.supabaseManager.uploadPublicPageFile(htmlFile, 'pages');
-                                    const publicUrl = uploadInfo?.downloadURL || null;
-                                    if (publicUrl) {
-                                        this.showStaticPageUploadedNotification(publicUrl, data.name);
-                                    } else {
-                                        const link = document.createElement('a');
-                                        link.href = generation.downloadUrl;
-                                        link.download = generation.filename;
-                                        this.showStaticPageNotification(link, data.name);
-                                    }
+                                    const link = document.createElement('a');
+                                    link.href = generation.downloadUrl;
+                                    link.download = generation.filename;
+                                    this.showStaticPageNotification(link, data.name);
                                 }
                             } catch (uploadErr) {
                                 console.warn('⚠️ Upload pagina statica non riuscito, uso download locale:', uploadErr);
@@ -1351,8 +1345,7 @@
                 const currentUrl = window.location.origin;
                 // URL della pagina statica che l'utente scaricherà e caricherà sul server
                 const staticFilename = `necrologio-${obituaryId}.html`;
-                // URL reale della pagina sul sito a cui vogliamo indirizzare l'utente quando clicca l'anteprima
-                const obituaryUrl = `${currentUrl}/necrologio-detail.html?id=${encodeURIComponent(obituaryId)}`;
+                const obituaryUrl = `${currentUrl}/${staticFilename}`;
                 // Scegli URL pubblico della foto (Supabase) se disponibile, altrimenti placeholder
                 const publicPhotoUrl = options.photoUrl || data.photoURL || data.existingPhotoUrl || null;
                 const photoUrl = publicPhotoUrl || `${currentUrl}/images/placeholder-person.svg`;
@@ -1399,12 +1392,6 @@
                 htmlTemplate = htmlTemplate.replace(
                     '<meta property="og:image" content="">',
                     `<meta property="og:image" content="${photoUrl}">`
-                );
-                
-                // Inserisci canonical e redirect automatico alla pagina del sito (delay 2s per non disturbare i crawler)
-                htmlTemplate = htmlTemplate.replace(
-                    '</head>',
-                    `<link rel="canonical" href="${obituaryUrl}">\n<meta http-equiv="refresh" content="2;url=${obituaryUrl}">\n</head>`
                 );
                 
                 // Crea un blob con il contenuto HTML

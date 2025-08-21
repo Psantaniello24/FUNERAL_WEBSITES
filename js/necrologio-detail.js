@@ -850,7 +850,7 @@ async function generateShareHtml(obituary) {
     const ogDescription = await buildOgDescriptionFromObituary(obituary);
     const ogImage = getPublicPhotoUrl(obituary);
     const filename = `necrologio-${encodeURIComponent(String(obituary.id))}.html`;
-    const ogUrl = `${window.location.origin}/necrologio-detail.html?id=${encodeURIComponent(String(obituary.id))}`;
+    const ogUrl = `${window.location.origin}/${filename}`;
 
     template = template.replace('<title>Necrologio - Onoranze Funebri Santaniello</title>', `<title>${pageTitle}</title>`);
     template = template.replace('content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello."', `content="${ogDescription}"`);
@@ -859,30 +859,16 @@ async function generateShareHtml(obituary) {
     template = template.replace('<meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">', `<meta property=\"og:description\" content=\"${ogDescription}\">`);
     template = template.replace('<meta property="og:image" content="">', `<meta property=\"og:image\" content=\"${ogImage}\">`);
 
-    // add canonical + meta refresh delay to the true site page
-    template = template.replace('</head>', `<link rel=\"canonical\" href=\"${ogUrl}\">\n<meta http-equiv=\"refresh\" content=\"2;url=${ogUrl}\">\n</head>`);
-
     return { html: template, filename };
 }
 
 // Carica HTML su Supabase Storage e restituisce URL pubblico
 async function uploadShareHtmlAndGetUrl(html, filename) {
-	// 1) Prova upload diretto sul tuo hosting (se configurato)
-	if (typeof window.uploadOgPageToHosting === 'function') {
-		try {
-			const hostingUrl = await window.uploadOgPageToHosting(html, filename);
-			if (hostingUrl) return hostingUrl;
-		} catch (e) {
-			console.warn('⚠️ Upload hosting fallito, provo Supabase:', e);
-		}
-	}
-
-	// 2) Fallback: Supabase Storage (og-pages)
-	if (!window.supabaseManager || !window.supabaseManager.isInitialized) return null;
-	const blob = new Blob([html], { type: 'text/html' });
-	const file = new File([blob], filename, { type: 'text/html' });
-	const uploadInfo = await window.supabaseManager.uploadPublicPageFile(file, 'pages');
-	return uploadInfo?.downloadURL || null;
+    if (!window.supabaseManager || !window.supabaseManager.isInitialized) return null;
+    const blob = new Blob([html], { type: 'text/html' });
+    const file = new File([blob], filename, { type: 'text/html' });
+    const uploadInfo = await window.supabaseManager.uploadPublicPageFile(file, 'pages');
+    return uploadInfo?.downloadURL || null;
 }
 
 // Prepara URL condivisibile con anteprima OG
