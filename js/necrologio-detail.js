@@ -850,7 +850,8 @@ async function generateShareHtml(obituary) {
     const ogDescription = await buildOgDescriptionFromObituary(obituary);
     const ogImage = getPublicPhotoUrl(obituary);
     const filename = `necrologio-${encodeURIComponent(String(obituary.id))}.html`;
-    const ogUrl = `${window.location.origin}/${filename}`;
+    const targetUrl = `${window.location.origin}/necrologio-detail.html?id=${encodeURIComponent(String(obituary.id))}`;
+    const ogUrl = targetUrl;
 
     template = template.replace('<title>Necrologio - Onoranze Funebri Santaniello</title>', `<title>${pageTitle}</title>`);
     template = template.replace('content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello."', `content="${ogDescription}"`);
@@ -858,6 +859,9 @@ async function generateShareHtml(obituary) {
     template = template.replace('<meta property="og:title" content="Necrologio - Onoranze Funebri Santaniello">', `<meta property=\"og:title\" content=\"${pageTitle}\">`);
     template = template.replace('<meta property="og:description" content="Dettagli necrologio. Invia le tue condoglianze alla famiglia. Onoranze Funebri Santaniello.">', `<meta property=\"og:description\" content=\"${ogDescription}\">`);
     template = template.replace('<meta property="og:image" content="">', `<meta property=\"og:image\" content=\"${ogImage}\">`);
+
+    // ensure click-through goes to the real site page
+    template = template.replace('</head>', `<link rel="canonical" href="${targetUrl}">\n<meta http-equiv="refresh" content="0;url=${targetUrl}">\n</head>`);
 
     return { html: template, filename };
 }
