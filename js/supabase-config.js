@@ -278,6 +278,20 @@ CREATE TABLE ${this.tableName} (
         }
     }
 
+    // 🌐 Ottieni URL pubblico per un path nel bucket
+    getPublicUrlForPath(path) {
+        try {
+            if (!this.isInitialized || !path) return null;
+            const { data } = this.supabase.storage
+                .from(this.bucketName)
+                .getPublicUrl(path);
+            return data?.publicUrl || null;
+        } catch (error) {
+            console.warn('⚠️ Errore generazione URL pubblico:', error?.message || error);
+            return null;
+        }
+    }
+
     // 🗑️ Elimina file da Supabase Storage
     async deleteFile(filePath) {
         if (!this.isInitialized || !filePath) {

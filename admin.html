@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -1198,11 +1195,13 @@
                 // 🟢 PRIORITÀ 1: Salva su Supabase (produzione)
                 let supabaseSaved = false;
                 let obituaryId = null;
+                let supabaseResult = null;
                 if (window.supabaseManager && window.supabaseManager.isInitialized) {
                     try {
                         console.log('🟢 Salvando su Supabase...');
                         const result = await window.supabaseManager.saveObituary(data);
                         obituaryId = result.id;
+                        supabaseResult = result;
                         supabaseSaved = true;
                         console.log('✅ Salvato su Supabase con successo!');
                     } catch (supabaseError) {
@@ -1218,7 +1217,42 @@
                 // 📄 Genera pagina HTML statica con meta tag Open Graph
                 if (obituaryId) {
                     try {
-                        await this.generateStaticObituaryPage(data, obituaryId);
+                        const generation = await this.generateStaticObituaryPage(
+                            data,
+                            obituaryId,
+                            {
+                                photoUrl: supabaseSaved ? (supabaseResult?.data?.photo_url || data.photoURL || data.existingPhotoUrl) : undefined,
+                                suppressLocalNotification: !!(window.supabaseManager && window.supabaseManager.isInitialized)
+                            }
+                        );
+
+                        if (window.supabaseManager && window.supabaseManager.isInitialized) {
+                            try {
+                                const htmlBlob = new Blob([generation.html], { type: 'text/html' });
+                                const htmlFile = new File([htmlBlob], generation.filename, { type: 'text/html' });
+                                const uploadInfo = await window.supabaseManager.uploadFile(htmlFile, 'pages');
+                                const publicUrl = uploadInfo?.downloadURL || null;
+                                if (publicUrl) {
+                                    this.showStaticPageUploadedNotification(publicUrl, data.name);
+                                } else {
+                                    const link = document.createElement('a');
+                                    link.href = generation.downloadUrl;
+                                    link.download = generation.filename;
+                                    this.showStaticPageNotification(link, data.name);
+                                }
+                            } catch (uploadErr) {
+                                console.warn('⚠️ Upload pagina statica non riuscito, uso download locale:', uploadErr);
+                                const link = document.createElement('a');
+                                link.href = generation.downloadUrl;
+                                link.download = generation.filename;
+                                this.showStaticPageNotification(link, data.name);
+                            }
+                        } else {
+                            const link = document.createElement('a');
+                            link.href = generation.downloadUrl;
+                            link.download = generation.filename;
+                            this.showStaticPageNotification(link, data.name);
+                        }
                         console.log('✅ Pagina statica generata con successo!');
                     } catch (error) {
                         console.error('❌ Errore nella generazione della pagina statica:', error);
@@ -1300,7 +1334,7 @@
             }
 
             // 📄 Genera pagina HTML statica con meta tag Open Graph
-            async generateStaticObituaryPage(data, obituaryId) {
+            async generateStaticObituaryPage(data, obituaryId, options = {}) {
                 console.log('📄 Generando pagina statica per necrologio:', data.name);
                 
                 // Leggi il template base
@@ -1309,8 +1343,12 @@
                 
                 // Prepara i dati per i meta tag
                 const currentUrl = window.location.origin;
-                const obituaryUrl = `${currentUrl}/necrologio-detail.html?id=${obituaryId}`;
-                const photoUrl = data.photoFile ? data.photoFile.data : `${currentUrl}/images/placeholder-person.svg`;
+                // URL della pagina statica che l'utente scaricherà e caricherà sul server
+                const staticFilename = `necrologio-${obituaryId}.html`;
+                const obituaryUrl = `${currentUrl}/${staticFilename}`;
+                // Scegli URL pubblico della foto (Supabase) se disponibile, altrimenti placeholder
+                const publicPhotoUrl = options.photoUrl || data.photoURL || data.existingPhotoUrl || null;
+                const photoUrl = publicPhotoUrl || `${currentUrl}/images/placeholder-person.svg`;
                 
                 // Formatta le date
                 const birthYear = data.birthDate ? new Date(data.birthDate).getFullYear() : '';
@@ -1363,17 +1401,19 @@
                 // Crea un link per il download
                 const downloadLink = document.createElement('a');
                 downloadLink.href = url;
-                downloadLink.download = `necrologio-${obituaryId}.html`;
+                downloadLink.download = staticFilename;
                 
-                // Mostra notifica all'utente con opzione di download
-                this.showStaticPageNotification(downloadLink, data.name);
+                // Mostra notifica all'utente con opzione di download (se non soppressa)
+                if (!options.suppressLocalNotification) {
+                    this.showStaticPageNotification(downloadLink, data.name);
+                }
                 
                 console.log('✅ Pagina statica generata con meta tag Open Graph');
                 
                 return {
                     html: htmlTemplate,
                     downloadUrl: url,
-                    filename: `necrologio-${obituaryId}.html`
+                    filename: staticFilename
                 };
             }
 
