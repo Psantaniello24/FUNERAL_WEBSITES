@@ -860,7 +860,7 @@ async function generateShareHtml(obituary) {
     template = template.replace('<meta property="og:image" content="">', `<meta property=\"og:image\" content=\"${ogImage}\">`);
 
     // add canonical + bot-aware JS redirect to the true site page
-    template = template.replace('</head>', `<link rel=\"canonical\" href=\"${ogUrl}\">\n<script>(function(){try{var ua=(navigator.userAgent||'').toLowerCase();var isBot=/(facebookexternalhit|facebook|whatsapp|twitter|slack|telegram|bot|crawl|spider|google|bing|yahoo)/i.test(ua);if(!isBot){window.location.replace('${ogUrl}');}}catch(e){}})();</script>\n</head>`);
+    template = template.replace('</head>', `<link rel=\"canonical\" href=\"${ogUrl}\">\n<script>(function(){try{var ua=(navigator.userAgent||'').toLowerCase();var isCrawler=/(facebookexternalhit|twitterbot|slackbot|telegrambot|linkedinbot|discordbot|bot|crawl|spider)/i.test(ua);if(!isCrawler){window.location.replace('${ogUrl}');}}catch(e){}})();</script>\n</head>`);
 
     return { html: template, filename };
 }
