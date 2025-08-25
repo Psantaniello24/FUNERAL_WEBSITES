@@ -887,6 +887,12 @@ async function ensureShareableUrl() {
 	const obituary = obituaryDetailPage?.obituary;
 	if (!obituary) return window.location.href;
 	try {
+		// Se è configurato un endpoint di redirect (es. Edge Function), usalo per la condivisione
+		if (window.OG_REDIRECT_ENDPOINT) {
+			const base = String(window.OG_REDIRECT_ENDPOINT).replace(/\/$/, '');
+			return `${base}?id=${encodeURIComponent(String(obituary.id))}`;
+		}
+
 		if (window.supabaseManager && window.supabaseManager.isInitialized) {
 			let { html, filename } = await generateShareHtml(obituary);
 			// upload e ottieni URL pubblico finale
