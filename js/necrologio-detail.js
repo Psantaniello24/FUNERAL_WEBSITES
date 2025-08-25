@@ -863,7 +863,8 @@ async function generateShareHtml(obituary) {
     template = template.replace('<meta property="og:image" content="">', `<meta property=\"og:image\" content=\"${ogImage}\">`);
 
     // inject canonical e redirect JS immediato per utenti (non bot) + link fallback visibile
-    const redirectScript = `<script>(function(){try{var ua=(navigator.userAgent||'').toLowerCase();var isBot=/(facebookexternalhit|facebot|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|pinterest|skypeuripreview)/.test(ua);if(!isBot){window.location.replace('${targetUrl}');}}catch(e){}})();<\/script>`;
+    // Nota: escludiamo solo i veri crawler; non consideriamo "whatsapp" o browser in-app come bot
+    const redirectScript = `<script>(function(){try{var ua=(navigator.userAgent||'').toLowerCase();var isBot=/(facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|pinterestbot)/.test(ua);if(!isBot){window.location.replace('${targetUrl}');}}catch(e){}})();<\/script><noscript><meta http-equiv=\"refresh\" content=\"0;url=${targetUrl}\"></noscript>`;
     template = template.replace('</head>', `<link rel=\"canonical\" href=\"${targetUrl}\">\n${redirectScript}\n</head>`);
     template = template.replace('</body>', `<div style=\"padding:16px;text-align:center;font-family:sans-serif\">Se non vieni reindirizzato, apri <a href=\"${targetUrl}\">questa pagina</a>.</div>\n</body>`);
 
@@ -871,36 +872,42 @@ async function generateShareHtml(obituary) {
 }
 
 async function uploadShareHtmlAndGetUrl(html, filename) {
-    if (!window.supabaseManager || !window.supabaseManager.isInitialized) return null;
-    const blob = new Blob([html], { type: 'text/html' });
-    const file = new File([blob], filename, { type: 'text/html' });
-    // carichiamo con un path stabile basato sull'id per evitare URL sempre diversi
-    const fullPath = `pages/${filename}`;
-    const uploadInfo = await window.supabaseManager.uploadPublicPageFile(file, 'pages', { fullPath, upsert: true });
-    return uploadInfo?.downloadURL || null;
+	if (!window.supabaseManager || !window.supabaseManager.isInitialized) return null;
+	const blob = new Blob([html], { type: 'text/html' });
+	const file = new File([blob], filename, { type: 'text/html' });
+	// carichiamo con un path stabile basato sull'id per evitare URL sempre diversi
+	const fullPath = `pages/${filename}`;
+	const uploadInfo = await window.supabaseManager.uploadPublicPageFile(file, 'pages', { fullPath, upsert: true });
+	if (!uploadInfo) return null;
+	return { publicUrl: uploadInfo.downloadURL, fullPath: uploadInfo.fullPath };
 }
 
 // Prepara URL condivisibile con anteprima OG
 async function ensureShareableUrl() {
-    const obituary = obituaryDetailPage?.obituary;
-    if (!obituary) return window.location.href;
-    try {
-        if (window.supabaseManager && window.supabaseManager.isInitialized) {
-            let { html, filename } = await generateShareHtml(obituary);
-            // upload e ottieni URL pubblico finale
-            const publicUrl = await uploadShareHtmlAndGetUrl(html, filename);
-            if (publicUrl) {
-                // allinea og:url al publicUrl per migliorare lo scraping
-                html = html.replace(/(<meta property=\\"og:url\\" content=\\")[^"]+(\\"\/>)/, `$1${publicUrl}$2`);
-                // ricarica file con og:url definitivo (upsert)
-                await uploadShareHtmlAndGetUrl(html, filename);
-                return publicUrl;
-            }
-        }
-    } catch (e) {
-        console.warn('⚠️ Condivisione: fallback URL pagina corrente per errore upload:', e);
-    }
-    return window.location.href;
+	const obituary = obituaryDetailPage?.obituary;
+	if (!obituary) return window.location.href;
+	try {
+		if (window.supabaseManager && window.supabaseManager.isInitialized) {
+			let { html, filename } = await generateShareHtml(obituary);
+			// upload e ottieni URL pubblico finale
+			const uploaded = await uploadShareHtmlAndGetUrl(html, filename);
+			if (uploaded && uploaded.publicUrl) {
+				let finalUrl = uploaded.publicUrl;
+				// Se configurato, usa custom domain per servire le pagine OG (es. https://og.tuosito.it)
+				if (window.OG_CUSTOM_DOMAIN && uploaded.fullPath) {
+					finalUrl = `${window.OG_CUSTOM_DOMAIN.replace(/\/$/, '')}/${uploaded.fullPath}`;
+				}
+				// allinea og:url al finalUrl per migliorare lo scraping
+				html = html.replace(/(<meta property=\\"og:url\\" content=\\")[^"]+(\\"\/>)/, `$1${finalUrl}$2`);
+				// ricarica file con og:url definitivo (upsert)
+				await uploadShareHtmlAndGetUrl(html, filename);
+				return finalUrl;
+			}
+		}
+	} catch (e) {
+		console.warn('⚠️ Condivisione: fallback URL pagina corrente per errore upload:', e);
+	}
+	return window.location.href;
 }
 
 // Share functionality
