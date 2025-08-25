@@ -337,7 +337,8 @@ CREATE TABLE ${this.tableName} (
                 .from(bucket)
                 .upload(fullPath, file, {
                     cacheControl: '3600',
-                    upsert
+                    upsert,
+                    contentType: 'text/html; charset=UTF-8'
                 });
 
             if (error) {
@@ -348,6 +349,7 @@ CREATE TABLE ${this.tableName} (
             const { data: urlData } = this.supabase.storage
                 .from(bucket)
                 .getPublicUrl(fullPath);
+            // Nota: serviamo inline come text/html tramite contentType impostato in upload
 
             return {
                 downloadURL: urlData.publicUrl,

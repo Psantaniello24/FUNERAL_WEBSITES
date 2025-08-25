@@ -832,7 +832,7 @@ async function buildOgDescriptionFromObituary(obituary) {
     const date = obituary.dataEsequie || obituary.funeralDate || null;
     const location = obituary.luogoEsequie || obituary.funeralLocation || 'Luogo da definire';
     const dateText = date ? Utils.formatDate(date) : 'Data da definire';
-    return `Ci ha lasciati ${obituary.nome}, i funerali si terranno ${dateText} presso ${location}`;
+    return `${obituary.nome} non è più tra noi, i funerali si terranno ${dateText} presso ${location}`;
 }
 
 // Helper: trova URL pubblico della foto se disponibile
